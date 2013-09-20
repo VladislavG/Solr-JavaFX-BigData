@@ -1,0 +1,8 @@
+dependencies {
+    compile project(':shared')
+    compile "org.open-dolphin:dolphin-server:$dolphinVersion"
+    compile "org.apache.solr:solr-solrj:4.4.0"
+    compile "org.apache.solr:solr-core:4.4.0"
+    runtime "log4j:log4j:1.2.17"
+    runtime "commons-logging:commons-logging:1.1.3"
+}

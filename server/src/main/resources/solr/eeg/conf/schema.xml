@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+
+<schema name="suggest" version="1.5">
+
+	<fields>
+		<field name="id" type="string" indexed="true" stored="true" required="true" multiValued="false" />
+        <field name="position" indexed="true" stored="true" type="int" />
+		<field name="starting" stored="true" indexed="true" type="date" />
+		<field name="geoDBId" stored="true" indexed="true" type="string" />
+		<field name="zipCode" stored="true" indexed="true" type="string" />
+		<field name="city" stored="true" indexed="true" type="text_general" />
+		<field name="street" stored="true" indexed="true" type="text_general" />
+		<field name="plantKey" stored="true" indexed="true" type="string" />
+		<field name="plantType" stored="true" indexed="true" type="string" />
+		<field name="subtype" stored="true" indexed="true" type="string" />
+		<field name="nominalPower" stored="true" indexed="true" type="float" />
+		<field name="voltageLevel" stored="true" indexed="true" type="string" />
+		<field name="DSO_EIC" stored="true" indexed="true" type="text_general" />
+		<field name="DSO" stored="true" indexed="true" type="text_general" />
+		<field name="TSO_EIC" stored="true" indexed="true" type="text_general" />
+		<field name="TSO" stored="true" indexed="true" type="text_general" />
+		<field name="actual_kWh" stored="true" indexed="true" type="float" />
+		<field name="average_kWh" stored="true" indexed="true" type="float" />
+		<field name="kWh_By_kW" stored="true" indexed="true" type="float" />
+		<field name="compensationKey" stored="true" indexed="true" type="string" />
+		<field name="regionCode" stored="true" indexed="true" type="string" />
+		<field name="latitude" stored="true" indexed="true" type="float" />
+		<field name="longitude" stored="true" indexed="true" type="float" />
+		<field name="GPS_Precision" stored="true" indexed="true" type="int" />
+		<field name="validation" stored="true" indexed="true" type="text_general" />
+		<field name="_version_" type="long" indexed="true" stored="true" />
+	</fields>
+
+    <types>
+        <fieldType name="date" class="solr.TrieDateField" omitNorms="false"/>
+        <fieldType name="int" class="solr.TrieIntField" omitNorms="false"/>
+        <fieldType name="float" class="solr.TrieFloatField" omitNorms="false"/>
+        <fieldType name="long" class="solr.TrieLongField" omitNorms="false"/>
+        <fieldType name="string" class="solr.StrField" sortMissingLast="true" />
+        <fieldType name="text_general" class="solr.TextField" positionIncrementGap="100">
+	      <analyzer type="index">
+	        <tokenizer class="solr.KeywordTokenizerFactory"/>
+	        <filter class="solr.LowerCaseFilterFactory"/>
+	      </analyzer>
+	      <analyzer type="query">
+	        <tokenizer class="solr.KeywordTokenizerFactory"/>
+	        <filter class="solr.LowerCaseFilterFactory"/>
+	      </analyzer>
+        </fieldType>
+    </types>
+
+    <uniqueKey>id</uniqueKey>
+
+</schema>
