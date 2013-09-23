@@ -15,6 +15,7 @@ import javafx.scene.paint.Color
 import javafx.scene.shape.Rectangle
 import javafx.stage.Stage
 import javafx.util.Callback
+import np.com.ngopal.control.AutoFillTextBox
 import org.opendolphin.core.Attribute;
 import org.opendolphin.core.PresentationModel;
 import org.opendolphin.core.client.ClientAttribute;
@@ -24,6 +25,8 @@ import org.opendolphin.core.client.comm.WithPresentationModelHandler
 
 import java.beans.PropertyChangeListener
 
+import static com.canoo.solar.Constants.CMD.GET_CITIES
+import static com.canoo.solar.Constants.CMD.GET_TYPE
 import static com.canoo.solar.Constants.FilterConstants.CITY;
 import static com.canoo.solar.Constants.FilterConstants.FILTER
 import static com.canoo.solar.Constants.FilterConstants.ID
@@ -38,9 +41,10 @@ import static com.canoo.solar.ApplicationConstants.*
 public class Application extends javafx.application.Application {
     static ClientDolphin clientDolphin;
     javafx.collections.ObservableList<Integer> observableList = FXCollections.observableArrayList()
+    javafx.collections.ObservableList<Integer> observableListCities = FXCollections.observableArrayList()
+    javafx.collections.ObservableList<Integer> observableListTypes = FXCollections.observableArrayList()
     private PresentationModel textAttributeModel;
     private TableView table = new TableView();
-    TextField cityText = new TextField()
     Label cityLabel = new Label("City: ")
     Label zipLabel = new Label("Zip Code: ")
     Label typeLabel = new Label("Type: ")
@@ -57,8 +61,10 @@ public class Application extends javafx.application.Application {
     TextField zipLabelDetail = new TextField("Zip Code")
     TextField typeLabelDetail = new TextField("Type")
     TextField nominalLabelDetail = new TextField("Power")
-
+    AutoFillTextBox typeChoiceBox = new AutoFillTextBox(observableListTypes)
+    AutoFillTextBox cityText = new AutoFillTextBox(observableListCities)
     Label loading = new Label("Loading Data from Solr")
+    Label noData = new Label("No Data Found")
 
 
 
@@ -68,7 +74,8 @@ public class Application extends javafx.application.Application {
 
     TextField zipText = new TextField()
     TextField nominalText = new TextField()
-    ChoiceBox typeChoiceBox = new ChoiceBox()
+    TextField typeLabelforBinding = typeChoiceBox.getTextbox()
+    TextField cityLabelforBinding = cityText.getTextbox()
 
     public Application() {
         textAttributeModel = clientDolphin.presentationModel(PM_APP, new ClientAttribute(ATT_ATTR_ID, null));
@@ -83,8 +90,10 @@ public class Application extends javafx.application.Application {
         addClientSideAction();
         setupBinding();
 
+        Scene scene = new Scene(root, 850, 305)
+        scene.stylesheets << 'demo.css'
 
-        stage.setScene(new Scene(root, 850, 305));
+        stage.setScene(scene);
         stage.setTitle(getClass().getName());
         stage.show();
     }
@@ -98,9 +107,6 @@ public class Application extends javafx.application.Application {
     }
 
     private Pane setupStage() {
-        typeChoiceBox.setItems(FXCollections.observableArrayList(
-                "Solarstrom", "Biomasse", "Windkraft", "Gas", "Erdwärme", ""))
-        typeChoiceBox.setTooltip(new Tooltip("Select a Plant Type"))
         loading.setScaleX(1.2)
         loading.setScaleY(1.2)
         loading.setTextFill(Color.BLUE)
@@ -259,6 +265,16 @@ public class Application extends javafx.application.Application {
            observableList.addAll( data.get(0).get("ids")  )
         }
 
+        clientDolphin.data GET_CITIES, { data ->
+           observableListCities.addAll( data.get(0).get("ids")  )
+            println observableListCities
+        }
+
+        clientDolphin.data GET_TYPE, { data ->
+           observableListTypes.addAll( data.get(0).get("ids")  )
+            println observableListTypes
+        }
+
 
 
 
@@ -284,8 +300,8 @@ public class Application extends javafx.application.Application {
 
     private void setupBinding() {
         bind 'text' of zipText to ZIP of clientDolphin[FILTER]
-        bind 'text' of cityText to CITY of clientDolphin[FILTER]
-        bind 'value' of typeChoiceBox to PLANT_TYPE of clientDolphin[FILTER]
+        bind 'text' of cityLabelforBinding to CITY of clientDolphin[FILTER]
+        bind 'text' of typeLabelforBinding to PLANT_TYPE of clientDolphin[FILTER]
         bind 'text' of nominalText to NOMINAL_POWER of clientDolphin[FILTER]
 
         bind ZIP of clientDolphin[SELECTED_POWERPLANT] to 'text' of zipLabelDetail
@@ -300,6 +316,8 @@ public class Application extends javafx.application.Application {
             clientDolphin.data GET, { data ->
                 observableList.clear()
                 observableList.addAll( data.get(0).get("ids"))
+                if (observableList.size()==0){table.setPlaceholder(noData)}
+                else{table.setPlaceholder(loading)}
             }
         })
 //        bindAttribute(clientDolphin[FILTER][CITY], {

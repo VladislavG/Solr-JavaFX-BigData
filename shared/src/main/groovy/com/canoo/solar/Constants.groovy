@@ -24,7 +24,8 @@ public class Constants {
     static class CMD {
 
     public static final String GET = "fullDataRequest"
-    public static final String GET_FILTERED = "filteredDataRequest"
+    public static final String GET_CITIES = "citiesDataRequest"
+    public static final String GET_TYPE = "typeDataRequest"
 
 }
 }

@@ -102,19 +102,15 @@ public class SolrService {
         solrQuery.setFacetLimit(-1);
         solrQuery.setFacet(true);
         solrQuery.setParam("facet.field", "city");
-        solrQuery.addFilterQuery("plantType:Biomasse");
         solrQuery.setFacetSort(true);
 
         response = solrServer2.query(solrQuery);
         FacetField field = response.getFacetField("city");
-        System.out.println("\nTime taken to query all cities and count Biomasse plants in each: "+ (System.currentTimeMillis() - start2) + "ms");
-        System.out.println("\nCities with more than 30 Biomasse plants:");
         List<FacetField.Count> values = field.getValues();
 
         for(FacetField.Count count : values){
-            if (count.getCount()>30)
 
-                System.out.println(count.getCount() + " " + count.getName());
+                System.out.println(count.getName());
         }
 
         solrQuery = new SolrQuery("*:*");

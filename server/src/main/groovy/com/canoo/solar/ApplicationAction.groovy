@@ -4,6 +4,7 @@ import org.apache.solr.client.solrj.SolrQuery
 import org.apache.solr.client.solrj.SolrServer
 import org.apache.solr.client.solrj.SolrServerException
 import org.apache.solr.client.solrj.embedded.EmbeddedSolrServer
+import org.apache.solr.client.solrj.response.FacetField
 import org.apache.solr.client.solrj.response.QueryResponse
 import org.apache.solr.core.CoreContainer
 import org.opendolphin.core.PresentationModel;
@@ -36,6 +37,8 @@ public class ApplicationAction extends DolphinServerAction{
 
     public void registerIn(ActionRegistry registry) {
         registry.register(GET, filter)
+        registry.register(GET_CITIES, getCitites)
+        registry.register(GET_TYPE, getTypes)
         registry.register(ValueChangedCommand.class, trigger)
 
         registry.register(GetPresentationModelCommand.class, new CommandHandler<GetPresentationModelCommand>() {
@@ -75,7 +78,6 @@ public class ApplicationAction extends DolphinServerAction{
             PresentationModel filterPm = getServerDolphin()[FILTER]
             if(!filterPm.findAttributeById(command.attributeId))  return;
             changeValue getServerDolphin()[STATE][TRIGGER], (getServerDolphin()[STATE][TRIGGER].value)+2
-            println (getServerDolphin()[STATE][TRIGGER].value + "         00000000000000000000000000000000000000000000")
 
         }
     }
@@ -98,13 +100,69 @@ public class ApplicationAction extends DolphinServerAction{
             solrQuery.setRows(100)
             def start = System.currentTimeMillis()
             QueryResponse queryResponse = getSolrServer().query(solrQuery)
-            println System.currentTimeMillis() - start  + "***********************"+ "***********************"
             def result = queryResponse.getResults()
             List<Integer> allPositions = new ArrayList<>()
             result.each {
                 allPositions << it.getFieldValue("position")
             }
             response.add(new DataCommand(new HashMap(ids: allPositions )))
+        }
+    }
+
+    private final NamedCommandHandler getCitites = new NamedCommandHandler() {
+
+        @Override
+        void handleCommand(NamedCommand command, List<Command> response) {
+
+
+            SolrQuery solrQuery = new SolrQuery("*:*")
+            solrQuery.setRows(0);
+            solrQuery.setFacetLimit(-1);
+            solrQuery.setFacet(true);
+            solrQuery.setParam("facet.field", "city");
+            solrQuery.setFacetSort(true);
+
+
+            QueryResponse queryResponse = getSolrServer().query(solrQuery)
+            List<String> allCities = new ArrayList<>()
+            FacetField field = queryResponse.getFacetField("city");
+            List<FacetField.Count> values = field.getValues();
+
+            for(FacetField.Count count : values){
+
+                allCities << count.getName()
+            }
+
+
+            response.add(new DataCommand(new HashMap(ids: allCities )))
+        }
+    }
+
+    private final NamedCommandHandler getTypes = new NamedCommandHandler() {
+
+        @Override
+        void handleCommand(NamedCommand command, List<Command> response) {
+
+
+            SolrQuery solrQuery = new SolrQuery("*:*")
+            solrQuery.setRows(0);
+            solrQuery.setFacetLimit(-1);
+            solrQuery.setFacet(true);
+            solrQuery.setParam("facet.field", "plantType");
+
+
+            QueryResponse queryResponse = getSolrServer().query(solrQuery)
+            List<String> allTypes = new ArrayList<>()
+            FacetField field = queryResponse.getFacetField("plantType");
+            List<FacetField.Count> values = field.getValues();
+
+            for(FacetField.Count count : values){
+
+                allTypes << count.getName()
+            }
+
+
+            response.add(new DataCommand(new HashMap(ids: allTypes )))
         }
     }
 
