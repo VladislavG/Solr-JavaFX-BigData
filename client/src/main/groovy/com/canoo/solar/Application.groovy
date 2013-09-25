@@ -65,12 +65,8 @@ public class Application extends javafx.application.Application {
     AutoFillTextBox cityText = new AutoFillTextBox(observableListCities)
     Label loading = new Label("Loading Data from Solr")
     Label noData = new Label("No Data Found")
-
-
-
-
-
-
+    Label search = new Label("Search: ")
+    Button button = new Button("ViewPort")
 
     TextField zipText = new TextField()
     TextField nominalText = new TextField()
@@ -144,6 +140,8 @@ public class Application extends javafx.application.Application {
                 }
             } )
         } as ChangeListener )
+
+
         idCol.cellValueFactory = {
             String lazyId = it.value
             def placeholder = new SimpleStringProperty("Not Loaded");
@@ -155,7 +153,9 @@ public class Application extends javafx.application.Application {
             } )
             return placeholder
         } as Callback
+
         typeCol.cellValueFactory = {
+//            String lazyId = cell.getTableView().getItems().get(cell.getIndex());
             String lazyId = it.value
             def placeholder = new SimpleStringProperty("Not Loaded")
             clientDolphin.clientModelStore.withPresentationModel(lazyId, new WithPresentationModelHandler() {
@@ -260,18 +260,18 @@ public class Application extends javafx.application.Application {
         details.setPadding(new Insets(10, 0, 0, 10));
         details.getChildren().addAll(cityLabelTextDetail, idLabelTextDetail, typeLabelTextDetail, nominalLabelTextDetail, zipLabelTextDetail)
 
-        clientDolphin.data GET, { data ->
-            observableList.clear()
-           observableList.addAll( data.get(0).get("ids")  )
-        }
+//        clientDolphin.data GET, { data ->
+//            observableList.clear()
+//           observableList.addAll( data.get(0).get("ids")  )
+//        }
 
         clientDolphin.data GET_CITIES, { data ->
-           observableListCities.addAll( data.get(0).get("ids")  )
+            observableListCities.addAll( data.get(0).get("ids")  )
             println observableListCities
         }
 
         clientDolphin.data GET_TYPE, { data ->
-           observableListTypes.addAll( data.get(0).get("ids")  )
+            observableListTypes.addAll( data.get(0).get("ids")  )
             println observableListTypes
         }
 
@@ -295,8 +295,37 @@ public class Application extends javafx.application.Application {
 
         vBox.getChildren().addAll(
                 borderPane);
-       return vBox
+        return vBox
     }
+
+//    public static class TableViewInfo {
+//        private final VirtualFlow virtualFlow;
+//        private final TableHeaderRow tableHeaderRow;
+//
+//        private TableViewInfo(final VirtualFlow virtualFlow, final TableHeaderRow tableHeaderRow) {
+//            this.virtualFlow = virtualFlow;
+//            this.tableHeaderRow = tableHeaderRow;
+//        }
+//        public VirtualFlow getVirtualFlow() {
+//
+//            return virtualFlow;
+//
+//        }
+//        public TableHeaderRow getTableHeaderRow() {
+//            return tableHeaderRow;
+//        }
+//    }
+//
+//    public static TableViewInfo getTableViewInfo(TableView tableView) {
+//        TableViewSkin tableViewSkin = (TableViewSkin) tableView.getSkin();
+//        ObservableList<Node> children = tableViewSkin.getChildren();
+//        VirtualFlow virtualFlow = (VirtualFlow) children.get(1);
+//
+//        TableHeaderRow tableHeaderRow = (TableHeaderRow) children.get(0);
+//
+//        return new TableViewInfo(virtualFlow, tableHeaderRow);
+//
+//    }
 
     private void setupBinding() {
         bind 'text' of zipText to ZIP of clientDolphin[FILTER]
@@ -320,34 +349,6 @@ public class Application extends javafx.application.Application {
                 else{table.setPlaceholder(loading)}
             }
         })
-//        bindAttribute(clientDolphin[FILTER][CITY], {
-//            observableList.clear()
-//            clientDolphin.data GET, { data ->
-//                observableList.clear()
-//                observableList.addAll( data.get(0).get("ids")  )
-//            }
-//        })
-//        bindAttribute(clientDolphin[FILTER][PLANT_TYPE], {
-//            observableList.clear()
-//            clientDolphin.data GET, { data ->
-//                observableList.clear()
-//                observableList.addAll( data.get(0).get("ids")  )
-//            }
-//        })
-//        bindAttribute(clientDolphin[FILTER][NOMINAL_POWER], {
-//            observableList.clear()
-//            clientDolphin.data GET, { data ->
-//                observableList.clear()
-//                observableList.addAll( data.get(0).get("ids")  )
-//            }
-//        })
-//        bindAttribute(clientDolphin[FILTER][ZIP], {
-//            observableList.clear()
-//            clientDolphin.data GET, { data ->
-//                observableList.clear()
-//                observableList.addAll( data.get(0).get("ids")  )
-//            }
-//        })
     }
     public static void bindAttribute(Attribute attribute, Closure closure) {
         final listener = closure as PropertyChangeListener
@@ -356,5 +357,12 @@ public class Application extends javafx.application.Application {
     }
     private void addClientSideAction() {
 
+//    public Integer getFirstCellIndex() {
+//        return getTableViewInfo(table).getVirtualFlow().getFirstVisibleCellWithinViewPort().getIndex()
+//    }
+//
+//    public Integer getLastCellIndex() {
+//        return getTableViewInfo(table).getVirtualFlow().getLastVisibleCellWithinViewPort().getIndex()
     }
+
 }
