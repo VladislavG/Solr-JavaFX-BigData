@@ -1,12 +1,19 @@
-package com.canoo.solar;
+package com.canoo.solar
 
+import com.sun.javafx.scene.control.skin.TableHeaderRow
+import com.sun.javafx.scene.control.skin.TableViewSkin
+import com.sun.javafx.scene.control.skin.VirtualFlow;
 import javafx.beans.property.SimpleStringProperty
 import javafx.beans.value.ChangeListener
+import javafx.beans.value.ObservableValue
 import javafx.collections.FXCollections
+import javafx.event.ActionEvent
+import javafx.event.EventHandler
 import javafx.geometry.Insets;
 import javafx.scene.Scene
 import javafx.scene.control.*
-import javafx.scene.layout.AnchorPane
+import javafx.scene.input.MouseEvent
+import javafx.scene.input.ScrollEvent
 import javafx.scene.layout.BorderPane
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane
@@ -45,17 +52,11 @@ public class Application extends javafx.application.Application {
     javafx.collections.ObservableList<Integer> observableListTypes = FXCollections.observableArrayList()
     private PresentationModel textAttributeModel;
     private TableView table = new TableView();
-    Label cityLabel = new Label("City: ")
-    Label zipLabel = new Label("Zip Code: ")
-    Label typeLabel = new Label("Type: ")
-    Label nominalLabel = new Label("Power: ")
     Label cityLabelforDetail = new Label("City:       ")
     Label zipLabelforDetail = new Label("Zip Code:")
     Label typeLabelforDetail = new Label("Type:      ")
     Label nominalLabelforDetail = new Label("Power:    ")
     Label idLabelforDetail = new Label("Id:          ")
-    Label nominalLabelTooltip = new Label(" e.g. [2 TO 35]")
-
     TextField cityLabelDetail = new TextField("City")
     TextField idLabelDetail = new TextField("Id")
     TextField zipLabelDetail = new TextField("Zip Code")
@@ -68,7 +69,9 @@ public class Application extends javafx.application.Application {
     Label search = new Label("Search: ")
     Button button = new Button("ViewPort")
 
+
     TextField zipText = new TextField()
+
     TextField nominalText = new TextField()
     TextField typeLabelforBinding = typeChoiceBox.getTextbox()
     TextField cityLabelforBinding = cityText.getTextbox()
@@ -83,10 +86,9 @@ public class Application extends javafx.application.Application {
         stage.setTitle("Application Title");
         initializePresentationModels();
         Pane root = setupStage();
-        addClientSideAction();
         setupBinding();
 
-        Scene scene = new Scene(root, 850, 305)
+        Scene scene = new Scene(root, 850, 270)
         scene.stylesheets << 'demo.css'
 
         stage.setScene(scene);
@@ -103,34 +105,44 @@ public class Application extends javafx.application.Application {
     }
 
     private Pane setupStage() {
+
+
         loading.setScaleX(1.2)
         loading.setScaleY(1.2)
         loading.setTextFill(Color.BLUE)
         table.setEditable(true);
+        table.setPrefHeight(250)
         Rectangle border = new Rectangle()
         border.setStroke(Color.DARKCYAN)
         border.setStrokeWidth(2)
-        border.setWidth(310)
+        border.setWidth(280)
         border.setHeight(255)
         border.setFill(Color.TRANSPARENT)
         border.setOpacity(0.5)
         TableColumn idCol = new TableColumn("Position");
         idCol.setMinWidth(100)
+        idCol.setResizable(false)
         TableColumn typeCol = new TableColumn("Plant Type");
+        typeChoiceBox.setMinWidth(120)
         typeCol.setMinWidth(120)
+        typeCol.setResizable(false)
         TableColumn cityCol = new TableColumn("City");
+        cityText.setMinWidth(100)
         cityCol.setMinWidth(100)
+        cityCol.setResizable(false)
         TableColumn zipCol = new TableColumn("ZIP Code");
+        zipText.setMaxWidth(100)
         zipCol.setMinWidth(100)
+        zipCol.setResizable(false)
         TableColumn nominalCol = new TableColumn("Nominal Power");
+        nominalText.setMaxWidth(100)
         nominalCol.setMinWidth(100)
+        nominalCol.setResizable(false)
 
 
         table.getColumns().addAll(idCol, typeCol, cityCol, zipCol, nominalCol);
         table.items = observableList
-        table.setPrefSize(250,250)
         table.setPlaceholder(loading)
-
         table.selectionModel.selectedItemProperty().addListener( { o, oldVal, selectedPm ->
             if (selectedPm==null) return;
             clientDolphin.clientModelStore.withPresentationModel(selectedPm.toString(), new WithPresentationModelHandler() {
@@ -141,10 +153,11 @@ public class Application extends javafx.application.Application {
             } )
         } as ChangeListener )
 
-
         idCol.cellValueFactory = {
             String lazyId = it.value
+            println "************** /" + it.value + "/"
             def placeholder = new SimpleStringProperty("Not Loaded");
+
 
             clientDolphin.clientModelStore.withPresentationModel(lazyId, new WithPresentationModelHandler() {
                 void onFinished(ClientPresentationModel presentationModel) {
@@ -153,6 +166,7 @@ public class Application extends javafx.application.Application {
             } )
             return placeholder
         } as Callback
+
 
         typeCol.cellValueFactory = {
 //            String lazyId = cell.getTableView().getItems().get(cell.getIndex());
@@ -165,6 +179,7 @@ public class Application extends javafx.application.Application {
             } )
             return placeholder
         } as Callback
+
         cityCol.cellValueFactory = {
             String lazyId = it.value
             def placeholder = new SimpleStringProperty("Not Loaded")
@@ -196,36 +211,6 @@ public class Application extends javafx.application.Application {
             return placeholder
         } as Callback
 
-
-
-        HBox cityLabelText = new HBox()
-        cityLabelText.setSpacing(5);
-        cityLabelText.setPadding(new Insets(10, 0, 0, 10));
-        cityLabelText.getChildren().addAll(cityLabel, cityText)
-
-        HBox zipLabelText = new HBox()
-        zipLabelText.setSpacing(5);
-        zipLabelText.setPadding(new Insets(10, 0, 0, 10));
-        zipLabelText.getChildren().addAll(zipLabel, zipText)
-
-        HBox typeLabelText = new HBox()
-        typeLabelText.setSpacing(5);
-        typeLabelText.setPadding(new Insets(10, 0, 0, 10));
-        typeLabelText.getChildren().addAll(typeLabel, typeChoiceBox)
-
-        nominalLabelTooltip.setTextFill(Color.GRAY)
-        nominalLabelTooltip.setOpacity(0.7)
-
-        HBox nominalLabelText = new HBox()
-        nominalLabelText.setSpacing(5);
-        nominalLabelText.setPadding(new Insets(10, 0, 0, 10));
-        nominalLabelText.getChildren().addAll(nominalLabel, nominalText, nominalLabelTooltip)
-
-        final HBox filterBox = new HBox();
-        filterBox.setSpacing(5);
-        filterBox.setPadding(new Insets(10, 0, 10, 10));
-        filterBox.getChildren().addAll(cityLabelText,zipLabelText, typeLabelText, nominalLabelText);
-
         HBox nominalLabelTextDetail = new HBox()
         nominalLabelTextDetail.setSpacing(5);
         nominalLabelTextDetail.setPadding(new Insets(10, 0, 0, 10));
@@ -253,31 +238,28 @@ public class Application extends javafx.application.Application {
         idLabelTextDetail.getChildren().addAll(idLabelforDetail, idLabelDetail)
 
 
+        HBox filters = new HBox()
+        filters.setPadding(new Insets(10, 2, 5, 59));
 
+        filters.getChildren().addAll(search, typeChoiceBox, cityText, zipText, nominalText,button)
 
         VBox details = new VBox()
         details.setSpacing(5);
         details.setPadding(new Insets(10, 0, 0, 10));
         details.getChildren().addAll(cityLabelTextDetail, idLabelTextDetail, typeLabelTextDetail, nominalLabelTextDetail, zipLabelTextDetail)
 
-//        clientDolphin.data GET, { data ->
-//            observableList.clear()
-//           observableList.addAll( data.get(0).get("ids")  )
-//        }
+        clientDolphin.data GET, { data ->
+            observableList.clear()
+           observableList.addAll( data.get(0).get("ids")  )
+        }
 
         clientDolphin.data GET_CITIES, { data ->
-            observableListCities.addAll( data.get(0).get("ids")  )
-            println observableListCities
+           observableListCities.addAll( data.get(0).get("ids")  )
         }
 
         clientDolphin.data GET_TYPE, { data ->
-            observableListTypes.addAll( data.get(0).get("ids")  )
-            println observableListTypes
+           observableListTypes.addAll( data.get(0).get("ids")  )
         }
-
-
-
-
 
 
 
@@ -286,7 +268,7 @@ public class Application extends javafx.application.Application {
 
 
         BorderPane borderPane = new BorderPane();
-        borderPane.setTop(filterBox);
+        borderPane.setTop(filters);
 
         borderPane.setCenter(table);
         borderPane.setRight(all);
@@ -295,8 +277,10 @@ public class Application extends javafx.application.Application {
 
         vBox.getChildren().addAll(
                 borderPane);
-        return vBox
+       return vBox
     }
+
+
 
 //    public static class TableViewInfo {
 //        private final VirtualFlow virtualFlow;
@@ -339,7 +323,6 @@ public class Application extends javafx.application.Application {
         bind NOMINAL_POWER of clientDolphin[SELECTED_POWERPLANT] to 'text' of nominalLabelDetail
         bind PLANT_TYPE of clientDolphin[SELECTED_POWERPLANT] to 'text' of typeLabelDetail
 
-
         bindAttribute(clientDolphin[STATE][TRIGGER], {
             observableList.clear()
             clientDolphin.data GET, { data ->
@@ -347,6 +330,7 @@ public class Application extends javafx.application.Application {
                 observableList.addAll( data.get(0).get("ids"))
                 if (observableList.size()==0){table.setPlaceholder(noData)}
                 else{table.setPlaceholder(loading)}
+
             }
         })
     }
@@ -355,7 +339,6 @@ public class Application extends javafx.application.Application {
         attribute.addPropertyChangeListener('value', listener)
 //        listener.propertyChange(new PropertyChangeEvent(attribute, 'value', attribute.value, attribute.value))
     }
-    private void addClientSideAction() {
 
 //    public Integer getFirstCellIndex() {
 //        return getTableViewInfo(table).getVirtualFlow().getFirstVisibleCellWithinViewPort().getIndex()
@@ -363,6 +346,5 @@ public class Application extends javafx.application.Application {
 //
 //    public Integer getLastCellIndex() {
 //        return getTableViewInfo(table).getVirtualFlow().getLastVisibleCellWithinViewPort().getIndex()
-    }
-
+//    }
 }

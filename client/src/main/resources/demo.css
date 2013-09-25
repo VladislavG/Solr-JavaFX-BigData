@@ -1,0 +1,72 @@
+.label {
+    -fx-text-fill: saddlebrown;
+}
+.table-view .label {
+	-fx-text-fill: black;
+}
+.tooltip {
+    -fx-background-color:firebrick;
+}
+
+
+
+#header {
+    -fx-font-size: 18;
+    -fx-padding: 0 0 10 0;
+}
+
+.submit {
+    -fx-spacing: 10;
+}
+
+.autofill-text {
+    -fx-skin: "np.com.ngopal.control.AutoFillTextBoxSkin";
+}
+
+.form {
+    -fx-padding: 25 25 25 25;
+    -fx-alignment: top-center;
+    -fx-hgap: 5;  /* doesn't work */
+    -fx-vgap: 10; /* doesn't work */
+}
+
+/*.tab-pane *.tab-header-background {*/
+.pane {
+    -fx-background-color: rgba(255, 239, 213, 0.69);
+}
+
+.root{
+    -fx-background-color: gainsboro;
+}
+
+.invalid {
+    -fx-text-fill:red;
+}
+
+.dirty {
+    -fx-text-fill:yellow;
+}
+.text-field {
+	-fx-background-color: papayawhip,white;
+}
+.text-field:focused {
+	-fx-background-color: orange,white;
+}
+.text-area {
+	-fx-background-color: papayawhip,white;
+}
+.text-area:focused {
+	 -fx-background-color: orange,white;
+ }
+
+.toolbar-button {
+    -fx-padding: 1
+}
+
+.search-field {
+    -fx-background-color: papayawhip,white;
+}
+
+.search-field:focused {
+	-fx-background-color: orange,white;
+}
