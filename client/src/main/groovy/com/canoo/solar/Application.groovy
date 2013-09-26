@@ -114,6 +114,10 @@ public class Application extends javafx.application.Application {
 
         stage.setTitle("Application Title");
         initializePresentationModels();
+//        clientDolphin.data GET, { data ->
+//            observableList.clear()
+//            observableList.addAll( data.get(0).get("ids")  )
+//        }
 
         clientDolphin.data GET_CITIES, { data ->
             observableListCities.addAll( data.get(0).get("ids")  )
@@ -466,7 +470,7 @@ public class Application extends javafx.application.Application {
             }
         });
 
-        border3.setOnMouseExited(new EventHandler<MouseEvent>() {
+        columnsStack.setOnMouseExited(new EventHandler<MouseEvent>() {
             @Override public void handle(MouseEvent e) {
                 border4.setVisible(true)
                 border4.setDisable(false)
@@ -475,7 +479,7 @@ public class Application extends javafx.application.Application {
 
             }
         });
-        border.setOnMouseExited(new EventHandler<MouseEvent>() {
+        filtersStack.setOnMouseExited(new EventHandler<MouseEvent>() {
             @Override public void handle(MouseEvent e) {
                 timelineLeft.play();
                 border2.setVisible(true)
