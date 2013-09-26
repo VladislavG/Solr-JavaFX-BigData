@@ -9,10 +9,12 @@ import javafx.beans.value.ObservableValue
 import javafx.collections.FXCollections
 import javafx.event.ActionEvent
 import javafx.event.EventHandler
+import javafx.event.EventType
 import javafx.geometry.Insets
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene
 import javafx.scene.control.*
+import javafx.scene.control.cell.CheckBoxTreeCell
 import javafx.scene.input.MouseEvent
 import javafx.scene.layout.BorderPane
 import javafx.scene.layout.HBox;
@@ -51,6 +53,7 @@ public class Application extends javafx.application.Application {
     javafx.collections.ObservableList<Integer> observableList = FXCollections.observableArrayList()
     javafx.collections.ObservableList<Integer> observableListCities = FXCollections.observableArrayList()
     javafx.collections.ObservableList<Integer> observableListTypes = FXCollections.observableArrayList()
+
     private PresentationModel textAttributeModel;
     private TableView table = new TableView();
     Label cityLabelforDetail = new Label("City:       ")
@@ -68,31 +71,38 @@ public class Application extends javafx.application.Application {
     Label loading = new Label("Loading Data from Solr")
     Label noData = new Label("No Data Found")
     Label search = new Label("Search: ")
+    Label columns = new Label("Columns")
+    Label filter = new Label("Filters")
     Button button = new Button("Show Filters")
     Button button2 = new Button("Hide Filters")
     private Rectangle2D boxBounds = new Rectangle2D(600, 100, 650, 200);
 
     CheckBox cityCB = new CheckBox("Show Cities");
     CheckBox typeCB = new CheckBox("Show Types");
+    CheckBox cityFilterCB = new CheckBox("Filter by City");
+    CheckBox typeFilterCB = new CheckBox("Filter by Type");
     CheckBox zipCB = new CheckBox("Show Zip-Codes");
     CheckBox nominalCB = new CheckBox("Show Nominal Powers");
-
-
-
-
+    final TreeItem<String> allItem = new TreeItem<String>("All");
     Pane filtersStack = new Pane()
     Pane columnsStack = new Pane()
     Pane tableStack = new Pane()
-
+    Pane pane = new Pane()
     private Rectangle clipRect;
     private Timeline timelineLeft;
     private Timeline timelineRight;
-
+    private Timeline timelineLeftFilters;
+    private Timeline timelineRightFilters;
+    final TreeView treeCities = new TreeView();
+    final TreeView tree = new TreeView();
     TextField zipText = new TextField()
-
+    final Label selectionLabeltypes = new Label();
+    final Label selectionLabelcities = new Label();
+    final Separator separator = new Separator();
     TextField nominalText = new TextField()
     TextField typeLabelforBinding = typeChoiceBox.getTextbox()
     TextField cityLabelforBinding = cityText.getTextbox()
+
 
     public Application() {
         textAttributeModel = clientDolphin.presentationModel(PM_APP, new ClientAttribute(ATT_ATTR_ID, null));
@@ -103,10 +113,22 @@ public class Application extends javafx.application.Application {
 
         stage.setTitle("Application Title");
         initializePresentationModels();
+//        clientDolphin.data GET, { data ->
+//            observableList.clear()
+//            observableList.addAll( data.get(0).get("ids")  )
+//        }
+
+        clientDolphin.data GET_CITIES, { data ->
+            observableListCities.addAll( data.get(0).get("ids")  )
+        }
+
+        clientDolphin.data GET_TYPE, { data ->
+            observableListTypes.addAll( data.get(0).get("ids")  )
+        }
         Pane root = setupStage();
         setupBinding();
 
-        Scene scene = new Scene(root, 850, 700)
+        Scene scene = new Scene(root, 800, 640)
         scene.stylesheets << 'demo.css'
 
         stage.setScene(scene);
@@ -123,36 +145,59 @@ public class Application extends javafx.application.Application {
     }
 
     private Pane setupStage() {
-
         loading.setScaleX(1.2)
         loading.setScaleY(1.2)
         loading.setTextFill(Color.BLUE)
-        table.setMinHeight(850)
+        table.setMinHeight(700)
+
         Rectangle border = new Rectangle()
         border.setStroke(Color.INDIANRED)
         border.setStrokeWidth(2)
         border.setWidth(170)
         border.setHeight(100)
-        border.setFill(Color.PAPAYAWHIP)
+        border.setFill(Color.WHITESMOKE)
         border.setArcWidth(10)
         border.setArcHeight(10)
         border.setOpacity(0.8)
-        cityCB.setSelected(true);
-        typeCB.setSelected(true);
-        nominalCB.setSelected(true);
-        zipCB.setSelected(true);
 
 
         Rectangle border2 = new Rectangle()
         border2.setStroke(Color.INDIANRED)
         border2.setStrokeWidth(2)
-        border2.setWidth(50)
-        border2.setHeight(40)
-        border2.setFill(Color.PAPAYAWHIP)
+        border2.setWidth(25)
+        border2.setHeight(100)
+        border2.setFill(Color.WHITESMOKE)
         border2.setArcWidth(10)
         border2.setArcHeight(10)
         border2.setOpacity(0.3)
-        border2.relocate(0, 320)
+        border2.relocate(0, 290)
+
+        Rectangle border3 = new Rectangle()
+        border3.setStroke(Color.INDIANRED)
+        border3.setStrokeWidth(2)
+        border3.setWidth(170)
+        border3.setHeight(100)
+        border3.setFill(Color.WHITESMOKE)
+        border3.setArcWidth(10)
+        border3.setArcHeight(10)
+        border3.setOpacity(0.8)
+
+
+        Rectangle border4 = new Rectangle()
+        border4.setStroke(Color.INDIANRED)
+        border4.setStrokeWidth(2)
+        border4.setWidth(25)
+        border4.setHeight(100)
+        border4.setFill(Color.WHITESMOKE)
+        border4.setArcWidth(10)
+        border4.setArcHeight(10)
+        border4.setOpacity(0.3)
+        border4.relocate(0, 420)
+
+        cityCB.setSelected(true);
+        typeCB.setSelected(true);
+        nominalCB.setSelected(true);
+        zipCB.setSelected(true);
 
         TableColumn idCol = new TableColumn("Position");
         idCol.setMinWidth(100)
@@ -249,29 +294,24 @@ public class Application extends javafx.application.Application {
                 if (newValue) {
                     table.getColumns().add(cityCol)
                 }
-
                 else table.getColumns().remove(cityCol)
             }
         });
-
         typeCB.selectedProperty().addListener(new ChangeListener<Boolean>() {
             @Override
             public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
                 if (newValue) {
                     table.getColumns().add(typeCol)
                 }
-
                 else table.getColumns().remove(typeCol)
             }
         });
-
         nominalCB.selectedProperty().addListener(new ChangeListener<Boolean>() {
             @Override
             public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
                 if (newValue) {
                     table.getColumns().add(nominalCol)
                 }
-
                 else table.getColumns().remove(nominalCol)
             }
         });
@@ -281,7 +321,6 @@ public class Application extends javafx.application.Application {
                 if (newValue) {
                     table.getColumns().add(zipCol)
                 }
-
                 else table.getColumns().remove(zipCol)
             }
         });
@@ -312,46 +351,132 @@ public class Application extends javafx.application.Application {
         idLabelTextDetail.setPadding(new Insets(10, 0, 0, 10));
         idLabelTextDetail.getChildren().addAll(idLabelforDetail, idLabelDetail)
 
-
         HBox filters = new HBox()
         filters.setPadding(new Insets(10, 0, 0, 10));
-
         filters.getChildren().addAll(search, typeChoiceBox, cityText, zipText, nominalText)
 
         VBox treeFilters = new VBox()
         treeFilters.setPadding(new Insets(20, 0, 0, 10));
         treeFilters.getChildren().addAll(cityCB, typeCB, zipCB, nominalCB)
 
+        VBox treeFiltersBottom = new VBox()
+        treeFiltersBottom.setPadding(new Insets(30, 0, 0, 10));
+        treeFiltersBottom.getChildren().addAll(cityFilterCB, typeFilterCB)
+
+
+        TreeItem<String> rootItem =
+            new TreeItem<String>("Plant Types");
+        rootItem.setExpanded(true);
+
+        rootItem.getChildren().add(allItem)
+
+        tree.setEditable(true);
+        tree.setRoot(rootItem);
+        tree.setShowRoot(true);
+        tree.setMaxHeight(200)
+
+        TreeItem<String> rootItemCities =
+            new TreeItem<String>("Cities");
+        rootItemCities.setExpanded(true);
+        rootItemCities.getChildren().add(allItem)
+        treeCities.setEditable(true);
+        treeCities.setRoot(rootItemCities);
+        treeCities.setShowRoot(true);
+        treeCities.setMaxHeight(200)
+
+        VBox trees = new VBox()
+        trees.setSpacing(5)
+        separator.setMinWidth(trees.getTranslateX())
         VBox details = new VBox()
         details.setSpacing(5);
         details.setPadding(new Insets(10, 0, 0, 10));
-        details.getChildren().addAll(cityLabelTextDetail, idLabelTextDetail, typeLabelTextDetail, nominalLabelTextDetail, zipLabelTextDetail, button, button2)
+        details.getChildren().addAll(cityLabelTextDetail, idLabelTextDetail, typeLabelTextDetail, nominalLabelTextDetail, zipLabelTextDetail,separator, trees)
 
-        clientDolphin.data GET, { data ->
-            observableList.clear()
-           observableList.addAll( data.get(0).get("ids")  )
-        }
+        typeFilterCB.selectedProperty().addListener(new ChangeListener<Boolean>() {
+            @Override
+            public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+                rootItem.getChildren().clear()
+                rootItem.getChildren().add(allItem)
+                observableListTypes.each {
+                    final TreeItem<String> checkBoxTreeItem =
+                        new TreeItem<String>(it.toString());
+                    rootItem.getChildren().add(checkBoxTreeItem);
+                }
+                if (newValue) {
+                    trees.getChildren().add(tree)
+                }
+                else trees.getChildren().remove(tree)
+            }
+        });
+        cityFilterCB.selectedProperty().addListener(new ChangeListener<Boolean>() {
+            @Override
+            public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+                rootItemCities.getChildren().clear()
+                rootItemCities.getChildren().add(allItem)
+                observableListCities.each {
+                    final TreeItem<String> checkBoxTreeItem =
+                        new TreeItem<String>(it.toString());
+                    rootItemCities.getChildren().add(checkBoxTreeItem);
+                }
+                if (newValue) {
+                    trees.getChildren().add(treeCities)
+                }
+                else trees.getChildren().remove(treeCities)
+            }
+        });
 
-        clientDolphin.data GET_CITIES, { data ->
-           observableListCities.addAll( data.get(0).get("ids")  )
-        }
+        tree.getSelectionModel().selectedItemProperty().addListener(
+                new ChangeListener<TreeItem <String>>() {
+                    public void changed(ObservableValue<? extends TreeItem<String>> observableValue,
+                                        TreeItem<String> oldItem, TreeItem<String> newItem) {
+                        selectionLabeltypes.setText(newItem.getValue());
+                    }
+                });
+        treeCities.getSelectionModel().selectedItemProperty().addListener(
+                new ChangeListener<TreeItem <String>>() {
+                    public void changed(ObservableValue<? extends TreeItem<String>> observableValue,
+                                        TreeItem<String> oldItem, TreeItem<String> newItem) {
+                        selectionLabelcities.setText(newItem.getValue());
+                    }
+                });
 
-        clientDolphin.data GET_TYPE, { data ->
-           observableListTypes.addAll( data.get(0).get("ids")  )
-        }
 
         border2.setOnMouseEntered(new EventHandler<MouseEvent>() {
             @Override public void handle(MouseEvent e) {
-                border2.setManaged(false)
+                border2.setVisible(false)
+                border2.setDisable(true)
                 timelineRight.play();
+                columns.setVisible(false)
 
             }
         });
 
+        border4.setOnMouseEntered(new EventHandler<MouseEvent>() {
+            @Override public void handle(MouseEvent e) {
+                border4.setVisible(false)
+                border4.setDisable(true)
+                timelineRightFilters.play();
+                filter.setVisible(false)
+
+
+            }
+        });
+
+        border3.setOnMouseExited(new EventHandler<MouseEvent>() {
+            @Override public void handle(MouseEvent e) {
+                border4.setVisible(true)
+                border4.setDisable(false)
+                timelineLeftFilters.play();
+                filter.setVisible(true)
+
+            }
+        });
         border.setOnMouseExited(new EventHandler<MouseEvent>() {
             @Override public void handle(MouseEvent e) {
                 timelineLeft.play();
-                border2.setManaged(true)
+                border2.setVisible(true)
+                border2.setDisable(false)
+                columns.setVisible(true)
 
             }
         });
@@ -360,6 +485,7 @@ public class Application extends javafx.application.Application {
             @Override
             public void handle(ActionEvent arg0) {
                 timelineRight.play();
+
             }
         });
 
@@ -367,15 +493,25 @@ public class Application extends javafx.application.Application {
             @Override
             public void handle(ActionEvent arg0) {
                 timelineLeft.play();
+
             }
         });
+
         setAnimation();
+        setAnimationFilters();
         Pane all = new Pane();
         all.getChildren().addAll(details)
 
         filtersStack.getChildren().addAll( border, treeFilters)
         filtersStack.relocate(0, 290)
-        tableStack.getChildren().addAll(table, border2,filtersStack)
+
+        columnsStack.getChildren().addAll( border3, treeFiltersBottom)
+        columnsStack.relocate(0, 420)
+        columns.relocate(-10,340)
+        columns.setRotate(90)
+        filter.relocate(-2,470)
+        filter.setRotate(90)
+        tableStack.getChildren().addAll(table,columns,filter, border2, border4, filtersStack, columnsStack)
 
 
         BorderPane borderPane = new BorderPane();
@@ -383,9 +519,10 @@ public class Application extends javafx.application.Application {
         borderPane.setCenter(tableStack);
         borderPane.setRight(all);
 
-        Pane pane = new Pane();
+
         pane.getChildren().addAll(borderPane)
        return pane
+
     }
 
 
@@ -440,12 +577,12 @@ public class Application extends javafx.application.Application {
 
     private void setupBinding() {
         bind 'text' of zipText to ZIP of clientDolphin[FILTER]
-        bind 'text' of cityLabelforBinding to CITY of clientDolphin[FILTER]
-        bind 'text' of typeLabelforBinding to PLANT_TYPE of clientDolphin[FILTER]
+        bind 'text' of selectionLabelcities to CITY of clientDolphin[FILTER]
+        bind 'text' of selectionLabeltypes to PLANT_TYPE of clientDolphin[FILTER]
         bind 'text' of nominalText to NOMINAL_POWER of clientDolphin[FILTER]
 
         bind ZIP of clientDolphin[SELECTED_POWERPLANT] to 'text' of zipLabelDetail
-        bind CITY of clientDolphin[SELECTED_POWERPLANT] to'text' of cityLabelDetail
+        bind CITY of clientDolphin[SELECTED_POWERPLANT] to 'text' of cityLabelDetail
         bind ID of clientDolphin[SELECTED_POWERPLANT] to 'text' of idLabelDetail
         bind NOMINAL_POWER of clientDolphin[SELECTED_POWERPLANT] to 'text' of nominalLabelDetail
         bind PLANT_TYPE of clientDolphin[SELECTED_POWERPLANT] to 'text' of typeLabelDetail
@@ -461,6 +598,55 @@ public class Application extends javafx.application.Application {
             }
         })
     }
+
+    private void setAnimationFilters(){
+        // Initially hiding the Top Pane
+        clipRect = new Rectangle();
+        clipRect.setWidth(30);
+        clipRect.setHeight(boxBounds.getHeight());
+        clipRect.translateXProperty().set(boxBounds.getWidth());
+        columnsStack.setClip(clipRect);
+        columnsStack.translateXProperty().set(-boxBounds.getWidth());
+
+        // Animation for bouncing effect.
+        final Timeline timelineBounce = new Timeline();
+        timelineBounce.setCycleCount(2);
+        timelineBounce.setAutoReverse(true);
+        final KeyValue kv1 = new KeyValue(clipRect.widthProperty(), (boxBounds.getWidth()-15));
+        final KeyValue kv2 = new KeyValue(clipRect.translateXProperty(), 15);
+        final KeyValue kv3 = new KeyValue(columnsStack.translateXProperty(), -15);
+        final KeyFrame kf1 = new KeyFrame(Duration.millis(100), kv1, kv2, kv3);
+        timelineBounce.getKeyFrames().add(kf1);
+
+        // Event handler to call bouncing effect after the scroll down is finished.
+        EventHandler<ActionEvent> onFinished = new EventHandler<ActionEvent>() {
+            public void handle(ActionEvent t) {
+                timelineBounce.play();
+            }
+        };
+
+        timelineRightFilters = new Timeline();
+        timelineLeftFilters = new Timeline();
+
+        // Animation for scroll down.
+        timelineRightFilters.setCycleCount(1);
+        timelineRightFilters.setAutoReverse(true);
+        final KeyValue kvDwn1 = new KeyValue(clipRect.widthProperty(), boxBounds.getWidth());
+        final KeyValue kvDwn2 = new KeyValue(clipRect.translateXProperty(), 0);
+        final KeyValue kvDwn3 = new KeyValue(columnsStack.translateXProperty(), 0);
+        final KeyFrame kfDwn = new KeyFrame(Duration.millis(200), onFinished, kvDwn1, kvDwn2, kvDwn3);
+        timelineRightFilters.getKeyFrames().add(kfDwn);
+
+        // Animation for scroll up.
+        timelineLeftFilters.setCycleCount(1);
+        timelineLeftFilters.setAutoReverse(true);
+        final KeyValue kvUp1 = new KeyValue(clipRect.widthProperty(), 0);
+        final KeyValue kvUp2 = new KeyValue(clipRect.translateXProperty(), boxBounds.getWidth());
+        final KeyValue kvUp3 = new KeyValue(columnsStack.translateXProperty(), -boxBounds.getWidth());
+        final KeyFrame kfUp = new KeyFrame(Duration.millis(200), kvUp1, kvUp2, kvUp3);
+        timelineLeftFilters.getKeyFrames().add(kfUp);
+    }
+
     public static void bindAttribute(Attribute attribute, Closure closure) {
         final listener = closure as PropertyChangeListener
         attribute.addPropertyChangeListener('value', listener)

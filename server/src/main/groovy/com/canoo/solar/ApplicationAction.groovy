@@ -93,7 +93,7 @@ public class ApplicationAction extends DolphinServerAction{
             solrQuery.setSort("position", SolrQuery.ORDER.asc)
 
             filterPM.attributes.each {
-                if (it.value=="" || it.value==null) it.value = "*"
+                if (it.value=="" || it.value==null || it.value=="All") it.value = "*"
                 solrQuery.addFilterQuery(it.getPropertyName() + ":" + it.value)
             }
 
