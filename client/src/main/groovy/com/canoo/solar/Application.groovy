@@ -76,6 +76,7 @@ public class Application extends javafx.application.Application {
     Button button = new Button("Show Filters")
     Button button2 = new Button("Hide Filters")
     private Rectangle2D boxBounds = new Rectangle2D(600, 100, 650, 200);
+    int f, c = 0
 
     CheckBox cityCB = new CheckBox("Show Cities");
     CheckBox typeCB = new CheckBox("Show Types");
@@ -113,10 +114,6 @@ public class Application extends javafx.application.Application {
 
         stage.setTitle("Application Title");
         initializePresentationModels();
-//        clientDolphin.data GET, { data ->
-//            observableList.clear()
-//            observableList.addAll( data.get(0).get("ids")  )
-//        }
 
         clientDolphin.data GET_CITIES, { data ->
             observableListCities.addAll( data.get(0).get("ids")  )
@@ -164,7 +161,7 @@ public class Application extends javafx.application.Application {
         Rectangle border2 = new Rectangle()
         border2.setStroke(Color.INDIANRED)
         border2.setStrokeWidth(2)
-        border2.setWidth(25)
+        border2.setWidth(40)
         border2.setHeight(100)
         border2.setFill(Color.WHITESMOKE)
         border2.setArcWidth(10)
@@ -186,7 +183,7 @@ public class Application extends javafx.application.Application {
         Rectangle border4 = new Rectangle()
         border4.setStroke(Color.INDIANRED)
         border4.setStrokeWidth(2)
-        border4.setWidth(25)
+        border4.setWidth(40)
         border4.setHeight(100)
         border4.setFill(Color.WHITESMOKE)
         border4.setArcWidth(10)
@@ -395,35 +392,42 @@ public class Application extends javafx.application.Application {
         typeFilterCB.selectedProperty().addListener(new ChangeListener<Boolean>() {
             @Override
             public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-                rootItem.getChildren().clear()
-                rootItem.getChildren().add(allItem)
-                observableListTypes.each {
+            def size = observableListTypes.size()
+            if (f==0 && size>1){ f++
+                    observableListTypes.each {
                     final TreeItem<String> checkBoxTreeItem =
                         new TreeItem<String>(it.toString());
                     rootItem.getChildren().add(checkBoxTreeItem);
                 }
+                    }
                 if (newValue) {
                     trees.getChildren().add(tree)
                 }
                 else trees.getChildren().remove(tree)
             }
         });
+
         cityFilterCB.selectedProperty().addListener(new ChangeListener<Boolean>() {
             @Override
             public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-                rootItemCities.getChildren().clear()
-                rootItemCities.getChildren().add(allItem)
-                observableListCities.each {
+            def size = observableListCities.size()
+                if (c==0 && size>1){
+                    c++
+                    observableListCities.each {
                     final TreeItem<String> checkBoxTreeItem =
                         new TreeItem<String>(it.toString());
                     rootItemCities.getChildren().add(checkBoxTreeItem);
-                }
+                }  }
                 if (newValue) {
+
                     trees.getChildren().add(treeCities)
                 }
                 else trees.getChildren().remove(treeCities)
-            }
+                            }
         });
+//        rootItemCities.getChildren().add(allItem)
+//        rootItem.getChildren().add(allItem)
+
 
         tree.getSelectionModel().selectedItemProperty().addListener(
                 new ChangeListener<TreeItem <String>>() {
@@ -507,9 +511,9 @@ public class Application extends javafx.application.Application {
 
         columnsStack.getChildren().addAll( border3, treeFiltersBottom)
         columnsStack.relocate(0, 420)
-        columns.relocate(-10,340)
+        columns.relocate(5,340)
         columns.setRotate(90)
-        filter.relocate(-2,470)
+        filter.relocate(13,470)
         filter.setRotate(90)
         tableStack.getChildren().addAll(table,columns,filter, border2, border4, filtersStack, columnsStack)
 
