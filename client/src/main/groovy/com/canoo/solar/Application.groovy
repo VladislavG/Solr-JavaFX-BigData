@@ -9,12 +9,10 @@ import javafx.beans.value.ObservableValue
 import javafx.collections.FXCollections
 import javafx.event.ActionEvent
 import javafx.event.EventHandler
-import javafx.event.EventType
 import javafx.geometry.Insets
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene
 import javafx.scene.control.*
-import javafx.scene.control.cell.CheckBoxTreeCell
 import javafx.scene.input.MouseEvent
 import javafx.scene.layout.BorderPane
 import javafx.scene.layout.HBox;
@@ -32,9 +30,7 @@ import org.opendolphin.core.client.ClientAttribute;
 import org.opendolphin.core.client.ClientDolphin;
 import org.opendolphin.core.client.ClientPresentationModel
 import org.opendolphin.core.client.comm.WithPresentationModelHandler
-
 import java.beans.PropertyChangeListener
-
 import static com.canoo.solar.Constants.CMD.GET_CITIES
 import static com.canoo.solar.Constants.CMD.GET_TYPE
 import static com.canoo.solar.Constants.FilterConstants.CITY;
@@ -68,16 +64,18 @@ public class Application extends javafx.application.Application {
     TextField nominalLabelDetail = new TextField("Power")
     AutoFillTextBox typeChoiceBox = new AutoFillTextBox(observableListTypes)
     AutoFillTextBox cityText = new AutoFillTextBox(observableListCities)
+    TableColumn idCol = new TableColumn("Position");
+    TableColumn typeCol = new TableColumn("Plant Type");
+    TableColumn cityCol = new TableColumn("City");
+    TableColumn zipCol = new TableColumn("ZIP Code");
+    TableColumn nominalCol = new TableColumn("Nominal Power");
     Label loading = new Label("Loading Data from Solr")
     Label noData = new Label("No Data Found")
-    Label search = new Label("Search: ")
+    Label search = new Label("Selection Details \n")
     Label columns = new Label("Columns")
     Label filter = new Label("Filters")
-    Button button = new Button("Show Filters")
-    Button button2 = new Button("Hide Filters")
     private Rectangle2D boxBounds = new Rectangle2D(600, 100, 650, 200);
     int f, c = 0
-
     CheckBox cityCB = new CheckBox("Show Cities");
     CheckBox typeCB = new CheckBox("Show Types");
     CheckBox cityFilterCB = new CheckBox("Filter by City");
@@ -85,8 +83,8 @@ public class Application extends javafx.application.Application {
     CheckBox zipCB = new CheckBox("Show Zip-Codes");
     CheckBox nominalCB = new CheckBox("Show Nominal Powers");
     final TreeItem<String> allItem = new TreeItem<String>("All");
-    Pane filtersStack = new Pane()
-    Pane columnsStack = new Pane()
+    Pane columnStack = new Pane()
+    Pane filterStack = new Pane()
     Pane tableStack = new Pane()
     Pane pane = new Pane()
     private Rectangle clipRect;
@@ -95,11 +93,12 @@ public class Application extends javafx.application.Application {
     private Timeline timelineLeftFilters;
     private Timeline timelineRightFilters;
     final TreeView treeCities = new TreeView();
-    final TreeView tree = new TreeView();
+    final TreeView treeTypes = new TreeView();
     TextField zipText = new TextField()
     final Label selectionLabeltypes = new Label();
     final Label selectionLabelcities = new Label();
     final Separator separator = new Separator();
+    final Separator separator2 = new Separator();
     TextField nominalText = new TextField()
     TextField typeLabelforBinding = typeChoiceBox.getTextbox()
     TextField cityLabelforBinding = cityText.getTextbox()
@@ -114,10 +113,6 @@ public class Application extends javafx.application.Application {
 
         stage.setTitle("Application Title");
         initializePresentationModels();
-//        clientDolphin.data GET, { data ->
-//            observableList.clear()
-//            observableList.addAll( data.get(0).get("ids")  )
-//        }
 
         clientDolphin.data GET_CITIES, { data ->
             observableListCities.addAll( data.get(0).get("ids")  )
@@ -129,7 +124,7 @@ public class Application extends javafx.application.Application {
         Pane root = setupStage();
         setupBinding();
 
-        Scene scene = new Scene(root, 800, 640)
+        Scene scene = new Scene(root, 700, 640)
         scene.stylesheets << 'demo.css'
 
         stage.setScene(scene);
@@ -149,78 +144,26 @@ public class Application extends javafx.application.Application {
         loading.setScaleX(1.2)
         loading.setScaleY(1.2)
         loading.setTextFill(Color.BLUE)
-        table.setMinHeight(700)
 
-        Rectangle border = new Rectangle()
-        border.setStroke(Color.INDIANRED)
-        border.setStrokeWidth(2)
-        border.setWidth(170)
-        border.setHeight(100)
-        border.setFill(Color.WHITESMOKE)
-        border.setArcWidth(10)
-        border.setArcHeight(10)
-        border.setOpacity(0.8)
-
-
-        Rectangle border2 = new Rectangle()
-        border2.setStroke(Color.INDIANRED)
-        border2.setStrokeWidth(2)
-        border2.setWidth(40)
-        border2.setHeight(100)
-        border2.setFill(Color.WHITESMOKE)
-        border2.setArcWidth(10)
-        border2.setArcHeight(10)
-        border2.setOpacity(0.3)
-        border2.relocate(0, 290)
-
-        Rectangle border3 = new Rectangle()
-        border3.setStroke(Color.INDIANRED)
-        border3.setStrokeWidth(2)
-        border3.setWidth(170)
-        border3.setHeight(100)
-        border3.setFill(Color.WHITESMOKE)
-        border3.setArcWidth(10)
-        border3.setArcHeight(10)
-        border3.setOpacity(0.8)
-
-
-        Rectangle border4 = new Rectangle()
-        border4.setStroke(Color.INDIANRED)
-        border4.setStrokeWidth(2)
-        border4.setWidth(40)
-        border4.setHeight(100)
-        border4.setFill(Color.WHITESMOKE)
-        border4.setArcWidth(10)
-        border4.setArcHeight(10)
-        border4.setOpacity(0.3)
-        border4.relocate(0, 420)
+        typeLabelDetail.setEditable(false)
+        cityLabelDetail.setEditable(false)
+        zipLabelDetail.setEditable(false)
+        nominalLabelDetail.setEditable(false)
+        idLabelDetail.setEditable(false)
 
         cityCB.setSelected(true);
         typeCB.setSelected(true);
         nominalCB.setSelected(true);
         zipCB.setSelected(true);
 
-        TableColumn idCol = new TableColumn("Position");
-        idCol.setMinWidth(100)
-        idCol.setResizable(false)
-        TableColumn typeCol = new TableColumn("Plant Type");
-        typeChoiceBox.setMinWidth(120)
-        typeCol.setMinWidth(120)
-        typeCol.setResizable(false)
-        TableColumn cityCol = new TableColumn("City");
-        cityText.setMinWidth(100)
-        cityCol.setMinWidth(100)
-        cityCol.setResizable(false)
-        TableColumn zipCol = new TableColumn("ZIP Code");
-        zipText.setMaxWidth(100)
-        zipCol.setMinWidth(100)
-        zipCol.setResizable(false)
-        TableColumn nominalCol = new TableColumn("Nominal Power");
-        nominalText.setMaxWidth(100)
-        nominalCol.setMinWidth(100)
-        nominalCol.setResizable(false)
+        Rectangle columnCBBorder = createCBsBorder()
+        Rectangle columnEventBorder = createEventBorder()
+        columnEventBorder.relocate(0, 290)
+        Rectangle filtersCBBorder = createCBsBorder()
+        Rectangle filtersEventBorder = createEventBorder()
+        filtersEventBorder.relocate(0, 420)
 
-
+        table.setMinHeight(700)
         table.getColumns().addAll(idCol, typeCol, cityCol, zipCol, nominalCol);
         table.items = observableList
         table.setPlaceholder(loading)
@@ -244,8 +187,6 @@ public class Application extends javafx.application.Application {
             } )
             return placeholder
         } as Callback
-
-
         typeCol.cellValueFactory = {
             String lazyId = it.value
             def placeholder = new SimpleStringProperty("Not Loaded")
@@ -256,7 +197,6 @@ public class Application extends javafx.application.Application {
             } )
             return placeholder
         } as Callback
-
         cityCol.cellValueFactory = {
             String lazyId = it.value
             def placeholder = new SimpleStringProperty("Not Loaded")
@@ -288,99 +228,37 @@ public class Application extends javafx.application.Application {
             return placeholder
         } as Callback
 
+        ChoiceBoxListener(cityCB, table, cityCol)
+        ChoiceBoxListener(typeCB, table, typeCol)
+        ChoiceBoxListener(nominalCB, table, nominalCol)
+        ChoiceBoxListener(zipCB, table, zipCol)
 
-        cityCB.selectedProperty().addListener(new ChangeListener<Boolean>() {
-            @Override
-            public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-                if (newValue) {
-                    table.getColumns().add(cityCol)
-                }
-                else table.getColumns().remove(cityCol)
-            }
-        });
-        typeCB.selectedProperty().addListener(new ChangeListener<Boolean>() {
-            @Override
-            public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-                if (newValue) {
-                    table.getColumns().add(typeCol)
-                }
-                else table.getColumns().remove(typeCol)
-            }
-        });
-        nominalCB.selectedProperty().addListener(new ChangeListener<Boolean>() {
-            @Override
-            public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-                if (newValue) {
-                    table.getColumns().add(nominalCol)
-                }
-                else table.getColumns().remove(nominalCol)
-            }
-        });
-        zipCB.selectedProperty().addListener(new ChangeListener<Boolean>() {
-            @Override
-            public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-                if (newValue) {
-                    table.getColumns().add(zipCol)
-                }
-                else table.getColumns().remove(zipCol)
-            }
-        });
+        HBox nominalLabelTextDetail = createPair(nominalLabelDetail, nominalLabelforDetail)
+        HBox typeLabelTextDetail = createPair(typeLabelDetail, typeLabelforDetail)
+        HBox cityLabelTextDetail = createPair(cityLabelDetail, cityLabelforDetail)
+        HBox zipLabelTextDetail = createPair(zipLabelDetail, zipLabelforDetail)
+        HBox idLabelTextDetail = createPair(idLabelDetail, idLabelforDetail)
 
-        HBox nominalLabelTextDetail = new HBox()
-        nominalLabelTextDetail.setSpacing(5);
-        nominalLabelTextDetail.setPadding(new Insets(10, 0, 0, 10));
-        nominalLabelTextDetail.getChildren().addAll(nominalLabelforDetail, nominalLabelDetail)
+        VBox columnsCBs = new VBox()
+        columnsCBs.setPadding(new Insets(20, 0, 0, 10));
+        columnsCBs.getChildren().addAll(cityCB, typeCB, zipCB, nominalCB)
 
-        HBox cityLabelTextDetail = new HBox()
-        cityLabelTextDetail.setSpacing(5);
-        cityLabelTextDetail.setPadding(new Insets(10, 0, 0, 10));
-        cityLabelTextDetail.getChildren().addAll(cityLabelforDetail, cityLabelDetail)
-
-        HBox typeLabelTextDetail = new HBox()
-        typeLabelTextDetail.setSpacing(5);
-        typeLabelTextDetail.setPadding(new Insets(10, 0, 0, 10));
-        typeLabelTextDetail.getChildren().addAll(typeLabelforDetail, typeLabelDetail)
-
-        HBox zipLabelTextDetail = new HBox()
-        zipLabelTextDetail.setSpacing(5);
-        zipLabelTextDetail.setPadding(new Insets(10, 0, 0, 10));
-        zipLabelTextDetail.getChildren().addAll(zipLabelforDetail, zipLabelDetail)
-
-
-        HBox idLabelTextDetail = new HBox()
-        idLabelTextDetail.setSpacing(5);
-        idLabelTextDetail.setPadding(new Insets(10, 0, 0, 10));
-        idLabelTextDetail.getChildren().addAll(idLabelforDetail, idLabelDetail)
-
-        HBox filters = new HBox()
-        filters.setPadding(new Insets(10, 0, 0, 10));
-        filters.getChildren().addAll(search, typeChoiceBox, cityText, zipText, nominalText)
-
-        VBox treeFilters = new VBox()
-        treeFilters.setPadding(new Insets(20, 0, 0, 10));
-        treeFilters.getChildren().addAll(cityCB, typeCB, zipCB, nominalCB)
-
-        VBox treeFiltersBottom = new VBox()
-        treeFiltersBottom.setPadding(new Insets(30, 0, 0, 10));
-        treeFiltersBottom.getChildren().addAll(cityFilterCB, typeFilterCB)
-
+        VBox filtersCBs = new VBox()
+        filtersCBs.setPadding(new Insets(30, 0, 0, 10));
+        filtersCBs.getChildren().addAll(cityFilterCB, typeFilterCB)
 
         TreeItem<String> rootItem =
             new TreeItem<String>("Plant Types");
         rootItem.setExpanded(true);
-
         rootItem.getChildren().add(allItem)
-
-        tree.setEditable(true);
-        tree.setRoot(rootItem);
-        tree.setShowRoot(true);
-        tree.setMaxHeight(200)
+        treeTypes.setRoot(rootItem);
+        treeTypes.setShowRoot(true);
+        treeTypes.setMaxHeight(200)
 
         TreeItem<String> rootItemCities =
             new TreeItem<String>("Cities");
         rootItemCities.setExpanded(true);
         rootItemCities.getChildren().add(allItem)
-        treeCities.setEditable(true);
         treeCities.setRoot(rootItemCities);
         treeCities.setShowRoot(true);
         treeCities.setMaxHeight(200)
@@ -388,26 +266,28 @@ public class Application extends javafx.application.Application {
         VBox trees = new VBox()
         trees.setSpacing(5)
         separator.setMinWidth(trees.getTranslateX())
+        separator2.setMinWidth(trees.getTranslateX())
+
         VBox details = new VBox()
         details.setSpacing(5);
-        details.setPadding(new Insets(10, 0, 0, 10));
-        details.getChildren().addAll(cityLabelTextDetail, idLabelTextDetail, typeLabelTextDetail, nominalLabelTextDetail, zipLabelTextDetail,separator, trees)
+        details.setPadding(new Insets(20, 0, 0, 10));
+        details.getChildren().addAll(search, cityLabelTextDetail, idLabelTextDetail, typeLabelTextDetail, nominalLabelTextDetail, zipLabelTextDetail, separator, trees/*, separator2, autofillHbox*/)
 
         typeFilterCB.selectedProperty().addListener(new ChangeListener<Boolean>() {
             @Override
             public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-            def size = observableListTypes.size()
-            if (f==0 && size>1){ f++
-                    observableListTypes.each {
-                    final TreeItem<String> checkBoxTreeItem =
-                        new TreeItem<String>(it.toString());
-                    rootItem.getChildren().add(checkBoxTreeItem);
+                def size = observableListTypes.size()
+                if (f==0 && size>1){ f++
+                        observableListTypes.each {
+                        final TreeItem<String> checkBoxTreeItem =
+                            new TreeItem<String>(it.toString());
+                        rootItem.getChildren().add(checkBoxTreeItem);
+                        }
                 }
-                    }
                 if (newValue) {
-                    trees.getChildren().add(tree)
+                    trees.getChildren().add(treeTypes)
                 }
-                else trees.getChildren().remove(tree)
+                else trees.getChildren().remove(treeTypes)
             }
         });
 
@@ -421,19 +301,16 @@ public class Application extends javafx.application.Application {
                     final TreeItem<String> checkBoxTreeItem =
                         new TreeItem<String>(it.toString());
                     rootItemCities.getChildren().add(checkBoxTreeItem);
-                }  }
+                    }
+                }
                 if (newValue) {
-
                     trees.getChildren().add(treeCities)
                 }
                 else trees.getChildren().remove(treeCities)
                             }
         });
-//        rootItemCities.getChildren().add(allItem)
-//        rootItem.getChildren().add(allItem)
 
-
-        tree.getSelectionModel().selectedItemProperty().addListener(
+        treeTypes.getSelectionModel().selectedItemProperty().addListener(
                 new ChangeListener<TreeItem <String>>() {
                     public void changed(ObservableValue<? extends TreeItem<String>> observableValue,
                                         TreeItem<String> oldItem, TreeItem<String> newItem) {
@@ -448,100 +325,105 @@ public class Application extends javafx.application.Application {
                     }
                 });
 
-
-        border2.setOnMouseEntered(new EventHandler<MouseEvent>() {
-            @Override public void handle(MouseEvent e) {
-                border2.setVisible(false)
-                border2.setDisable(true)
-                timelineRight.play();
-                columns.setVisible(false)
-
-            }
-        });
-
-        border4.setOnMouseEntered(new EventHandler<MouseEvent>() {
-            @Override public void handle(MouseEvent e) {
-                border4.setVisible(false)
-                border4.setDisable(true)
-                timelineRightFilters.play();
-                filter.setVisible(false)
-
-
-            }
-        });
-
-        columnsStack.setOnMouseExited(new EventHandler<MouseEvent>() {
-            @Override public void handle(MouseEvent e) {
-                border4.setVisible(true)
-                border4.setDisable(false)
-                timelineLeftFilters.play();
-                filter.setVisible(true)
-
-            }
-        });
-        filtersStack.setOnMouseExited(new EventHandler<MouseEvent>() {
-            @Override public void handle(MouseEvent e) {
-                timelineLeft.play();
-                border2.setVisible(true)
-                border2.setDisable(false)
-                columns.setVisible(true)
-
-            }
-        });
-
-        button.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent arg0) {
-                timelineRight.play();
-
-            }
-        });
-
-        button2.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent arg0) {
-                timelineLeft.play();
-
-            }
-        });
-
         setAnimation();
         setAnimationFilters();
+        setMouseEventSliding(columnEventBorder, columnStack, timelineRight, timelineLeft, columns)
+        setMouseEventSliding(filtersEventBorder, filterStack, timelineRightFilters, timelineLeftFilters, filter)
+
+
         Pane all = new Pane();
         all.getChildren().addAll(details)
 
-        filtersStack.getChildren().addAll( border, treeFilters)
-        filtersStack.relocate(0, 290)
+        columnStack.getChildren().addAll( columnCBBorder, columnsCBs)
+        columnStack.relocate(0, 290)
 
-        columnsStack.getChildren().addAll( border3, treeFiltersBottom)
-        columnsStack.relocate(0, 420)
+        filterStack.getChildren().addAll( filtersCBBorder, filtersCBs)
+        filterStack.relocate(0, 420)
         columns.relocate(5,340)
         columns.setRotate(90)
         filter.relocate(13,470)
         filter.setRotate(90)
-        tableStack.getChildren().addAll(table,columns,filter, border2, border4, filtersStack, columnsStack)
-
+        tableStack.getChildren().addAll(table,columns,filter, columnEventBorder, filtersEventBorder, columnStack, filterStack)
 
         BorderPane borderPane = new BorderPane();
-
         borderPane.setCenter(tableStack);
         borderPane.setRight(all);
 
-
         pane.getChildren().addAll(borderPane)
-       return pane
+
+        return pane
 
     }
 
+    /*METHODS*/
+    static private Rectangle createEventBorder(){
+
+        Rectangle eventBorder = new Rectangle()
+        eventBorder.setStroke(Color.INDIANRED)
+        eventBorder.setStrokeWidth(2)
+        eventBorder.setWidth(40)
+        eventBorder.setHeight(100)
+        eventBorder.setFill(Color.WHITESMOKE)
+        eventBorder.setArcWidth(10)
+        eventBorder.setArcHeight(10)
+        eventBorder.setOpacity(0.3)
+        return eventBorder
+    }
+
+     static private Rectangle createCBsBorder(){
+        Rectangle border = new Rectangle()
+         border.setStroke(Color.INDIANRED)
+         border.setStrokeWidth(2)
+         border.setWidth(170)
+         border.setHeight(100)
+         border.setFill(Color.WHITESMOKE)
+         border.setArcWidth(10)
+         border.setArcHeight(10)
+         border.setOpacity(0.8)
+        return border
+    }
+
+    static private void setMouseEventSliding(Rectangle border, Pane pane, Timeline show, Timeline hide, Label tooltip){
+
+        border.setOnMouseEntered(new EventHandler<MouseEvent>() {
+            @Override public void handle(MouseEvent e) {
+                border.setVisible(false)
+                border.setDisable(true)
+                show.play();
+                tooltip.setVisible(false)
+
+
+            }
+        });
+
+        pane.setOnMouseExited(new EventHandler<MouseEvent>() {
+            @Override public void handle(MouseEvent e) {
+                border.setVisible(true)
+                border.setDisable(false)
+                hide.play();
+                tooltip.setVisible(true)
+
+            }
+        });
+    }
+
+    static private HBox createPair(TextField detail, Label detailTooltip){
+
+        HBox hBox = new HBox()
+        hBox.setSpacing(5);
+        hBox.setPadding(new Insets(10, 0, 0, 10));
+        hBox.getChildren().addAll(detailTooltip, detail)
+        return hBox
+    }
 
     private void setAnimation(){
-        // Initially hiding the Top Pane
+        // Initially hiding the  Pane
         clipRect = new Rectangle();
         clipRect.setWidth(30);
         clipRect.setHeight(boxBounds.getHeight());
         clipRect.translateXProperty().set(boxBounds.getWidth());
-        filtersStack.setClip(clipRect);
-        filtersStack.translateXProperty().set(-boxBounds.getWidth());
+        columnStack.setClip(clipRect);
+        columnStack.translateXProperty().set(-boxBounds.getWidth());
 
         // Animation for bouncing effect.
         final Timeline timelineBounce = new Timeline();
@@ -549,7 +431,7 @@ public class Application extends javafx.application.Application {
         timelineBounce.setAutoReverse(true);
         final KeyValue kv1 = new KeyValue(clipRect.widthProperty(), (boxBounds.getWidth()-15));
         final KeyValue kv2 = new KeyValue(clipRect.translateXProperty(), 15);
-        final KeyValue kv3 = new KeyValue(filtersStack.translateXProperty(), -15);
+        final KeyValue kv3 = new KeyValue(columnStack.translateXProperty(), -15);
         final KeyFrame kf1 = new KeyFrame(Duration.millis(100), kv1, kv2, kv3);
         timelineBounce.getKeyFrames().add(kf1);
 
@@ -568,7 +450,7 @@ public class Application extends javafx.application.Application {
         timelineRight.setAutoReverse(true);
         final KeyValue kvDwn1 = new KeyValue(clipRect.widthProperty(), boxBounds.getWidth());
         final KeyValue kvDwn2 = new KeyValue(clipRect.translateXProperty(), 0);
-        final KeyValue kvDwn3 = new KeyValue(filtersStack.translateXProperty(), 0);
+        final KeyValue kvDwn3 = new KeyValue(columnStack.translateXProperty(), 0);
         final KeyFrame kfDwn = new KeyFrame(Duration.millis(200), onFinished, kvDwn1, kvDwn2, kvDwn3);
         timelineRight.getKeyFrames().add(kfDwn);
 
@@ -577,11 +459,10 @@ public class Application extends javafx.application.Application {
         timelineLeft.setAutoReverse(true);
         final KeyValue kvUp1 = new KeyValue(clipRect.widthProperty(), 0);
         final KeyValue kvUp2 = new KeyValue(clipRect.translateXProperty(), boxBounds.getWidth());
-        final KeyValue kvUp3 = new KeyValue(filtersStack.translateXProperty(), -boxBounds.getWidth());
+        final KeyValue kvUp3 = new KeyValue(columnStack.translateXProperty(), -boxBounds.getWidth());
         final KeyFrame kfUp = new KeyFrame(Duration.millis(200), kvUp1, kvUp2, kvUp3);
         timelineLeft.getKeyFrames().add(kfUp);
     }
-
 
     private void setupBinding() {
         bind 'text' of zipText to ZIP of clientDolphin[FILTER]
@@ -613,8 +494,8 @@ public class Application extends javafx.application.Application {
         clipRect.setWidth(30);
         clipRect.setHeight(boxBounds.getHeight());
         clipRect.translateXProperty().set(boxBounds.getWidth());
-        columnsStack.setClip(clipRect);
-        columnsStack.translateXProperty().set(-boxBounds.getWidth());
+        filterStack.setClip(clipRect);
+        filterStack.translateXProperty().set(-boxBounds.getWidth());
 
         // Animation for bouncing effect.
         final Timeline timelineBounce = new Timeline();
@@ -622,7 +503,7 @@ public class Application extends javafx.application.Application {
         timelineBounce.setAutoReverse(true);
         final KeyValue kv1 = new KeyValue(clipRect.widthProperty(), (boxBounds.getWidth()-15));
         final KeyValue kv2 = new KeyValue(clipRect.translateXProperty(), 15);
-        final KeyValue kv3 = new KeyValue(columnsStack.translateXProperty(), -15);
+        final KeyValue kv3 = new KeyValue(filterStack.translateXProperty(), -15);
         final KeyFrame kf1 = new KeyFrame(Duration.millis(100), kv1, kv2, kv3);
         timelineBounce.getKeyFrames().add(kf1);
 
@@ -641,7 +522,7 @@ public class Application extends javafx.application.Application {
         timelineRightFilters.setAutoReverse(true);
         final KeyValue kvDwn1 = new KeyValue(clipRect.widthProperty(), boxBounds.getWidth());
         final KeyValue kvDwn2 = new KeyValue(clipRect.translateXProperty(), 0);
-        final KeyValue kvDwn3 = new KeyValue(columnsStack.translateXProperty(), 0);
+        final KeyValue kvDwn3 = new KeyValue(filterStack.translateXProperty(), 0);
         final KeyFrame kfDwn = new KeyFrame(Duration.millis(200), onFinished, kvDwn1, kvDwn2, kvDwn3);
         timelineRightFilters.getKeyFrames().add(kfDwn);
 
@@ -650,7 +531,7 @@ public class Application extends javafx.application.Application {
         timelineLeftFilters.setAutoReverse(true);
         final KeyValue kvUp1 = new KeyValue(clipRect.widthProperty(), 0);
         final KeyValue kvUp2 = new KeyValue(clipRect.translateXProperty(), boxBounds.getWidth());
-        final KeyValue kvUp3 = new KeyValue(columnsStack.translateXProperty(), -boxBounds.getWidth());
+        final KeyValue kvUp3 = new KeyValue(filterStack.translateXProperty(), -boxBounds.getWidth());
         final KeyFrame kfUp = new KeyFrame(Duration.millis(200), kvUp1, kvUp2, kvUp3);
         timelineLeftFilters.getKeyFrames().add(kfUp);
     }
@@ -660,11 +541,16 @@ public class Application extends javafx.application.Application {
         attribute.addPropertyChangeListener('value', listener)
     }
 
-//    public Integer getFirstCellIndex() {
-//        return getTableViewInfo(table).getVirtualFlow().getFirstVisibleCellWithinViewPort().getIndex()
-//    }
-//
-//    public Integer getLastCellIndex() {
-//        return getTableViewInfo(table).getVirtualFlow().getLastVisibleCellWithinViewPort().getIndex()
-//    }
+    static private void ChoiceBoxListener(CheckBox cb, TableView table, TableColumn col){
+        cb.selectedProperty().addListener(new ChangeListener<Boolean>() {
+            @Override
+            public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+                if (newValue) {
+                    table.getColumns().add(col)
+                }
+                else table.getColumns().remove(col)
+            }
+        });
+    }
+
 }

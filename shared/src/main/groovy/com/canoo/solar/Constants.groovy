@@ -12,6 +12,7 @@ public class Constants {
    static class FilterConstants {
 
     public static final String ID = "id"
+    public static final String POSITION = "position"
     public static final String CITY = "city"
     public static final String PLANT_TYPE = "plantType"
     public static final String ZIP = "zipCode"

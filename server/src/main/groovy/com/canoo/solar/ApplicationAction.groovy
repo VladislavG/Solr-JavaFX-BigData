@@ -52,27 +52,23 @@ public class ApplicationAction extends DolphinServerAction{
                 }
                 if (getServerDolphin().getAt(pmId) == null) {
                     def start = System.currentTimeMillis()
-                    SolrQuery solrQuery = new SolrQuery("position:" + pmId);
+                    SolrQuery solrQuery = new SolrQuery(POSITION + ":" + pmId);
                     solrQuery.setRows(1);
                     QueryResponse solrResponse = getSolrServer().query(solrQuery);
                     def result = solrResponse.getResults().get(0)
 
                     println "Solr took " + (System.currentTimeMillis() -  start )
-                    response.add(createInitializeAttributeCommand(pmId, "id", result.getFieldValue("id")))
-                    response.add(createInitializeAttributeCommand(pmId, "position", result.getFieldValue("position")))
-                    response.add(createInitializeAttributeCommand(pmId, "nominalPower", result.getFieldValue("nominalPower")))
-                    response.add(createInitializeAttributeCommand(pmId, "plantType", result.getFieldValue("plantType")))
-                    response.add(createInitializeAttributeCommand(pmId, "city", result.getFieldValue("city")))
-                    response.add(createInitializeAttributeCommand(pmId, "zipCode", result.getFieldValue("zipCode")))
-
-
-//                    presentationModel(pmId, "PowerPlant", createPowerPlant(result.getFieldValue("id"), result.getFieldValue("position"), result.getFieldValue("nominalPower"), result.getFieldValue("plantType"), result.getFieldValue("city"), result.getFieldValue("zipCode")))
+                    response.add(createInitializeAttributeCommand(pmId, ID, result.getFieldValue(ID)))
+                    response.add(createInitializeAttributeCommand(pmId, POSITION, result.getFieldValue(POSITION)))
+                    response.add(createInitializeAttributeCommand(pmId, NOMINAL_POWER, result.getFieldValue(NOMINAL_POWER)))
+                    response.add(createInitializeAttributeCommand(pmId, PLANT_TYPE, result.getFieldValue(PLANT_TYPE)))
+                    response.add(createInitializeAttributeCommand(pmId, CITY, result.getFieldValue(CITY)))
+                    response.add(createInitializeAttributeCommand(pmId, ZIP, result.getFieldValue(ZIP)))
                 }
             }
         })
     }
     private final CommandHandler trigger = new CommandHandler<ValueChangedCommand>() {
-
         @Override
         public void handleCommand(final ValueChangedCommand command, final List<Command> response) {
             PresentationModel filterPm = getServerDolphin()[FILTER]
@@ -82,15 +78,13 @@ public class ApplicationAction extends DolphinServerAction{
         }
     }
     private final NamedCommandHandler filter = new NamedCommandHandler() {
-
         @Override
         void handleCommand(NamedCommand command, List<Command> response) {
 
-
             def filterPM = getServerDolphin().findPresentationModelById(FILTER)
             SolrQuery solrQuery = new SolrQuery("*:*")
-            solrQuery.addField("position")
-            solrQuery.setSort("position", SolrQuery.ORDER.asc)
+            solrQuery.addField(POSITION)
+            solrQuery.setSort(POSITION, SolrQuery.ORDER.asc)
 
             filterPM.attributes.each {
                 if (it.value=="" || it.value==null || it.value=="All") it.value = "*"
@@ -103,84 +97,57 @@ public class ApplicationAction extends DolphinServerAction{
             def result = queryResponse.getResults()
             List<Integer> allPositions = new ArrayList<>()
             result.each {
-                allPositions << it.getFieldValue("position")
+                allPositions << it.getFieldValue(POSITION)
             }
             response.add(new DataCommand(new HashMap(ids: allPositions )))
         }
     }
 
     private final NamedCommandHandler getCitites = new NamedCommandHandler() {
-
         @Override
         void handleCommand(NamedCommand command, List<Command> response) {
-
 
             SolrQuery solrQuery = new SolrQuery("*:*")
             solrQuery.setRows(0);
             solrQuery.setFacetLimit(-1);
             solrQuery.setFacet(true);
-            solrQuery.setParam("facet.field", "city");
+            solrQuery.setParam("facet.field", CITY);
             solrQuery.setFacetSort(true);
-
 
             QueryResponse queryResponse = getSolrServer().query(solrQuery)
             List<String> allCities = new ArrayList<>()
-            FacetField field = queryResponse.getFacetField("city");
+            FacetField field = queryResponse.getFacetField(CITY);
             List<FacetField.Count> values = field.getValues();
 
             for(FacetField.Count count : values){
-
                 allCities << count.getName()
             }
-
-
             response.add(new DataCommand(new HashMap(ids: allCities )))
         }
     }
 
     private final NamedCommandHandler getTypes = new NamedCommandHandler() {
-
         @Override
         void handleCommand(NamedCommand command, List<Command> response) {
-
 
             SolrQuery solrQuery = new SolrQuery("*:*")
             solrQuery.setRows(0);
             solrQuery.setFacetLimit(-1);
             solrQuery.setFacet(true);
-            solrQuery.setParam("facet.field", "plantType");
-
+            solrQuery.setParam("facet.field", PLANT_TYPE);
 
             QueryResponse queryResponse = getSolrServer().query(solrQuery)
             List<String> allTypes = new ArrayList<>()
-            FacetField field = queryResponse.getFacetField("plantType");
+            FacetField field = queryResponse.getFacetField(PLANT_TYPE);
             List<FacetField.Count> values = field.getValues();
 
             for(FacetField.Count count : values){
-
                 allTypes << count.getName()
             }
-
-
             response.add(new DataCommand(new HashMap(ids: allTypes )))
         }
     }
 
-
-    private static DTO createPowerPlant(id, position, nominalPower, plantType, city, zipCode) {
-        new DTO(
-
-                createSlot("id", id, position),
-                createSlot("position", position, position),
-                createSlot("nominalPower", nominalPower, position),
-                createSlot("plantType", plantType, position),
-                createSlot("city", city, position),
-                createSlot("zipCode", zipCode, position) )
-    }
-
-    private static Slot createSlot(String propertyName, Object value, int id) {
-        new Slot(propertyName, value, id + '/' + propertyName)
-    }
     private SolrServer getSolrServer() throws SolrServerException {
         if (null == solrServer) {
             String solrHome = (ApplicationAction.class.getResource("/"+SOLR_INDEX_DIR)).getPath();
@@ -188,7 +155,6 @@ public class ApplicationAction extends DolphinServerAction{
             coreContainer.load();
             solrServer = new EmbeddedSolrServer(coreContainer, CORE_NAME);
         }
-
         return solrServer;
     }
 
