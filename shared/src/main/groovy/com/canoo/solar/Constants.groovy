@@ -19,6 +19,9 @@ public class Constants {
     public static final String NOMINAL_POWER = "nominalPower"
     public static final String FILTER = 'FILTER'
     public static final String SELECTED_POWERPLANT = 'SELECTED_POWERPLANT'
+    public static final String ORDER = 'ORDER'
+    public static final String ORDER_SELECTED = 'ORDER_SELECTED'
+    public static final String LAST_SELECTED = 'LAST_SELECTED'
     public static final String TRIGGER = 'TRIGGER'
     public static final String STATE = 'STATE'
 }

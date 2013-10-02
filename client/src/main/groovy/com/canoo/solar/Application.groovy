@@ -49,6 +49,7 @@ public class Application extends javafx.application.Application {
     javafx.collections.ObservableList<Integer> observableList = FXCollections.observableArrayList()
     javafx.collections.ObservableList<Integer> observableListCities = FXCollections.observableArrayList()
     javafx.collections.ObservableList<Integer> observableListTypes = FXCollections.observableArrayList()
+    javafx.collections.ObservableList<Integer> observableListZips = FXCollections.observableArrayList()
 
     private PresentationModel textAttributeModel;
     private TableView table = new TableView();
@@ -80,6 +81,7 @@ public class Application extends javafx.application.Application {
     CheckBox typeCB = new CheckBox("Show Types");
     CheckBox cityFilterCB = new CheckBox("Filter by City");
     CheckBox typeFilterCB = new CheckBox("Filter by Type");
+    CheckBox zipFilterCB = new CheckBox("Filter by Zip");
     CheckBox zipCB = new CheckBox("Show Zip-Codes");
     CheckBox nominalCB = new CheckBox("Show Nominal Powers");
     final TreeItem<String> allItem = new TreeItem<String>("All");
@@ -94,9 +96,11 @@ public class Application extends javafx.application.Application {
     private Timeline timelineRightFilters;
     final TreeView treeCities = new TreeView();
     final TreeView treeTypes = new TreeView();
+    final TreeView treeZip = new TreeView();
     TextField zipText = new TextField()
     final Label selectionLabeltypes = new Label();
     final Label selectionLabelcities = new Label();
+    final Label selectionLabelzips = new Label();
     final Separator separator = new Separator();
     final Separator separator2 = new Separator();
     TextField nominalText = new TextField()
@@ -114,17 +118,50 @@ public class Application extends javafx.application.Application {
         stage.setTitle("Application Title");
         initializePresentationModels();
 
-        clientDolphin.data GET_CITIES, { data ->
-            observableListCities.addAll( data.get(0).get("ids")  )
+        observableList.clear()
+        observableListCities.clear()
+        observableListTypes.clear()
+        observableListZips.clear()
+        clientDolphin.data GET, { data ->
+
+            observableListCities.addAll(data.get(2).get("ids"))
+            treeCities.getRoot().getChildren().clear()
+            observableListCities.each {
+                if(it.toString().endsWith("(0)")) return;
+                final TreeItem<String> checkBoxTreeItem =
+                    new TreeItem<String>(it.toString());
+                treeCities.getRoot().getChildren().add(checkBoxTreeItem);
+
+            }
+
+            observableListTypes.addAll(data.get(1).get("ids"))
+            treeTypes.getRoot().getChildren().clear()
+            observableListTypes.each {
+//                    if(it.toString().endsWith("(0)")) return;
+                final TreeItem<String> checkBoxTreeItem =
+                    new TreeItem<String>(it.toString());
+                treeTypes.getRoot().getChildren().add(checkBoxTreeItem);
+            }
+
+            observableListZips.addAll(data.get(3).get("ids"))
+            treeZip.getRoot().getChildren().clear()
+            observableListZips.each {
+//                    if(it.toString().endsWith("(0)")) return;
+                final TreeItem<String> checkBoxTreeItem =
+                    new TreeItem<String>(it.toString());
+                treeZip.getRoot().getChildren().add(checkBoxTreeItem);
+            }
+
+            observableList.addAll( data.get(0).get("ids"))
+            if (observableList.size()==0){table.setPlaceholder(noData)}
+            else{table.setPlaceholder(loading)}
+
         }
 
-        clientDolphin.data GET_TYPE, { data ->
-            observableListTypes.addAll( data.get(0).get("ids")  )
-        }
         Pane root = setupStage();
         setupBinding();
 
-        Scene scene = new Scene(root, 700, 640)
+        Scene scene = new Scene(root, 1280, 640)
         scene.stylesheets << 'demo.css'
 
         stage.setScene(scene);
@@ -135,16 +172,24 @@ public class Application extends javafx.application.Application {
     private static void initializePresentationModels () {
         clientDolphin.presentationModel(FILTER, [ID, CITY, PLANT_TYPE, ZIP, NOMINAL_POWER]);
         clientDolphin.presentationModel(SELECTED_POWERPLANT, [ID, CITY, PLANT_TYPE, ZIP, NOMINAL_POWER]);
+        clientDolphin.presentationModel(ORDER, [CITY, PLANT_TYPE, ZIP])[ZIP].value=0
+        clientDolphin.getClientModelStore().findPresentationModelById(ORDER).findAttributeByPropertyName(CITY).setValue(0)
+        clientDolphin.getClientModelStore().findPresentationModelById(ORDER).findAttributeByPropertyName(PLANT_TYPE).setValue(0)
         clientDolphin.presentationModel(STATE, [TRIGGER])[TRIGGER].value=0
 
 
     }
 
     private Pane setupStage() {
+        def orderPm = clientDolphin.findPresentationModelById(ORDER)
         loading.setScaleX(1.2)
         loading.setScaleY(1.2)
         loading.setTextFill(Color.BLUE)
-
+        idCol.setMinWidth(100)
+        nominalCol.setMinWidth(100)
+        typeCol.setMinWidth(100)
+        zipCol.setMinWidth(100)
+        cityCol.setMinWidth(100)
         typeLabelDetail.setEditable(false)
         cityLabelDetail.setEditable(false)
         zipLabelDetail.setEditable(false)
@@ -156,6 +201,7 @@ public class Application extends javafx.application.Application {
         nominalCB.setSelected(true);
         zipCB.setSelected(true);
 
+//      create borders for sliding panes
         Rectangle columnCBBorder = createCBsBorder()
         Rectangle columnEventBorder = createEventBorder()
         columnEventBorder.relocate(0, 290)
@@ -182,7 +228,7 @@ public class Application extends javafx.application.Application {
             def placeholder = new SimpleStringProperty("Not Loaded");
             clientDolphin.clientModelStore.withPresentationModel(lazyId, new WithPresentationModelHandler() {
                 void onFinished(ClientPresentationModel presentationModel) {
-                    placeholder.setValue( presentationModel.getAt("position").value.toString() ) // fill async lazily
+                    placeholder.setValue(presentationModel.getAt("position").value.toString() ) // fill async lazily
                 }
             } )
             return placeholder
@@ -192,7 +238,7 @@ public class Application extends javafx.application.Application {
             def placeholder = new SimpleStringProperty("Not Loaded")
             clientDolphin.clientModelStore.withPresentationModel(lazyId, new WithPresentationModelHandler() {
                 void onFinished(ClientPresentationModel presentationModel) {
-                    placeholder.setValue( presentationModel.getAt(PLANT_TYPE).value.toString() ) // fill async lazily
+                    placeholder.setValue(presentationModel.getAt(PLANT_TYPE).value.toString() ) // fill async lazily
                 }
             } )
             return placeholder
@@ -202,7 +248,7 @@ public class Application extends javafx.application.Application {
             def placeholder = new SimpleStringProperty("Not Loaded")
             clientDolphin.clientModelStore.withPresentationModel(lazyId, new WithPresentationModelHandler() {
                 void onFinished(ClientPresentationModel presentationModel) {
-                    placeholder.setValue( presentationModel.getAt(CITY).value.toString() ) // fill async lazily
+                    placeholder.setValue(presentationModel.getAt(CITY).value.toString() ) // fill async lazily
                 }
             } )
             return placeholder
@@ -212,7 +258,7 @@ public class Application extends javafx.application.Application {
             def placeholder = new SimpleStringProperty("Not Loaded")
             clientDolphin.clientModelStore.withPresentationModel(lazyId, new WithPresentationModelHandler() {
                 void onFinished(ClientPresentationModel presentationModel) {
-                    placeholder.setValue( presentationModel.getAt(ZIP).value.toString() ) // fill async lazily
+                    placeholder.setValue(presentationModel.getAt(ZIP).value.toString() ) // fill async lazily
                 }
             } )
             return placeholder
@@ -228,6 +274,7 @@ public class Application extends javafx.application.Application {
             return placeholder
         } as Callback
 
+//        show/hide table Columns on checkbox event
         ChoiceBoxListener(cityCB, table, cityCol)
         ChoiceBoxListener(typeCB, table, typeCol)
         ChoiceBoxListener(nominalCB, table, nominalCol)
@@ -244,29 +291,32 @@ public class Application extends javafx.application.Application {
         columnsCBs.getChildren().addAll(cityCB, typeCB, zipCB, nominalCB)
 
         VBox filtersCBs = new VBox()
-        filtersCBs.setPadding(new Insets(30, 0, 0, 10));
-        filtersCBs.getChildren().addAll(cityFilterCB, typeFilterCB)
+        filtersCBs.setPadding(new Insets(25, 0, 0, 10));
+        filtersCBs.getChildren().addAll(cityFilterCB, typeFilterCB, zipFilterCB)
 
         TreeItem<String> rootItem =
-            new TreeItem<String>("Plant Types");
+            new TreeItem<String>("All");
         rootItem.setExpanded(true);
-        rootItem.getChildren().add(allItem)
         treeTypes.setRoot(rootItem);
         treeTypes.setShowRoot(true);
-        treeTypes.setMaxHeight(200)
+
+        TreeItem<String> rootItemZip =
+            new TreeItem<String>("All");
+        rootItemZip.setExpanded(true);
+        treeZip.setRoot(rootItemZip);
+        treeZip.setShowRoot(true);
 
         TreeItem<String> rootItemCities =
-            new TreeItem<String>("Cities");
+            new TreeItem<String>("All");
         rootItemCities.setExpanded(true);
-        rootItemCities.getChildren().add(allItem)
         treeCities.setRoot(rootItemCities);
         treeCities.setShowRoot(true);
-        treeCities.setMaxHeight(200)
 
-        VBox trees = new VBox()
+        HBox trees = new HBox()
         trees.setSpacing(5)
         separator.setMinWidth(trees.getTranslateX())
         separator2.setMinWidth(trees.getTranslateX())
+
 
         VBox details = new VBox()
         details.setSpacing(5);
@@ -276,37 +326,65 @@ public class Application extends javafx.application.Application {
         typeFilterCB.selectedProperty().addListener(new ChangeListener<Boolean>() {
             @Override
             public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-                def size = observableListTypes.size()
-                if (f==0 && size>1){ f++
-                        observableListTypes.each {
-                        final TreeItem<String> checkBoxTreeItem =
-                            new TreeItem<String>(it.toString());
-                        rootItem.getChildren().add(checkBoxTreeItem);
-                        }
-                }
+                
                 if (newValue) {
+                    int i = 1
+                    
+                    orderPm.getAttributes().each {if(it.value > 0) i++}
+                    orderPm.findAttributeByPropertyName(PLANT_TYPE).setValue(i)
+                    println "typeTree added with order: " + i
                     trees.getChildren().add(treeTypes)
                 }
-                else trees.getChildren().remove(treeTypes)
+                else {
+                    trees.getChildren().remove(treeTypes)
+                   def order = orderPm.findAttributeByPropertyName(PLANT_TYPE).getValue()
+                    orderPm.getAttributes().each {if(it.value > order) it.setValue(it.getValue()-1)}
+                    orderPm.findAttributeByPropertyName(PLANT_TYPE).setValue(0)
+
+                }
             }
         });
 
         cityFilterCB.selectedProperty().addListener(new ChangeListener<Boolean>() {
             @Override
             public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-            def size = observableListCities.size()
-                if (c==0 && size>1){
-                    c++
-                    observableListCities.each {
-                    final TreeItem<String> checkBoxTreeItem =
-                        new TreeItem<String>(it.toString());
-                    rootItemCities.getChildren().add(checkBoxTreeItem);
-                    }
-                }
+
+
                 if (newValue) {
+                    int i = 1
+                    orderPm.getAttributes().each {if(it.value > 0) i++}
+                    orderPm.findAttributeByPropertyName(CITY).setValue(i)
+                    println "cityTree added with order: " + i
                     trees.getChildren().add(treeCities)
                 }
-                else trees.getChildren().remove(treeCities)
+                else {
+                    trees.getChildren().remove(treeCities)
+                    def order = orderPm.findAttributeByPropertyName(CITY).getValue()
+                    orderPm.getAttributes().each {if(it.value > order) it.setValue(it.getValue()-1)}
+                    orderPm.findAttributeByPropertyName(CITY).setValue(0)
+                }
+                            }
+        });
+
+        zipFilterCB.selectedProperty().addListener(new ChangeListener<Boolean>() {
+            @Override
+            public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+
+
+                if (newValue) {
+                    int i = 1
+                    orderPm.getAttributes().each {if(it.value > 0) i++}
+                    orderPm.findAttributeByPropertyName(ZIP).setValue(i)
+                    println "zipTree added with order: " + i
+                    trees.getChildren().add(treeZip)
+                }
+                else {
+                    trees.getChildren().remove(treeZip)
+                    def order = orderPm.findAttributeByPropertyName(ZIP).getValue()
+                    orderPm.getAttributes().each {if(it.value > order) it.setValue(it.getValue()-1)}
+                    orderPm.findAttributeByPropertyName(ZIP).setValue(0)
+
+                }
                             }
         });
 
@@ -314,14 +392,154 @@ public class Application extends javafx.application.Application {
                 new ChangeListener<TreeItem <String>>() {
                     public void changed(ObservableValue<? extends TreeItem<String>> observableValue,
                                         TreeItem<String> oldItem, TreeItem<String> newItem) {
-                        selectionLabeltypes.setText(newItem.getValue());
+                        String[] parts = newItem.getValue().toString().split(" \\(");
+                        String part1 = parts[0];
+                        selectionLabeltypes.setText(part1);
+
+
+                        observableListTypes.clear()
+                        observableList.clear()
+                        clientDolphin.data GET, { data ->
+                            if (orderPm.findAttributeByPropertyName(CITY).getValue() > orderPm.findAttributeByPropertyName(PLANT_TYPE).getValue()){
+                                observableListCities.clear()
+                                observableListCities.addAll(data.get(2).get("ids"))
+                                treeCities.getRoot().getChildren().clear()
+                                observableListCities.each {
+                                    if(it.toString().endsWith("(0)")) return;
+                                    final TreeItem<String> checkBoxTreeItem =
+                                        new TreeItem<String>(it.toString());
+                                    treeCities.getRoot().getChildren().add(checkBoxTreeItem);
+
+                                }
+                            }
+                            observableListTypes.addAll(data.get(1).get("ids"))
+                            treeTypes.getRoot().getChildren().clear()
+                            observableListTypes.each {
+//                    if(it.toString().endsWith("(0)")) return;
+                                final TreeItem<String> checkBoxTreeItem =
+                                    new TreeItem<String>(it.toString());
+                                treeTypes.getRoot().getChildren().add(checkBoxTreeItem);
+                            }
+                            if (orderPm.findAttributeByPropertyName(ZIP).getValue() > orderPm.findAttributeByPropertyName(PLANT_TYPE).getValue()){
+                                observableListZips.clear()
+                                observableListZips.addAll(data.get(3).get("ids"))
+                                treeZip.getRoot().getChildren().clear()
+                                observableListZips.each {
+    //                    if(it.toString().endsWith("(0)")) return;
+                                    final TreeItem<String> checkBoxTreeItem =
+                                        new TreeItem<String>(it.toString());
+                                    treeZip.getRoot().getChildren().add(checkBoxTreeItem);
+                                }
+                            }
+                            observableList.addAll( data.get(0).get("ids"))
+                            if (observableList.size()==0){table.setPlaceholder(noData)}
+                            else{table.setPlaceholder(loading)}
+
+                        }
                     }
                 });
         treeCities.getSelectionModel().selectedItemProperty().addListener(
                 new ChangeListener<TreeItem <String>>() {
                     public void changed(ObservableValue<? extends TreeItem<String>> observableValue,
                                         TreeItem<String> oldItem, TreeItem<String> newItem) {
-                        selectionLabelcities.setText(newItem.getValue());
+                        if (newItem==null) return;
+                        String[] parts = newItem.getValue().toString().split(" \\(");
+                        String part1 = parts[0];
+                        selectionLabelcities.setText(part1);
+                        observableListCities.clear()
+
+
+                        observableList.clear()
+                        clientDolphin.data GET, { data ->
+
+                            observableListCities.addAll(data.get(2).get("ids"))
+                            treeCities.getRoot().getChildren().clear()
+                            observableListCities.each {
+                                if(it.toString().endsWith("(0)")) return;
+                                final TreeItem<String> checkBoxTreeItem =
+                                    new TreeItem<String>(it.toString());
+                                treeCities.getRoot().getChildren().add(checkBoxTreeItem);
+
+                            }
+                            if (orderPm.findAttributeByPropertyName(PLANT_TYPE).getValue() > orderPm.findAttributeByPropertyName(CITY).getValue()){
+                                observableListTypes.clear()
+                                observableListTypes.addAll(data.get(1).get("ids"))
+                                treeTypes.getRoot().getChildren().clear()
+                                observableListTypes.each {
+    //                    if(it.toString().endsWith("(0)")) return;
+                                    final TreeItem<String> checkBoxTreeItem =
+                                        new TreeItem<String>(it.toString());
+                                    treeTypes.getRoot().getChildren().add(checkBoxTreeItem);
+                                }
+                            }
+                            if (orderPm.findAttributeByPropertyName(ZIP).getValue() > orderPm.findAttributeByPropertyName(CITY).getValue()){
+                                observableListZips.clear()
+                                observableListZips.addAll(data.get(3).get("ids"))
+                                treeZip.getRoot().getChildren().clear()
+                                observableListZips.each {
+    //                    if(it.toString().endsWith("(0)")) return;
+                                    final TreeItem<String> checkBoxTreeItem =
+                                        new TreeItem<String>(it.toString());
+                                    treeZip.getRoot().getChildren().add(checkBoxTreeItem);
+                                }
+                            }
+                            observableList.addAll( data.get(0).get("ids"))
+                            if (observableList.size()==0){table.setPlaceholder(noData)}
+                            else{table.setPlaceholder(loading)}
+
+                        }
+                    }
+                });
+        treeZip.getSelectionModel().selectedItemProperty().addListener(
+                new ChangeListener<TreeItem <String>>() {
+                    public void changed(ObservableValue<? extends TreeItem<String>> observableValue,
+                                        TreeItem<String> oldItem, TreeItem<String> newItem) {
+                        if (newItem==null) return;
+                        String[] parts = newItem.getValue().toString().split(" \\(");
+                        String part1 = parts[0];
+                        selectionLabelzips.setText(part1);
+
+                        observableListZips.clear()
+
+                        observableList.clear()
+                        clientDolphin.data GET, { data ->
+                            if (orderPm.findAttributeByPropertyName(CITY).getValue() > orderPm.findAttributeByPropertyName(ZIP).getValue()){
+                                observableListCities.clear()
+                                observableListCities.addAll(data.get(2).get("ids"))
+                                treeCities.getRoot().getChildren().clear()
+                                observableListCities.each {
+                                    if(it.toString().endsWith("(0)")) return;
+                                    final TreeItem<String> checkBoxTreeItem =
+                                        new TreeItem<String>(it.toString());
+                                    treeCities.getRoot().getChildren().add(checkBoxTreeItem);
+
+                                }
+                            }
+                            if (orderPm.findAttributeByPropertyName(PLANT_TYPE).getValue() > orderPm.findAttributeByPropertyName(ZIP).getValue()){
+                                observableListTypes.clear()
+                                observableListTypes.addAll(data.get(1).get("ids"))
+                                treeTypes.getRoot().getChildren().clear()
+                                observableListTypes.each {
+    //                    if(it.toString().endsWith("(0)")) return;
+                                    final TreeItem<String> checkBoxTreeItem =
+                                        new TreeItem<String>(it.toString());
+                                    treeTypes.getRoot().getChildren().add(checkBoxTreeItem);
+                                }
+                            }
+                            observableListZips.addAll(data.get(3).get("ids"))
+                            treeZip.getRoot().getChildren().clear()
+                            observableListZips.each {
+//                    if(it.toString().endsWith("(0)")) return;
+                                final TreeItem<String> checkBoxTreeItem =
+                                    new TreeItem<String>(it.toString());
+                                treeZip.getRoot().getChildren().add(checkBoxTreeItem);
+                            }
+
+                            observableList.addAll( data.get(0).get("ids"))
+                            if (observableList.size()==0){table.setPlaceholder(noData)}
+                            else{table.setPlaceholder(loading)}
+
+                        }
                     }
                 });
 
@@ -417,7 +635,7 @@ public class Application extends javafx.application.Application {
     }
 
     private void setAnimation(){
-        // Initially hiding the  Pane
+        // Initially hiding the Pane
         clipRect = new Rectangle();
         clipRect.setWidth(30);
         clipRect.setHeight(boxBounds.getHeight());
@@ -435,7 +653,7 @@ public class Application extends javafx.application.Application {
         final KeyFrame kf1 = new KeyFrame(Duration.millis(100), kv1, kv2, kv3);
         timelineBounce.getKeyFrames().add(kf1);
 
-        // Event handler to call bouncing effect after the scroll down is finished.
+        // Event handler to call bouncing effect after the scroll right is finished.
         EventHandler<ActionEvent> onFinished = new EventHandler<ActionEvent>() {
             public void handle(ActionEvent t) {
                 timelineBounce.play();
@@ -445,7 +663,7 @@ public class Application extends javafx.application.Application {
         timelineRight = new Timeline();
         timelineLeft = new Timeline();
 
-        // Animation for scroll down.
+        // Animation for scroll right.
         timelineRight.setCycleCount(1);
         timelineRight.setAutoReverse(true);
         final KeyValue kvDwn1 = new KeyValue(clipRect.widthProperty(), boxBounds.getWidth());
@@ -454,7 +672,7 @@ public class Application extends javafx.application.Application {
         final KeyFrame kfDwn = new KeyFrame(Duration.millis(200), onFinished, kvDwn1, kvDwn2, kvDwn3);
         timelineRight.getKeyFrames().add(kfDwn);
 
-        // Animation for scroll up.
+        // Animation for scroll left.
         timelineLeft.setCycleCount(1);
         timelineLeft.setAutoReverse(true);
         final KeyValue kvUp1 = new KeyValue(clipRect.widthProperty(), 0);
@@ -465,7 +683,7 @@ public class Application extends javafx.application.Application {
     }
 
     private void setupBinding() {
-        bind 'text' of zipText to ZIP of clientDolphin[FILTER]
+        bind 'text' of selectionLabelzips to ZIP of clientDolphin[FILTER]
         bind 'text' of selectionLabelcities to CITY of clientDolphin[FILTER]
         bind 'text' of selectionLabeltypes to PLANT_TYPE of clientDolphin[FILTER]
         bind 'text' of nominalText to NOMINAL_POWER of clientDolphin[FILTER]
@@ -476,20 +694,51 @@ public class Application extends javafx.application.Application {
         bind NOMINAL_POWER of clientDolphin[SELECTED_POWERPLANT] to 'text' of nominalLabelDetail
         bind PLANT_TYPE of clientDolphin[SELECTED_POWERPLANT] to 'text' of typeLabelDetail
 
-        bindAttribute(clientDolphin[STATE][TRIGGER], {
-            observableList.clear()
-            clientDolphin.data GET, { data ->
-                observableList.clear()
-                observableList.addAll( data.get(0).get("ids"))
-                if (observableList.size()==0){table.setPlaceholder(noData)}
-                else{table.setPlaceholder(loading)}
-
-            }
-        })
+//        bindAttribute(clientDolphin[STATE][TRIGGER], {
+//            observableList.clear()
+//            observableListCities.clear()
+//            observableListTypes.clear()
+//            observableListZips.clear()
+//            clientDolphin.data GET, { data ->
+//
+//                observableListCities.addAll(data.get(2).get("ids"))
+//                treeCities.getRoot().getChildren().clear()
+//                observableListCities.each {
+//                    if(it.toString().endsWith("(0)")) return;
+//                    final TreeItem<String> checkBoxTreeItem =
+//                        new TreeItem<String>(it.toString());
+//                    treeCities.getRoot().getChildren().add(checkBoxTreeItem);
+//
+//                }
+//
+//                observableListTypes.addAll(data.get(1).get("ids"))
+//                treeTypes.getRoot().getChildren().clear()
+//                observableListTypes.each {
+////                    if(it.toString().endsWith("(0)")) return;
+//                    final TreeItem<String> checkBoxTreeItem =
+//                        new TreeItem<String>(it.toString());
+//                    treeTypes.getRoot().getChildren().add(checkBoxTreeItem);
+//                }
+//
+//                observableListZips.addAll(data.get(3).get("ids"))
+//                treeZip.getRoot().getChildren().clear()
+//                observableListZips.each {
+////                    if(it.toString().endsWith("(0)")) return;
+//                    final TreeItem<String> checkBoxTreeItem =
+//                        new TreeItem<String>(it.toString());
+//                    treeZip.getRoot().getChildren().add(checkBoxTreeItem);
+//                }
+//
+//                observableList.addAll( data.get(0).get("ids"))
+//                if (observableList.size()==0){table.setPlaceholder(noData)}
+//                else{table.setPlaceholder(loading)}
+//
+//            }
+//        })
     }
 
     private void setAnimationFilters(){
-        // Initially hiding the Top Pane
+        // Initially hiding the Pane
         clipRect = new Rectangle();
         clipRect.setWidth(30);
         clipRect.setHeight(boxBounds.getHeight());
@@ -507,7 +756,7 @@ public class Application extends javafx.application.Application {
         final KeyFrame kf1 = new KeyFrame(Duration.millis(100), kv1, kv2, kv3);
         timelineBounce.getKeyFrames().add(kf1);
 
-        // Event handler to call bouncing effect after the scroll down is finished.
+        // Event handler to call bouncing effect after the scroll right is finished.
         EventHandler<ActionEvent> onFinished = new EventHandler<ActionEvent>() {
             public void handle(ActionEvent t) {
                 timelineBounce.play();
@@ -517,7 +766,7 @@ public class Application extends javafx.application.Application {
         timelineRightFilters = new Timeline();
         timelineLeftFilters = new Timeline();
 
-        // Animation for scroll down.
+        // Animation for scroll right.
         timelineRightFilters.setCycleCount(1);
         timelineRightFilters.setAutoReverse(true);
         final KeyValue kvDwn1 = new KeyValue(clipRect.widthProperty(), boxBounds.getWidth());
@@ -526,7 +775,7 @@ public class Application extends javafx.application.Application {
         final KeyFrame kfDwn = new KeyFrame(Duration.millis(200), onFinished, kvDwn1, kvDwn2, kvDwn3);
         timelineRightFilters.getKeyFrames().add(kfDwn);
 
-        // Animation for scroll up.
+        // Animation for scroll left.
         timelineLeftFilters.setCycleCount(1);
         timelineLeftFilters.setAutoReverse(true);
         final KeyValue kvUp1 = new KeyValue(clipRect.widthProperty(), 0);

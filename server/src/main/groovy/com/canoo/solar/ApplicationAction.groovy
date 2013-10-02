@@ -37,8 +37,6 @@ public class ApplicationAction extends DolphinServerAction{
 
     public void registerIn(ActionRegistry registry) {
         registry.register(GET, filter)
-        registry.register(GET_CITIES, getCitites)
-        registry.register(GET_TYPE, getTypes)
         registry.register(ValueChangedCommand.class, trigger)
 
         registry.register(GetPresentationModelCommand.class, new CommandHandler<GetPresentationModelCommand>() {
@@ -72,8 +70,9 @@ public class ApplicationAction extends DolphinServerAction{
         @Override
         public void handleCommand(final ValueChangedCommand command, final List<Command> response) {
             PresentationModel filterPm = getServerDolphin()[FILTER]
+            PresentationModel statePm = getServerDolphin()[STATE]
             if(!filterPm.findAttributeById(command.attributeId))  return;
-            changeValue getServerDolphin()[STATE][TRIGGER], (getServerDolphin()[STATE][TRIGGER].value)+2
+            changeValue statePm[TRIGGER], (statePm[TRIGGER].value)+2
 
         }
     }
@@ -85,68 +84,51 @@ public class ApplicationAction extends DolphinServerAction{
             SolrQuery solrQuery = new SolrQuery("*:*")
             solrQuery.addField(POSITION)
             solrQuery.setSort(POSITION, SolrQuery.ORDER.asc)
-
+            solrQuery.setFacet(true);
             filterPM.attributes.each {
                 if (it.value=="" || it.value==null || it.value=="All") it.value = "*"
                 solrQuery.addFilterQuery(it.getPropertyName() + ":" + it.value)
             }
-
+            solrQuery.setParam("facet.field", CITY);
+            solrQuery.addFacetField(PLANT_TYPE);
+            solrQuery.addFacetField(ZIP);
             solrQuery.setRows(100)
-            def start = System.currentTimeMillis()
             QueryResponse queryResponse = getSolrServer().query(solrQuery)
             def result = queryResponse.getResults()
+            FacetField field = queryResponse.getFacetField(CITY);
+            FacetField fieldtypes = queryResponse.getFacetField(PLANT_TYPE);
+            FacetField fieldzip = queryResponse.getFacetField(ZIP);
             List<Integer> allPositions = new ArrayList<>()
             result.each {
                 allPositions << it.getFieldValue(POSITION)
             }
+
             response.add(new DataCommand(new HashMap(ids: allPositions )))
-        }
-    }
-
-    private final NamedCommandHandler getCitites = new NamedCommandHandler() {
-        @Override
-        void handleCommand(NamedCommand command, List<Command> response) {
-
-            SolrQuery solrQuery = new SolrQuery("*:*")
-            solrQuery.setRows(0);
-            solrQuery.setFacetLimit(-1);
-            solrQuery.setFacet(true);
-            solrQuery.setParam("facet.field", CITY);
-            solrQuery.setFacetSort(true);
-
-            QueryResponse queryResponse = getSolrServer().query(solrQuery)
             List<String> allCities = new ArrayList<>()
-            FacetField field = queryResponse.getFacetField(CITY);
-            List<FacetField.Count> values = field.getValues();
-
-            for(FacetField.Count count : values){
-                allCities << count.getName()
-            }
-            response.add(new DataCommand(new HashMap(ids: allCities )))
-        }
-    }
-
-    private final NamedCommandHandler getTypes = new NamedCommandHandler() {
-        @Override
-        void handleCommand(NamedCommand command, List<Command> response) {
-
-            SolrQuery solrQuery = new SolrQuery("*:*")
-            solrQuery.setRows(0);
-            solrQuery.setFacetLimit(-1);
-            solrQuery.setFacet(true);
-            solrQuery.setParam("facet.field", PLANT_TYPE);
-
-            QueryResponse queryResponse = getSolrServer().query(solrQuery)
             List<String> allTypes = new ArrayList<>()
-            FacetField field = queryResponse.getFacetField(PLANT_TYPE);
+            List<String> allZips = new ArrayList<>()
+
             List<FacetField.Count> values = field.getValues();
+            List<FacetField.Count> valuestype = fieldtypes.getValues();
+            List<FacetField.Count> valueszip = fieldzip.getValues();
 
             for(FacetField.Count count : values){
-                allTypes << count.getName()
+                allCities << count.getName() + " (" + count.getCount() + ")"
             }
-            response.add(new DataCommand(new HashMap(ids: allTypes )))
+            for(FacetField.Count count : valuestype){
+                allTypes << count.getName() + " (" + count.getCount() + ")"
+            }
+            for(FacetField.Count count : valueszip){
+                allZips << count.getName() + " (" + count.getCount() + ")"
+            }
+            response.add(new DataCommand(new HashMap(ids: allTypes, facetName: PLANT_TYPE )))
+            response.add(new DataCommand(new HashMap(ids: allCities, facetName: CITY )))
+            response.add(new DataCommand(new HashMap(ids: allZips, facetName: ZIP )))
+
         }
     }
+
+
 
     private SolrServer getSolrServer() throws SolrServerException {
         if (null == solrServer) {

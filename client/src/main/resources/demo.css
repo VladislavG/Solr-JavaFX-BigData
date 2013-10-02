@@ -2,10 +2,13 @@
     -fx-text-fill: saddlebrown;
 }
 .table-view .label {
-	-fx-text-fill: black;
+	-fx-text-fill: saddlebrown;
 }
 .tooltip {
     -fx-background-color:firebrick;
+}
+.tree-view {
+    -fx-text-fill: saddlebrown;
 }
 
 
