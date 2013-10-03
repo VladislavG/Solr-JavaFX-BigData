@@ -45,6 +45,7 @@ public class ApplicationAction extends DolphinServerAction{
             }
             public void handleCommand(GetPresentationModelCommand cmd, List<Command> response) {
                 String pmId = cmd.pmId
+                println "requested pmId: " + pmId
                 if (pmId == null) {
                     return
                 }
