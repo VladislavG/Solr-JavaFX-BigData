@@ -68,14 +68,15 @@ public class SolrService {
 //		solrService.indexAll();
 
 
-        SolrQuery solrQuery = new SolrQuery("*:*" );    //get all
+        SolrQuery solrQuery = new SolrQuery("position:424909" );    //get all
         solrQuery.setStart(0);                          //startign index
         solrQuery.setRows(50);                          //number of rows
         //solrQuery.setSort("latitude", ORDER.asc);        //sort by their latitude in ascending order
         //solrQuery.addSort(PowerPlant._ATTR_starting, ORDER.desc);   //secondarily sort by the starting in a descending order
 
         QueryResponse response = solrServer2.query(solrQuery);          //make a response based on the above query
-
+        SolrDocumentList results = response.getResults();
+        System.out.println("results: " + results);
 
         System.out.println("Time take to query everything: " + (System.currentTimeMillis() - start) + "ms");
 
@@ -84,98 +85,98 @@ public class SolrService {
         dateFormat.setTimeZone(TimeZone.getTimeZone("GMT+1"));                       //create and instantiate a dateformat
         String startDate = dateFormat.format(new Date(2000 - 1900, 0, 1));
         String endDate = dateFormat.format(new Date(2001 - 1900, 0, 1));
-
-
-        solrQuery.setQuery("*:*");                                //get all data
-        solrQuery.setStart(0);                                     //start at the beginning
-        solrQuery.setSort("latitude", ORDER.asc);     //sort the query in ascending order based on the latitude value
-        solrQuery.setQuery("starting"+":[" + startDate + " TO " + endDate +  "]" );    //add additional sorting based on the starting time and in descending order this time
-        response = solrServer2.query(solrQuery);                       //creates response from query
 //
-        System.out.println("hits between 2000 and 2001 : " + response.getResults().getNumFound());
-        SolrDocumentList results = response.getResults();
-        System.out.println("results: " + results.size());
 //
-        long start2 = System.currentTimeMillis();
+//        solrQuery.setQuery("*:*");                                //get all data
+//        solrQuery.setStart(0);                                     //start at the beginning
+//        solrQuery.setSort("latitude", ORDER.asc);     //sort the query in ascending order based on the latitude value
+//        solrQuery.setQuery("starting"+":[" + startDate + " TO " + endDate +  "]" );    //add additional sorting based on the starting time and in descending order this time
+//        response = solrServer2.query(solrQuery);                       //creates response from query
+////
+//        System.out.println("hits between 2000 and 2001 : " + response.getResults().getNumFound());
+//        SolrDocumentList results = response.getResults();
+//        System.out.println("results: " + results.size());
+////
+//        long start2 = System.currentTimeMillis();
         solrQuery = new SolrQuery("*:*" );
         solrQuery.setRows(0);
         solrQuery.setFacetLimit(-1);
         solrQuery.setFacet(true);
-        solrQuery.setParam("facet.field", "city");
+        solrQuery.setParam("facet.field", "plantType");
         solrQuery.setFacetSort(true);
 
         response = solrServer2.query(solrQuery);
-        FacetField field = response.getFacetField("city");
+        FacetField field = response.getFacetField("plantType");
         List<FacetField.Count> values = field.getValues();
 
         for(FacetField.Count count : values){
 
                 System.out.println(count.getName());
         }
-
-        solrQuery = new SolrQuery("*:*");
-        solrQuery.setRows(0);
-        solrQuery.setFacetLimit(-1);
-        solrQuery.setFacet(true);
-        solrQuery.setParam("facet.field", "plantType");
-        solrQuery.addFilterQuery("city:Berlin");
-        solrQuery.setFacetSort(true);
-
-        response = solrServer2.query(solrQuery);
-        FacetField field2 = response.getFacetField("plantType");
-        System.out.println("\nPlants in Berlin:");
-        List<FacetField.Count> values2 = field2.getValues();
-
-        for(FacetField.Count count : values2){
-            if (count.getCount()>0)
-
-                System.out.println(count.getCount() + " " + count.getName());
-        }
-
-        solrQuery = new SolrQuery("*:*");
-        solrQuery.setRows(0);
-        solrQuery.setFacetLimit(-1);
-        solrQuery.setFacet(true);
-        solrQuery.setParam("facet.field", "plantType");
-        solrQuery.addFilterQuery("nominalPower:[* TO 1000]");
-        solrQuery.setFacetSort(true);
-        response = solrServer2.query(solrQuery);
-        FacetField fieldPower = response.getFacetField("plantType");
-        System.out.println("\nPlants with nominal power between * and 1000:");
-        List<FacetField.Count> valuesPower = fieldPower.getValues();
-
-        for(FacetField.Count count : valuesPower){
-            if (count.getCount()>0)
-
-                System.out.println(count.getCount() + " " + count.getName());
-        }
-
-        solrQuery = new SolrQuery("*:*");
-        solrQuery.setRows(0);
-        solrQuery.setFacetLimit(-1);
-        solrQuery.setFacet(true);
-        solrQuery.setParam("facet.field", "city");
-        solrQuery.addFilterQuery("voltageLevel:[0 TO 500]");
-        solrQuery.setFacetSort(true);
-        response = solrServer2.query(solrQuery);
-        FacetField fieldVoltage = response.getFacetField("city");
-        System.out.println("\nPlants with voltage level between 0 and 500:");
-        List<FacetField.Count> valuesVoltage = fieldVoltage.getValues();
-
-        for(FacetField.Count count : valuesVoltage){
-            if (count.getCount()>2000)
-
-                System.out.println(count.getCount() + " " + count.getName());
-        }
-
-        solrQuery = new SolrQuery("*:*");
-        solrQuery.setRows(0);
-        solrQuery.setFacetLimit(-1);
-        solrQuery.setFacet(true);
-        // solrQuery.setQuery("city:B[*]");
-        response = solrServer2.query(solrQuery);
-
-        System.out.println(response.getResults());
+//
+//        solrQuery = new SolrQuery("*:*");
+//        solrQuery.setRows(0);
+//        solrQuery.setFacetLimit(-1);
+//        solrQuery.setFacet(true);
+//        solrQuery.setParam("facet.field", "plantType");
+//        solrQuery.addFilterQuery("city:Berlin");
+//        solrQuery.setFacetSort(true);
+//
+//        response = solrServer2.query(solrQuery);
+//        FacetField field2 = response.getFacetField("plantType");
+//        System.out.println("\nPlants in Berlin:");
+//        List<FacetField.Count> values2 = field2.getValues();
+//
+//        for(FacetField.Count count : values2){
+//            if (count.getCount()>0)
+//
+//                System.out.println(count.getCount() + " " + count.getName());
+//        }
+//
+//        solrQuery = new SolrQuery("*:*");
+//        solrQuery.setRows(0);
+//        solrQuery.setFacetLimit(-1);
+//        solrQuery.setFacet(true);
+//        solrQuery.setParam("facet.field", "plantType");
+//        solrQuery.addFilterQuery("nominalPower:[* TO 1000]");
+//        solrQuery.setFacetSort(true);
+//        response = solrServer2.query(solrQuery);
+//        FacetField fieldPower = response.getFacetField("plantType");
+//        System.out.println("\nPlants with nominal power between * and 1000:");
+//        List<FacetField.Count> valuesPower = fieldPower.getValues();
+//
+//        for(FacetField.Count count : valuesPower){
+//            if (count.getCount()>0)
+//
+//                System.out.println(count.getCount() + " " + count.getName());
+//        }
+//
+//        solrQuery = new SolrQuery("*:*");
+//        solrQuery.setRows(0);
+//        solrQuery.setFacetLimit(-1);
+//        solrQuery.setFacet(true);
+//        solrQuery.setParam("facet.field", "city");
+//        solrQuery.addFilterQuery("voltageLevel:[0 TO 500]");
+//        solrQuery.setFacetSort(true);
+//        response = solrServer2.query(solrQuery);
+//        FacetField fieldVoltage = response.getFacetField("city");
+//        System.out.println("\nPlants with voltage level between 0 and 500:");
+//        List<FacetField.Count> valuesVoltage = fieldVoltage.getValues();
+//
+//        for(FacetField.Count count : valuesVoltage){
+//            if (count.getCount()>2000)
+//
+//                System.out.println(count.getCount() + " " + count.getName());
+//        }
+//
+//        solrQuery = new SolrQuery("*:*");
+//        solrQuery.setRows(0);
+//        solrQuery.setFacetLimit(-1);
+//        solrQuery.setFacet(true);
+//        // solrQuery.setQuery("city:B[*]");
+//        response = solrServer2.query(solrQuery);
+//
+//        System.out.println(response.getResults());
 
         solrServer2.shutdown();
     }

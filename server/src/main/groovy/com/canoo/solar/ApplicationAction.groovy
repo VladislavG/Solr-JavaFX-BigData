@@ -93,7 +93,8 @@ public class ApplicationAction extends DolphinServerAction{
             solrQuery.setParam("facet.field", CITY);
             solrQuery.addFacetField(PLANT_TYPE);
             solrQuery.addFacetField(ZIP);
-            solrQuery.setRows(100)
+            solrQuery.setRows(100000)
+            solrQuery.setFacetLimit(Integer.MAX_VALUE)
             QueryResponse queryResponse = getSolrServer().query(solrQuery)
             def result = queryResponse.getResults()
             FacetField field = queryResponse.getFacetField(CITY);

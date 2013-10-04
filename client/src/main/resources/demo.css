@@ -1,8 +1,8 @@
 .label {
-    -fx-text-fill: saddlebrown;
+    -fx-text-fill: crimson;
 }
 .table-view .label {
-	-fx-text-fill: saddlebrown;
+	-fx-text-fill: crimson;
 }
 .tooltip {
     -fx-background-color:firebrick;
