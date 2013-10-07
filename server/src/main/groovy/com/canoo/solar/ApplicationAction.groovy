@@ -92,9 +92,9 @@ public class ApplicationAction extends DolphinServerAction{
             }
             solrQuery.setParam("facet.field", CITY);
             solrQuery.addFacetField(PLANT_TYPE);
-            solrQuery.addFacetField(ZIP);
-            solrQuery.setRows(100000)
-            solrQuery.setFacetLimit(Integer.MAX_VALUE)
+            solrQuery.addFacetField(ZIP)
+            solrQuery.setRows(1000)
+            solrQuery.setFacetLimit(1000)
             QueryResponse queryResponse = getSolrServer().query(solrQuery)
             def result = queryResponse.getResults()
             FacetField field = queryResponse.getFacetField(CITY);
@@ -107,25 +107,31 @@ public class ApplicationAction extends DolphinServerAction{
 
             response.add(new DataCommand(new HashMap(ids: allPositions )))
             List<String> allCities = new ArrayList<>()
+            List<String> allCitiesCount = new ArrayList<>()
             List<String> allTypes = new ArrayList<>()
+            List<String> allTypesCount = new ArrayList<>()
             List<String> allZips = new ArrayList<>()
+            List<String> allZipsCount = new ArrayList<>()
 
             List<FacetField.Count> values = field.getValues();
             List<FacetField.Count> valuestype = fieldtypes.getValues();
             List<FacetField.Count> valueszip = fieldzip.getValues();
 
             for(FacetField.Count count : values){
-                allCities << count.getName() + " (" + count.getCount() + ")"
+                allCities << count.getName()
+                allCitiesCount << count.getCount()
             }
             for(FacetField.Count count : valuestype){
-                allTypes << count.getName() + " (" + count.getCount() + ")"
+                allTypes << count.getName()
+                allTypesCount << count.getCount()
             }
             for(FacetField.Count count : valueszip){
-                allZips << count.getName() + " (" + count.getCount() + ")"
+                allZips << count.getName()
+                allZipsCount << count.getCount()
             }
-            response.add(new DataCommand(new HashMap(ids: allTypes, facetName: PLANT_TYPE )))
-            response.add(new DataCommand(new HashMap(ids: allCities, facetName: CITY )))
-            response.add(new DataCommand(new HashMap(ids: allZips, facetName: ZIP )))
+            response.add(new DataCommand(new HashMap(ids: allTypes, numCount: allTypesCount )))
+            response.add(new DataCommand(new HashMap(ids: allCities, numCount: allCitiesCount )))
+            response.add(new DataCommand(new HashMap(ids: allZips, numCount: allZipsCount )))
 
         }
     }

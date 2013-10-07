@@ -48,8 +48,11 @@ public class Application extends javafx.application.Application {
     static ClientDolphin clientDolphin;
     javafx.collections.ObservableList<Integer> observableList = FXCollections.observableArrayList()
     javafx.collections.ObservableList<Integer> observableListCities = FXCollections.observableArrayList()
+    javafx.collections.ObservableList<Integer> observableListCitiesCount = FXCollections.observableArrayList()
     javafx.collections.ObservableList<Integer> observableListTypes = FXCollections.observableArrayList()
+    javafx.collections.ObservableList<Integer> observableListTypesCount = FXCollections.observableArrayList()
     javafx.collections.ObservableList<Integer> observableListZips = FXCollections.observableArrayList()
+    javafx.collections.ObservableList<Integer> observableListZipsCount = FXCollections.observableArrayList()
 
     private PresentationModel textAttributeModel;
     private TableView<PowerPlant> table = new TableView();
@@ -89,6 +92,7 @@ public class Application extends javafx.application.Application {
     Pane filterStack = new Pane()
     Pane tableStack = new Pane()
     Pane pane = new Pane()
+    HBox trees = new HBox()
     private Rectangle clipRect;
     private Timeline timelineLeft;
     private Timeline timelineRight;
@@ -104,10 +108,11 @@ public class Application extends javafx.application.Application {
     final Separator separator = new Separator();
     final Separator separator2 = new Separator();
     TextField nominalText = new TextField()
+
     TextField typeLabelforBinding = typeChoiceBox.getTextbox()
     TextField cityLabelforBinding = cityText.getTextbox()
 
-    PowerPlantList fakedPersonList = new PowerPlantList(50, new OurBiConsumer<Integer, PowerPlant>(){
+    PowerPlantList fakedPersonList = new PowerPlantList(10000, new OurBiConsumer<Integer, PowerPlant>(){
         @Override
         void accept(Integer rowIndex, PowerPlant pp) {
             loadPresentationModel(rowIndex, pp)
@@ -148,32 +153,41 @@ public class Application extends javafx.application.Application {
         observableListTypes.clear()
         observableListZips.clear()
         clientDolphin.data GET, { data ->
-
+            def cityCount = 0
+            def typeCount = 0
+            def zipCount = 0
             observableListCities.addAll(data.get(2).get("ids"))
+            observableListCitiesCount.addAll(data.get(2).get("numCount"))
             treeCities.getRoot().getChildren().clear()
             observableListCities.each {
-                if(it.toString().endsWith("(0)")) return;
+
+                if(observableListCitiesCount.get(cityCount).toString().equals("0")) return;
+                cityCount++
                 final TreeItem<String> checkBoxTreeItem =
-                    new TreeItem<String>(it.toString());
+                    new TreeItem<String>(it.toString() + " (" + observableListCitiesCount.get(cityCount-1).toString() + ")");
                 treeCities.getRoot().getChildren().add(checkBoxTreeItem);
 
             }
 
             observableListTypes.addAll(data.get(1).get("ids"))
+            observableListTypesCount.addAll(data.get(1).get("numCount"))
             treeTypes.getRoot().getChildren().clear()
             observableListTypes.each {
-                    if(it.toString().endsWith("(0)")) return;
+                if(observableListTypesCount.get(typeCount).toString().equals("0")) return;
+                typeCount++
                 final TreeItem<String> checkBoxTreeItem =
-                    new TreeItem<String>(it.toString());
+                    new TreeItem<String>(it.toString() + " (" +  observableListTypesCount.get(typeCount-1).toString() + ")");
                 treeTypes.getRoot().getChildren().add(checkBoxTreeItem);
             }
 
             observableListZips.addAll(data.get(3).get("ids"))
+            observableListZipsCount.addAll(data.get(3).get("numCount"))
             treeZip.getRoot().getChildren().clear()
             observableListZips.each {
-                    if(it.toString().endsWith("(0)")) return;
+                    if(observableListZipsCount.get(zipCount).toString().equals("0")) return;
+                zipCount++
                 final TreeItem<String> checkBoxTreeItem =
-                    new TreeItem<String>(it.toString());
+                    new TreeItem<String>(it.toString() + " (" + observableListZipsCount.get(zipCount-1).toString() + ")");
                 treeZip.getRoot().getChildren().add(checkBoxTreeItem);
             }
 
@@ -231,7 +245,7 @@ public class Application extends javafx.application.Application {
     }
 
     private Pane setupStage() {
-        def orderPm = clientDolphin.findPresentationModelById(ORDER)
+
         loading.setScaleX(1.2)
         loading.setScaleY(1.2)
         loading.setTextFill(Color.BLUE)
@@ -251,6 +265,9 @@ public class Application extends javafx.application.Application {
         nominalCB.setSelected(true);
         zipCB.setSelected(true);
 
+        def orderPm = clientDolphin.findPresentationModelById(ORDER)
+
+
 //      create borders for sliding panes
         Rectangle columnCBBorder = createCBsBorder()
         Rectangle columnEventBorder = createEventBorder()
@@ -260,20 +277,20 @@ public class Application extends javafx.application.Application {
         filtersEventBorder.relocate(0, 420)
 
         table.setMinHeight(700)
-        def allitems = items(1000)
 //        table.items = observableList
-        table.getItems().addAll(items)
+//        table.getItems().addAll(items)
+        table.setItems(items)
         table.setPlaceholder(loading)
-        table.selectionModel.selectedItemProperty().addListener( { o, oldVal, selectedPm ->
+        //table.selectionModel.selectedItemProperty().addListener( { o, oldVal, selectedPm ->
 
-            if (selectedPm==null) return;
-            clientDolphin.clientModelStore.withPresentationModel(selectedPm.toString(), new WithPresentationModelHandler() {
-                void onFinished(ClientPresentationModel presentationModel) {
-                    clientDolphin.apply presentationModel to clientDolphin[SELECTED_POWERPLANT]
-
-                }
-            } )
-        } as ChangeListener )
+//            if (selectedPm==null) return;
+//            clientDolphin.clientModelStore.withPresentationModel(selectedPm.toString(), new WithPresentationModelHandler() {
+//                void onFinished(ClientPresentationModel presentationModel) {
+//                    clientDolphin.apply presentationModel to clientDolphin[SELECTED_POWERPLANT]
+//
+//                }
+//            } )
+//        } as ChangeListener )
 //
 //        table.setRowFactory(new Callback<TableView<PP>, TableRow<PP>>() {
 //            @Override
@@ -329,7 +346,7 @@ public class Application extends javafx.application.Application {
                 return pp.getZipProperty()
             }
         });
-//
+
         nominalCol.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<PP, String>, ObservableValue<String>>() {
             @Override
             public ObservableValue<String> call(TableColumn.CellDataFeatures<PP, String> param) {
@@ -444,7 +461,7 @@ public class Application extends javafx.application.Application {
         treeCities.setRoot(rootItemCities);
         treeCities.setShowRoot(true);
 
-        HBox trees = new HBox()
+
         trees.setSpacing(5)
         separator.setMinWidth(trees.getTranslateX())
         separator2.setMinWidth(trees.getTranslateX())
@@ -461,15 +478,12 @@ public class Application extends javafx.application.Application {
                 
                 if (newValue) {
                     int i = 1
-                    
                     orderPm.getAttributes().each {if(it.value > 0) i++}
                     orderPm.findAttributeByPropertyName(PLANT_TYPE).setValue(i)
-                    println "typeTree added with order: " + i
-                    trees.getChildren().add(treeTypes)
+
                 }
                 else {
-                    trees.getChildren().remove(treeTypes)
-                   def order = orderPm.findAttributeByPropertyName(PLANT_TYPE).getValue()
+                   def order = clientDolphin.findPresentationModelById(ORDER).findAttributeByPropertyName(PLANT_TYPE).getValue()
                     orderPm.getAttributes().each {if(it.value > order) it.setValue(it.getValue()-1)}
                     orderPm.findAttributeByPropertyName(PLANT_TYPE).setValue(0)
 
@@ -486,11 +500,8 @@ public class Application extends javafx.application.Application {
                     int i = 1
                     orderPm.getAttributes().each {if(it.value > 0) i++}
                     orderPm.findAttributeByPropertyName(CITY).setValue(i)
-                    println "cityTree added with order: " + i
-                    trees.getChildren().add(treeCities)
                 }
                 else {
-                    trees.getChildren().remove(treeCities)
                     def order = orderPm.findAttributeByPropertyName(CITY).getValue()
                     orderPm.getAttributes().each {if(it.value > order) it.setValue(it.getValue()-1)}
                     orderPm.findAttributeByPropertyName(CITY).setValue(0)
@@ -507,11 +518,8 @@ public class Application extends javafx.application.Application {
                     int i = 1
                     orderPm.getAttributes().each {if(it.value > 0) i++}
                     orderPm.findAttributeByPropertyName(ZIP).setValue(i)
-                    println "zipTree added with order: " + i
-                    trees.getChildren().add(treeZip)
                 }
                 else {
-                    trees.getChildren().remove(treeZip)
                     def order = orderPm.findAttributeByPropertyName(ZIP).getValue()
                     orderPm.getAttributes().each {if(it.value > order) it.setValue(it.getValue()-1)}
                     orderPm.findAttributeByPropertyName(ZIP).setValue(0)
@@ -524,48 +532,103 @@ public class Application extends javafx.application.Application {
                 new ChangeListener<TreeItem <String>>() {
                     public void changed(ObservableValue<? extends TreeItem<String>> observableValue,
                                         TreeItem<String> oldItem, TreeItem<String> newItem) {
-
+                        def cityValue = clientDolphin.findPresentationModelById(ORDER).findAttributeByPropertyName(CITY).getValue()
+                        def typeValue = clientDolphin.findPresentationModelById(ORDER).findAttributeByPropertyName(PLANT_TYPE).getValue()
+                        def zipValue = clientDolphin.findPresentationModelById(ORDER).findAttributeByPropertyName(ZIP).getValue()
                         String[] parts = newItem.getValue().toString().split(" \\(");
                         String part1 = parts[0];
                         selectionLabeltypes.setText(part1);
-                        if (orderPm.findAttributeByPropertyName(CITY).getValue() > orderPm.findAttributeByPropertyName(PLANT_TYPE).getValue()){selectionLabelcities.setText("")}
-                        if (orderPm.findAttributeByPropertyName(ZIP).getValue() > orderPm.findAttributeByPropertyName(PLANT_TYPE).getValue()){selectionLabelzips.setText("")}
+                        if (cityValue > typeValue){selectionLabelcities.setText("")}
+                        if (zipValue > typeValue){selectionLabelzips.setText("")}
                         observableList.clear()
+
                         clientDolphin.data GET, { data ->
-                            if (orderPm.findAttributeByPropertyName(CITY).getValue() > orderPm.findAttributeByPropertyName(PLANT_TYPE).getValue()){
+                            if (cityValue > typeValue){
+
+                                observableListCitiesCount.clear()
                                 observableListCities.clear()
-                                selectionLabelcities.setText("")
+                                observableListCitiesCount.addAll(data.get(2).get("numCount"))
                                 observableListCities.addAll(data.get(2).get("ids"))
+                                Map<Integer,Integer> map = new LinkedHashMap<Integer,Integer>();
+                                for (int i=0; i<observableListCities.size(); i++) {
+                                    map.put(observableListCities.get(i), observableListCitiesCount.get(i));    // is there a clearer way?
+                                }
+                                List<TreeItem<String>> iteratedList = new ArrayList<TreeItem<String>>()
                                 treeCities.getRoot().getChildren().each {
-                                    TreeItem<String> treeItem = it
-                                    treeCities.getRoot().getChildren().remove(it)
                                     String[] elements = it.getValue().toString().split(" \\(");
                                     String element1 = elements[0];
-                                    observableListCities.each {
+                                    def newCount = map.get(element1)
+
+                                            final TreeItem<String> checkBoxTreeItem =
+                                                new TreeItem<String>(element1 + " (" + newCount + ")");
+                                            iteratedList.add(checkBoxTreeItem);
+
+
+                                }
+                            treeCities.getRoot().getChildren().clear()
+                            treeCities.getRoot().getChildren().addAll(iteratedList)
+
+                            }
+                            if (zipValue > typeValue){
+                                observableListZips.clear()
+                                observableListZips.addAll(data.get(3).get("ids"))
+                                treeZip.getRoot().getChildren().clear()
+                                selectionLabelzips.setText("")
+                                observableListZips.each {
+                                    final TreeItem<String> checkBoxTreeItem =
+                                        new TreeItem<String>(it.toString());
+                                    treeZip.getRoot().getChildren().add(checkBoxTreeItem);
+                                }
+                            }
+                            observableList.addAll( data.get(0).get("ids"))
+                            if (observableList.size()==0){table.setPlaceholder(noData)}
+                            else{table.setPlaceholder(loading)}
+
+                        }
+                    }
+                });
+        
+        treeCities.getSelectionModel().selectedItemProperty().addListener(
+                new ChangeListener<TreeItem <String>>() {
+                    public void changed(ObservableValue<? extends TreeItem<String>> observableValue,
+                                        TreeItem<String> oldItem, TreeItem<String> newItem) {
+                        def cityValue = clientDolphin.findPresentationModelById(ORDER).findAttributeByPropertyName(CITY).getValue()
+                        def typeValue = clientDolphin.findPresentationModelById(ORDER).findAttributeByPropertyName(PLANT_TYPE).getValue()
+                        def zipValue = clientDolphin.findPresentationModelById(ORDER).findAttributeByPropertyName(ZIP).getValue()
+                        if (newItem==null) return;
+                        String[] parts = newItem.getValue().toString().split(" \\(");
+                        String part1 = parts[0];
+                        selectionLabelcities.setText(part1);
+                        if (typeValue > cityValue){selectionLabeltypes.setText("")}
+                        if (zipValue > cityValue){selectionLabelzips.setText("")}
+
+                        observableList.clear()
+                        clientDolphin.data GET, { data ->
+                            if (typeValue > cityValue){
+                                observableListTypes.clear()
+                                observableListTypes.addAll(data.get(1).get("ids"))
+                                treeTypes.getRoot().getChildren().each {
+                                    treeTypes.getRoot().getChildren().remove(it)
+                                    String[] elements = it.getValue().toString().split(" \\(");
+                                    String element1 = elements[0];
+                                    observableListTypes.each {
                                         String[] elements2 = it.toString().split(" \\(");
                                         String element2 = elements2[0];
                                         if(element1 == element2){
                                             final TreeItem<String> checkBoxTreeItem =
                                                 new TreeItem<String>(it.toString());
-                                            def theItem = treeCities.getRoot().getChildren().find {it.getValue().toString() == treeItem.getValue().toString()}
-
-                                            treeCities.getRoot().getChildren().add(checkBoxTreeItem);
-
+                                            treeTypes.getRoot().getChildren().add(checkBoxTreeItem);
+                                            return;
                                         }
                                         else return;
-
                                     }
                                 }
                             }
-
-                            if (orderPm.findAttributeByPropertyName(ZIP).getValue() > orderPm.findAttributeByPropertyName(PLANT_TYPE).getValue()){
+                            if (zipValue > cityValue){
                                 observableListZips.clear()
-
                                 observableListZips.addAll(data.get(3).get("ids"))
                                 treeZip.getRoot().getChildren().clear()
-                                selectionLabelzips.setText("")
                                 observableListZips.each {
-    //                    if(it.toString().endsWith("(0)")) return;
                                     final TreeItem<String> checkBoxTreeItem =
                                         new TreeItem<String>(it.toString());
                                     treeZip.getRoot().getChildren().add(checkBoxTreeItem);
@@ -578,82 +641,39 @@ public class Application extends javafx.application.Application {
                         }
                     }
                 });
-        treeCities.getSelectionModel().selectedItemProperty().addListener(
-                new ChangeListener<TreeItem <String>>() {
-                    public void changed(ObservableValue<? extends TreeItem<String>> observableValue,
-                                        TreeItem<String> oldItem, TreeItem<String> newItem) {
-
-                        if (newItem==null) return;
-                        String[] parts = newItem.getValue().toString().split(" \\(");
-                        String part1 = parts[0];
-                        selectionLabelcities.setText(part1);
-                        if (orderPm.findAttributeByPropertyName(PLANT_TYPE).getValue() > orderPm.findAttributeByPropertyName(CITY).getValue()){selectionLabeltypes.setText("")}
-                        if (orderPm.findAttributeByPropertyName(ZIP).getValue() > orderPm.findAttributeByPropertyName(CITY).getValue()){selectionLabelzips.setText("")}
-
-
-                        observableList.clear()
-                        clientDolphin.data GET, { data ->
-                            if (orderPm.findAttributeByPropertyName(PLANT_TYPE).getValue() > orderPm.findAttributeByPropertyName(CITY).getValue()){
-                                observableListTypes.clear()
-                                observableListTypes.addAll(data.get(1).get("ids"))
-                                treeTypes.getRoot().getChildren().clear()
-                                observableListTypes.each {
-    //                    if(it.toString().endsWith("(0)")) return;
-                                    final TreeItem<String> checkBoxTreeItem =
-                                        new TreeItem<String>(it.toString());
-                                    treeTypes.getRoot().getChildren().add(checkBoxTreeItem);
-                                }
-                            }
-                            if (orderPm.findAttributeByPropertyName(ZIP).getValue() > orderPm.findAttributeByPropertyName(CITY).getValue()){
-                                observableListZips.clear()
-                                observableListZips.addAll(data.get(3).get("ids"))
-                                treeZip.getRoot().getChildren().clear()
-                                observableListZips.each {
-    //                    if(it.toString().endsWith("(0)")) return;
-                                    final TreeItem<String> checkBoxTreeItem =
-                                        new TreeItem<String>(it.toString());
-                                    treeZip.getRoot().getChildren().add(checkBoxTreeItem);
-                                }
-                            }
-                            observableList.addAll( data.get(0).get("ids"))
-                            if (observableList.size()==0){table.setPlaceholder(noData)}
-                            else{table.setPlaceholder(loading)}
-
-                        }
-                    }
-                });
+        
         treeZip.getSelectionModel().selectedItemProperty().addListener(
                 new ChangeListener<TreeItem <String>>() {
                     public void changed(ObservableValue<? extends TreeItem<String>> observableValue,
                                         TreeItem<String> oldItem, TreeItem<String> newItem) {
-
+                        def cityValue = clientDolphin.findPresentationModelById(ORDER).findAttributeByPropertyName(CITY).getValue()
+                        def typeValue = clientDolphin.findPresentationModelById(ORDER).findAttributeByPropertyName(PLANT_TYPE).getValue()
+                        def zipValue = clientDolphin.findPresentationModelById(ORDER).findAttributeByPropertyName(ZIP).getValue()
                         if (newItem==null) return;
                         String[] parts = newItem.getValue().toString().split(" \\(");
                         String part1 = parts[0];
                         selectionLabelzips.setText(part1);
-                        if (orderPm.findAttributeByPropertyName(CITY).getValue() > orderPm.findAttributeByPropertyName(ZIP).getValue()){selectionLabelcities.setText("")}
-                        if (orderPm.findAttributeByPropertyName(PLANT_TYPE).getValue() > orderPm.findAttributeByPropertyName(ZIP).getValue()){selectionLabeltypes.setText("")}
+                        if (cityValue > zipValue){selectionLabelcities.setText("")}
+                        if (typeValue > zipValue){selectionLabeltypes.setText("")}
 
                         observableList.clear()
                         clientDolphin.data GET, { data ->
-                            if (orderPm.findAttributeByPropertyName(CITY).getValue() > orderPm.findAttributeByPropertyName(ZIP).getValue()){
+                            if (cityValue > zipValue){
                                 observableListCities.clear()
                                 observableListCities.addAll(data.get(2).get("ids"))
                                 treeCities.getRoot().getChildren().clear()
                                 observableListCities.each {
-//                                    if(it.toString().endsWith("(0)")) return;
                                     final TreeItem<String> checkBoxTreeItem =
                                         new TreeItem<String>(it.toString());
                                     treeCities.getRoot().getChildren().add(checkBoxTreeItem);
 
                                 }
                             }
-                            if (orderPm.findAttributeByPropertyName(PLANT_TYPE).getValue() > orderPm.findAttributeByPropertyName(ZIP).getValue()){
+                            if (typeValue > zipValue){
                                 observableListTypes.clear()
                                 observableListTypes.addAll(data.get(1).get("ids"))
                                 treeTypes.getRoot().getChildren().clear()
                                 observableListTypes.each {
-    //                    if(it.toString().endsWith("(0)")) return;
                                     final TreeItem<String> checkBoxTreeItem =
                                         new TreeItem<String>(it.toString());
                                     treeTypes.getRoot().getChildren().add(checkBoxTreeItem);
@@ -667,6 +687,7 @@ public class Application extends javafx.application.Application {
                         }
                     }
                 });
+
 
         setAnimation();
         setAnimationFilters();
@@ -818,6 +839,25 @@ public class Application extends javafx.application.Application {
         bind ID of clientDolphin[SELECTED_POWERPLANT] to 'text' of idLabelDetail
         bind NOMINAL_POWER of clientDolphin[SELECTED_POWERPLANT] to 'text' of nominalLabelDetail
         bind PLANT_TYPE of clientDolphin[SELECTED_POWERPLANT] to 'text' of typeLabelDetail
+
+        bindAttribute(clientDolphin[ORDER][PLANT_TYPE],{
+            if(it.newValue==0){
+                trees.getChildren().remove(treeTypes)
+            }
+            else if(it.oldValue==0) {trees.getChildren().add(treeTypes)}
+        })
+        bindAttribute(clientDolphin[ORDER][CITY],{
+            if(it.newValue==0){
+                trees.getChildren().remove(treeCities)
+            }
+            else if(it.oldValue==0) { trees.getChildren().add(treeCities)}
+        })
+        bindAttribute(clientDolphin[ORDER][ZIP],{
+            if(it.newValue==0){
+                trees.getChildren().remove(treeZip)
+            }
+            else if(it.oldValue==0) {trees.getChildren().add(treeZip)}
+        })
 
 //        bindAttribute(clientDolphin[STATE][TRIGGER], {
 //            observableList.clear()
