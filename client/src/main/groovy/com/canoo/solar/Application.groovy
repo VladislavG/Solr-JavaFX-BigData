@@ -37,10 +37,16 @@ import org.opendolphin.core.client.comm.WithPresentationModelHandler
 
 import java.beans.PropertyChangeListener
 import java.util.function.BiConsumer
+import java.util.function.Consumer
+import java.util.function.Function
+import java.util.function.ToDoubleFunction
+import java.util.function.ToIntFunction
+import java.util.function.ToLongFunction
 
 import static com.canoo.solar.ApplicationConstants.ATT_ATTR_ID
 import static com.canoo.solar.ApplicationConstants.PM_APP
 import static com.canoo.solar.Constants.CMD.GET
+import static com.canoo.solar.Constants.CMD.GET_FIFTY
 import static com.canoo.solar.Constants.FilterConstants.*
 import static org.opendolphin.binding.JFXBinder.bind
 
@@ -55,7 +61,7 @@ public class Application extends javafx.application.Application {
     javafx.collections.ObservableList<Integer> observableListZipsCount = FXCollections.observableArrayList()
 
     private PresentationModel textAttributeModel;
-    private TableView<PowerPlant> table = new TableView();
+    public static TableView<PowerPlant> table = new TableView();
     Label cityLabelforDetail = new Label("City:       ")
     Label zipLabelforDetail = new Label("Zip Code:")
     Label typeLabelforDetail = new Label("Type:      ")
@@ -112,10 +118,10 @@ public class Application extends javafx.application.Application {
     TextField typeLabelforBinding = typeChoiceBox.getTextbox()
     TextField cityLabelforBinding = cityText.getTextbox()
 
-    PowerPlantList fakedPersonList = new PowerPlantList(10000, new OurBiConsumer<Integer, PowerPlant>(){
+    PowerPlantList fakedPersonList = new PowerPlantList(1370000, new OurConsumer<Integer>(){
         @Override
-        void accept(Integer rowIndex, PowerPlant pp) {
-            loadPresentationModel(rowIndex, pp)
+        void accept(Integer rowIndex) {
+            loadPresentationModel(rowIndex)
         }
     });
     javafx.collections.ObservableList<PowerPlant> items = FakeCollections.newObservableList(fakedPersonList);
@@ -190,12 +196,6 @@ public class Application extends javafx.application.Application {
                     new TreeItem<String>(it.toString() + " (" + observableListZipsCount.get(zipCount-1).toString() + ")");
                 treeZip.getRoot().getChildren().add(checkBoxTreeItem);
             }
-
-
-            observableList.addAll( data.get(0).get("ids"))
-            if (observableList.size()==0){table.setPlaceholder(noData)}
-            else{table.setPlaceholder(loading)}
-
         }
 
         Pane root = setupStage();
@@ -215,12 +215,12 @@ public class Application extends javafx.application.Application {
         clientDolphin.presentationModel(ORDER, [CITY, PLANT_TYPE, ZIP])[ZIP].value=0
         clientDolphin.getClientModelStore().findPresentationModelById(ORDER).findAttributeByPropertyName(CITY).setValue(0)
         clientDolphin.getClientModelStore().findPresentationModelById(ORDER).findAttributeByPropertyName(PLANT_TYPE).setValue(0)
-        clientDolphin.presentationModel(STATE, [TRIGGER])[TRIGGER].value=0
-
+        clientDolphin.presentationModel(STATE, [TRIGGER, START_INDEX])[TRIGGER].value=0
+        clientDolphin.getClientModelStore().findPresentationModelById(STATE).findAttributeByPropertyName(START_INDEX).setValue(0)
 
     }
 
-    TableView getTable() {
+   public static TableView getTable() {
         return table;
     }
 
@@ -276,21 +276,21 @@ public class Application extends javafx.application.Application {
         Rectangle filtersEventBorder = createEventBorder()
         filtersEventBorder.relocate(0, 420)
 
-        table.setMinHeight(700)
-//        table.items = observableList
-//        table.getItems().addAll(items)
+        table.setMinHeight(600)
         table.setItems(items)
         table.setPlaceholder(loading)
-        //table.selectionModel.selectedItemProperty().addListener( { o, oldVal, selectedPm ->
+        table.selectionModel.selectedItemProperty().addListener( { o, oldVal, selectedPm ->
 
-//            if (selectedPm==null) return;
-//            clientDolphin.clientModelStore.withPresentationModel(selectedPm.toString(), new WithPresentationModelHandler() {
-//                void onFinished(ClientPresentationModel presentationModel) {
-//                    clientDolphin.apply presentationModel to clientDolphin[SELECTED_POWERPLANT]
-//
-//                }
-//            } )
-//        } as ChangeListener )
+            if (selectedPm==null) return;
+            clientDolphin.clientModelStore.withPresentationModel(selectedPm.toString(), new WithPresentationModelHandler() {
+                void onFinished(ClientPresentationModel presentationModel) {
+                    clientDolphin.apply presentationModel to clientDolphin[SELECTED_POWERPLANT]
+
+                }
+            } )
+        } as ChangeListener )
+        table.getColumns().addAll(firstColumn(), secondColumn(), thirdColumn(), fourthColumn(), fithColumn());
+
 //
 //        table.setRowFactory(new Callback<TableView<PP>, TableRow<PP>>() {
 //            @Override
@@ -327,50 +327,49 @@ public class Application extends javafx.application.Application {
 //                return tableRow;
 //            }
 //        });
-
-        idCol.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<PP, Integer>, ObservableValue<Integer>>() {
-            @Override
-            public ObservableValue<Integer> call(TableColumn.CellDataFeatures<PP, Integer> param) {
-                def value = param.getValue();
-
-                return value.getIdProperty()
-
-
-            }
-        });
-
-        zipCol.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<PP, String>, ObservableValue<String>>() {
-            @Override
-            public ObservableValue<String> call(TableColumn.CellDataFeatures<PP, String> param) {
-                PP pp = param.getValue()
-                return pp.getZipProperty()
-            }
-        });
-
-        nominalCol.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<PP, String>, ObservableValue<String>>() {
-            @Override
-            public ObservableValue<String> call(TableColumn.CellDataFeatures<PP, String> param) {
-                return param.getValue().getNominalProperty()
-
-            }
-        });
-
-        typeCol.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<PP, String>, ObservableValue<String>>() {
-            @Override
-            public ObservableValue<String> call(TableColumn.CellDataFeatures<PP, String> param) {
-                return  param.getValue().getTypeProperty()
-
-            }
-        });
-
-        cityCol.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<PP, String>, ObservableValue<String>>() {
-            @Override
-            public ObservableValue<String> call(TableColumn.CellDataFeatures<PP, String> param) {
-               return param.getValue().getCityProperty()
-            }
-        });
+//
+//        idCol.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<PP, Integer>, ObservableValue<Integer>>() {
+//            @Override
+//            public ObservableValue<Integer> call(TableColumn.CellDataFeatures<PP, Integer> param) {
+//                def value = param.getValue();
+//
+//                return value.getIdProperty()
+//
+//
+//            }
+//        });
+//
+//        zipCol.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<PP, String>, ObservableValue<String>>() {
+//            @Override
+//            public ObservableValue<String> call(TableColumn.CellDataFeatures<PP, String> param) {
+//                PP pp = param.getValue()
+//                return pp.getZipProperty()
+//            }
+//        });
+//
+//        nominalCol.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<PP, String>, ObservableValue<String>>() {
+//            @Override
+//            public ObservableValue<String> call(TableColumn.CellDataFeatures<PP, String> param) {
+//                return param.getValue().getNominalProperty()
+//
+//            }
+//        });
+//
+//        typeCol.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<PP, String>, ObservableValue<String>>() {
+//            @Override
+//            public ObservableValue<String> call(TableColumn.CellDataFeatures<PP, String> param) {
+//                return  param.getValue().getTypeProperty()
+//
+//            }
+//        });
+//
+//        cityCol.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<PP, String>, ObservableValue<String>>() {
+//            @Override
+//            public ObservableValue<String> call(TableColumn.CellDataFeatures<PP, String> param) {
+//               return param.getValue().getCityProperty()
+//            }
+//        });
 //        table.getColumns().addAll(idCol, typeCol, cityCol, zipCol, nominalCol);
-        table.getColumns().addAll(firstColumn(), secondColumn(), thirdColumn(), fourthColumn(), fithColumn());
 //
 //        idCol.cellValueFactory = {
 //            String lazyId = it.value
@@ -528,6 +527,8 @@ public class Application extends javafx.application.Application {
                             }
         });
 
+
+
         treeTypes.getSelectionModel().selectedItemProperty().addListener(
                 new ChangeListener<TreeItem <String>>() {
                     public void changed(ObservableValue<? extends TreeItem<String>> observableValue,
@@ -551,20 +552,19 @@ public class Application extends javafx.application.Application {
                                 observableListCities.addAll(data.get(2).get("ids"))
                                 Map<Integer,Integer> map = new LinkedHashMap<Integer,Integer>();
                                 for (int i=0; i<observableListCities.size(); i++) {
-                                    map.put(observableListCities.get(i), observableListCitiesCount.get(i));    // is there a clearer way?
+                                    map.put(observableListCities.get(i), observableListCitiesCount.get(i));
                                 }
                                 List<TreeItem<String>> iteratedList = new ArrayList<TreeItem<String>>()
                                 treeCities.getRoot().getChildren().each {
                                     String[] elements = it.getValue().toString().split(" \\(");
                                     String element1 = elements[0];
                                     def newCount = map.get(element1)
-
+                                    if (newCount==null)newCount=0;
                                             final TreeItem<String> checkBoxTreeItem =
                                                 new TreeItem<String>(element1 + " (" + newCount + ")");
                                             iteratedList.add(checkBoxTreeItem);
-
-
                                 }
+                            Collections.sort(iteratedList, new TreeItemNumberComparator())
                             treeCities.getRoot().getChildren().clear()
                             treeCities.getRoot().getChildren().addAll(iteratedList)
 
@@ -572,17 +572,27 @@ public class Application extends javafx.application.Application {
                             if (zipValue > typeValue){
                                 observableListZips.clear()
                                 observableListZips.addAll(data.get(3).get("ids"))
-                                treeZip.getRoot().getChildren().clear()
-                                selectionLabelzips.setText("")
-                                observableListZips.each {
-                                    final TreeItem<String> checkBoxTreeItem =
-                                        new TreeItem<String>(it.toString());
-                                    treeZip.getRoot().getChildren().add(checkBoxTreeItem);
+                                observableListZipsCount.clear()
+                                observableListZipsCount.addAll(data.get(3).get("numCount"))
+                                Map<Integer,Integer> map = new LinkedHashMap<Integer,Integer>();
+                                for (int i=0; i<observableListZips.size(); i++) {
+                                    map.put(observableListZips.get(i), observableListZipsCount.get(i));
                                 }
+                                List<TreeItem<String>> iteratedList = new ArrayList<TreeItem<String>>()
+                                treeZip.getRoot().getChildren().each {
+                                    String[] elements = it.getValue().toString().split(" \\(");
+                                    String element1 = elements[0];
+                                    def newCount = map.get(element1)
+                                    if (newCount==null)newCount=0;
+                                    final TreeItem<String> checkBoxTreeItem =
+                                        new TreeItem<String>(element1 + " (" + newCount + ")");
+                                    iteratedList.add(checkBoxTreeItem);
+                                }
+                                treeZip.getRoot().getChildren().clear()
+                                treeZip.getRoot().getChildren().addAll(iteratedList)
+
                             }
-                            observableList.addAll( data.get(0).get("ids"))
-                            if (observableList.size()==0){table.setPlaceholder(noData)}
-                            else{table.setPlaceholder(loading)}
+
 
                         }
                     }
@@ -1025,26 +1035,50 @@ public class Application extends javafx.application.Application {
         return result;
     }
 
-    private static void loadPresentationModel(int rowIdx, final PowerPlant plant) {
+    private static void loadPresentationModel(int rowIdx) {
         if (rowIdx == -1) return;
         System.out.println("loadPresentationModel: rowIdx = " + rowIdx);
-        if (plant.getLoadState() == LoadState.LOADED) return;
-        if (plant.getLoadState() == LoadState.LOADING) return;
-
-        plant.setLoadState(LoadState.LOADING);
-        getClientDolphin().clientModelStore.withPresentationModel(rowIdx.toString(), new WithPresentationModelHandler() {
-            void onFinished(ClientPresentationModel pm) {
-                plant.setDbId(rowIdx)
-                plant.typeProperty().setValue(pm[PLANT_TYPE].getValue().toString())
-                plant.zipProperty().setValue(pm[ZIP].getValue().toString())
-                plant.cityProperty().setValue(pm[CITY].getValue().toString())
-                plant.nominalProperty().setValue(pm[NOMINAL_POWER].getValue().toString())
-                plant.positionProperty().setValue(pm[POSITION].getValue().toString())
-                plant.setLoadState(LoadState.LOADED);
+        PowerPlant initialPlant = getTable().getItems().get(rowIdx)
+        if (initialPlant.getLoadState() == LoadState.LOADED) return;
+        if (initialPlant.getLoadState() == LoadState.LOADING) return;
+        boolean useWithPresentationModel = false
+        if (useWithPresentationModel) {
+            getClientDolphin().clientModelStore.withPresentationModel(rowIdx.toString(), new WithPresentationModelHandler() {
+                void onFinished(ClientPresentationModel pm) {
+                    PowerPlant plant = getTable().getItems().get(Integer.parseInt(pm.getId()))
+                    plant.setDbId(rowIdx)
+                    plant.typeProperty().setValue(pm[PLANT_TYPE].getValue().toString())
+                    plant.zipProperty().setValue(pm[ZIP].getValue().toString())
+                    plant.cityProperty().setValue(pm[CITY].getValue().toString())
+                    plant.nominalProperty().setValue(pm[NOMINAL_POWER].getValue().toString())
+                    plant.positionProperty().setValue(pm[POSITION].getValue().toString())
+                    plant.setLoadState(LoadState.LOADED);
 //                getTable().getColumns().clear()
 //                getTable().getColumns().addAll(getIdCol(), getTypeCol(), getCityCol(), getZipCol(), getNominalCol());
+                }
+            })
+
+        } else {
+            initialPlant.setLoadState(LoadState.LOADING);
+            clientDolphin.findPresentationModelById(STATE).findAttributeByPropertyName(START_INDEX).setValue(rowIdx)
+            clientDolphin.send GET_FIFTY, { pms ->
+                pms.each { pm ->
+                    println "555555555555555555555555          " + rowIdx
+                    PowerPlant plant = getTable().getItems().get(Integer.parseInt(pm.getId()))
+                    plant.setDbId(rowIdx)
+                    plant.typeProperty().setValue(pm[PLANT_TYPE].getValue().toString())
+                    plant.zipProperty().setValue(pm[ZIP].getValue().toString())
+                    plant.cityProperty().setValue(pm[CITY].getValue().toString())
+                    plant.nominalProperty().setValue(pm[NOMINAL_POWER].getValue().toString())
+                    plant.positionProperty().setValue(pm[POSITION].getValue().toString())
+                    plant.setLoadState(LoadState.LOADED);
+
+                }
+
             }
-        })
+        }
+
+
 
     }
 

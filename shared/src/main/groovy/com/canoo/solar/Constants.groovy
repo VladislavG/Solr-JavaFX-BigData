@@ -23,12 +23,14 @@ public class Constants {
     public static final String ORDER_SELECTED = 'ORDER_SELECTED'
     public static final String LAST_SELECTED = 'LAST_SELECTED'
     public static final String TRIGGER = 'TRIGGER'
+    public static final String START_INDEX = 'START_INDEX'
     public static final String STATE = 'STATE'
+    public static final Integer BATCH_SIZE = 1
 }
     static class CMD {
 
     public static final String GET = "fullDataRequest"
-    public static final String GET_CITIES = "citiesDataRequest"
+    public static final String GET_FIFTY = "fiftyDataRequest"
     public static final String GET_TYPE = "typeDataRequest"
 
 }

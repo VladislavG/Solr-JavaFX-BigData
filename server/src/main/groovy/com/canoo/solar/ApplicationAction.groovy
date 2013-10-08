@@ -37,6 +37,7 @@ public class ApplicationAction extends DolphinServerAction{
 
     public void registerIn(ActionRegistry registry) {
         registry.register(GET, filter)
+        registry.register(GET_FIFTY, getPms)
         registry.register(ValueChangedCommand.class, trigger)
 
         registry.register(GetPresentationModelCommand.class, new CommandHandler<GetPresentationModelCommand>() {
@@ -80,6 +81,8 @@ public class ApplicationAction extends DolphinServerAction{
     private final NamedCommandHandler filter = new NamedCommandHandler() {
         @Override
         void handleCommand(NamedCommand command, List<Command> response) {
+
+
 
             def filterPM = getServerDolphin().findPresentationModelById(FILTER)
             SolrQuery solrQuery = new SolrQuery("*:*")
@@ -136,9 +139,48 @@ public class ApplicationAction extends DolphinServerAction{
         }
     }
 
+    private final NamedCommandHandler getPms = new NamedCommandHandler() {
+        private static InitializeAttributeCommand createInitializeAttributeCommand(String pmId, String attributeName, Object attributeValue) {
+            return new InitializeAttributeCommand(pmId, attributeName, null, attributeValue, "PowerPlant")
+        }
+        @Override
+        void handleCommand(NamedCommand command, List<Command> response) {
+            Integer rowIdx = Integer.parseInt(getServerDolphin().findPresentationModelById(STATE).findAttributeByPropertyName(START_INDEX).getValue().toString())
+            def stopPoint = rowIdx + BATCH_SIZE
+            if (rowIdx == null) {
+                return
+            }
+            if (getServerDolphin().getAt(rowIdx.toString()) == null) {
+                while(rowIdx < stopPoint){
+                    def start = System.currentTimeMillis()
+                    def filterPM = getServerDolphin().findPresentationModelById(FILTER)
+                    SolrQuery solrQuery = new SolrQuery("*:*")
+                    solrQuery.setSort(POSITION, SolrQuery.ORDER.asc)
+                    filterPM.attributes.each {
+                        if (it.value=="" || it.value==null || it.value=="All") it.value = "*"
+                        solrQuery.addFilterQuery(it.getPropertyName() + ":" + it.value)
+                    }
+                    solrQuery.setStart(rowIdx)
+                    solrQuery.setRows(1);
+                    QueryResponse solrResponse = getSolrServer().query(solrQuery);
+                    def result = solrResponse.getResults().get(0)
+
+                    println "Solr took " + (System.currentTimeMillis() -  start )
+                    println "000000000000000000000000${stopPoint-rowIdx}"
+                    response.add(createInitializeAttributeCommand(rowIdx.toString(), ID, result.getFieldValue(ID)))
+                    response.add(createInitializeAttributeCommand(rowIdx.toString(), POSITION, result.getFieldValue(POSITION)))
+                    response.add(createInitializeAttributeCommand(rowIdx.toString(), NOMINAL_POWER, result.getFieldValue(NOMINAL_POWER)))
+                    response.add(createInitializeAttributeCommand(rowIdx.toString(), PLANT_TYPE, result.getFieldValue(PLANT_TYPE)))
+                    response.add(createInitializeAttributeCommand(rowIdx.toString(), CITY, result.getFieldValue(CITY)))
+                    response.add(createInitializeAttributeCommand(rowIdx.toString(), ZIP, result.getFieldValue(ZIP)))
+                    rowIdx++
+                }
+            }
+        }
+    }
 
 
-    private SolrServer getSolrServer() throws SolrServerException {
+            private SolrServer getSolrServer() throws SolrServerException {
         if (null == solrServer) {
             String solrHome = (ApplicationAction.class.getResource("/"+SOLR_INDEX_DIR)).getPath();
             CoreContainer coreContainer = new CoreContainer(solrHome);
