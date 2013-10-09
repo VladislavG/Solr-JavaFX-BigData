@@ -7,21 +7,17 @@ import java.util.Comparator;
 public class TreeItemNumberComparator implements Comparator<TreeItem> {
     @Override
     public int compare(TreeItem o1, TreeItem o2) {
-        String[] elements = o1.getValue().toString().split(" \\(");
-        String element1 = elements[1];
-        String[] elements2 = element1.split("\\)");
-        String theElement = elements2[0];
+        String firstCount = o1.getValue().toString();
+        String secondCount = o2.getValue().toString();
 
-        String[] elements3 = o2.getValue().toString().split(" \\(");
-        String element2 = elements3[1];
-        String[] elements4 = element2.split("\\)");
-        String theElement2 = elements4[0];
+        String theElement = firstCount.substring(firstCount.lastIndexOf('(')+1, firstCount.lastIndexOf(')'));
+        String theElement2 =  secondCount.substring(secondCount.lastIndexOf('(')+1, secondCount.lastIndexOf(')'));
 
-        String itemNumber1 = theElement;
-        String itemNumber2 = theElement2;
+        Integer itemNumber1 = Integer.parseInt(theElement);
+        Integer itemNumber2 = Integer.parseInt(theElement2);
 
         //ascending order
-        return theElement2.compareTo(theElement);
+        return itemNumber2.compareTo(itemNumber1);
 
         //descending order
     }

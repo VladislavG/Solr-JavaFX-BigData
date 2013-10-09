@@ -97,7 +97,7 @@ public class ApplicationAction extends DolphinServerAction{
             solrQuery.addFacetField(PLANT_TYPE);
             solrQuery.addFacetField(ZIP)
             solrQuery.setRows(1000)
-            solrQuery.setFacetLimit(1000)
+            solrQuery.setFacetLimit(Integer.MAX_VALUE)
             QueryResponse queryResponse = getSolrServer().query(solrQuery)
             def result = queryResponse.getResults()
             FacetField field = queryResponse.getFacetField(CITY);
@@ -107,7 +107,6 @@ public class ApplicationAction extends DolphinServerAction{
             result.each {
                 allPositions << it.getFieldValue(POSITION)
             }
-
             response.add(new DataCommand(new HashMap(ids: allPositions )))
             List<String> allCities = new ArrayList<>()
             List<String> allCitiesCount = new ArrayList<>()

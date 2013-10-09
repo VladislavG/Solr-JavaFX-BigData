@@ -8,6 +8,8 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Stream;
+
 import org.opendolphin.core.PresentationModel;
 import org.opendolphin.core.Tag;
 import org.opendolphin.core.comm.Command;
