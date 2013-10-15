@@ -45,11 +45,12 @@ public class ApplicationAction extends DolphinServerAction{
                 return new InitializeAttributeCommand(pmId, attributeName, null, attributeValue, "PowerPlant")
             }
             public void handleCommand(GetPresentationModelCommand cmd, List<Command> response) {
+
                 String pmId = cmd.pmId
-                println "requested pmId: " + pmId
                 if (pmId == null) {
                     return
                 }
+
                 if (getServerDolphin().getAt(pmId) == null) {
                     def start = System.currentTimeMillis()
                     SolrQuery solrQuery = new SolrQuery(POSITION + ":" + pmId);
@@ -73,6 +74,7 @@ public class ApplicationAction extends DolphinServerAction{
         public void handleCommand(final ValueChangedCommand command, final List<Command> response) {
             PresentationModel filterPm = getServerDolphin()[FILTER]
             PresentationModel statePm = getServerDolphin()[STATE]
+
             if(!filterPm.findAttributeById(command.attributeId))  return;
             changeValue statePm[TRIGGER], (statePm[TRIGGER].value)+2
 
@@ -96,10 +98,12 @@ public class ApplicationAction extends DolphinServerAction{
             solrQuery.setParam("facet.field", CITY);
             solrQuery.addFacetField(PLANT_TYPE);
             solrQuery.addFacetField(ZIP)
-            solrQuery.setRows(1000)
+            solrQuery.setRows(200000)
             solrQuery.setFacetLimit(Integer.MAX_VALUE)
+            def start = System.currentTimeMillis()
             QueryResponse queryResponse = getSolrServer().query(solrQuery)
             def result = queryResponse.getResults()
+            println "Solr took " + (System.currentTimeMillis() -  start )
             FacetField field = queryResponse.getFacetField(CITY);
             FacetField fieldtypes = queryResponse.getFacetField(PLANT_TYPE);
             FacetField fieldzip = queryResponse.getFacetField(ZIP);
@@ -145,16 +149,20 @@ public class ApplicationAction extends DolphinServerAction{
         @Override
         void handleCommand(NamedCommand command, List<Command> response) {
             Integer rowIdx = Integer.parseInt(getServerDolphin().findPresentationModelById(STATE).findAttributeByPropertyName(START_INDEX).getValue().toString())
-            def stopPoint = rowIdx + BATCH_SIZE
+            def reverse = getServerDolphin().findPresentationModelById(STATE).findAttributeByPropertyName(REVERSER_ORDER)
             if (rowIdx == null) {
                 return
             }
+
             if (getServerDolphin().getAt(rowIdx.toString()) == null) {
-                while(rowIdx < stopPoint){
                     def start = System.currentTimeMillis()
                     def filterPM = getServerDolphin().findPresentationModelById(FILTER)
                     SolrQuery solrQuery = new SolrQuery("*:*")
-                    solrQuery.setSort(POSITION, SolrQuery.ORDER.asc)
+                if (reverse.getValue()) {
+                    solrQuery.setSort(getServerDolphin().findPresentationModelById(STATE).findAttributeByPropertyName(SORT).getValue().toString(), SolrQuery.ORDER.desc)
+                } else {
+                    solrQuery.setSort(getServerDolphin().findPresentationModelById(STATE).findAttributeByPropertyName(SORT).getValue().toString(), SolrQuery.ORDER.asc)
+                }
                     filterPM.attributes.each {
                         if (it.value=="" || it.value==null || it.value=="All") it.value = "*"
                         solrQuery.addFilterQuery(it.getPropertyName() + ":" + it.value)
@@ -163,17 +171,15 @@ public class ApplicationAction extends DolphinServerAction{
                     solrQuery.setRows(1);
                     QueryResponse solrResponse = getSolrServer().query(solrQuery);
                     def result = solrResponse.getResults().get(0)
-
+                    println "currenty creating PM for index: $rowIdx"
                     println "Solr took " + (System.currentTimeMillis() -  start )
-                    println "000000000000000000000000${stopPoint-rowIdx}"
                     response.add(createInitializeAttributeCommand(rowIdx.toString(), ID, result.getFieldValue(ID)))
                     response.add(createInitializeAttributeCommand(rowIdx.toString(), POSITION, result.getFieldValue(POSITION)))
                     response.add(createInitializeAttributeCommand(rowIdx.toString(), NOMINAL_POWER, result.getFieldValue(NOMINAL_POWER)))
                     response.add(createInitializeAttributeCommand(rowIdx.toString(), PLANT_TYPE, result.getFieldValue(PLANT_TYPE)))
                     response.add(createInitializeAttributeCommand(rowIdx.toString(), CITY, result.getFieldValue(CITY)))
                     response.add(createInitializeAttributeCommand(rowIdx.toString(), ZIP, result.getFieldValue(ZIP)))
-                    rowIdx++
-                }
+
             }
         }
     }
