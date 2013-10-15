@@ -19,6 +19,7 @@ public class Constants {
     public static final String NOMINAL_POWER = "nominalPower"
     public static final String FILTER = 'FILTER'
     public static final String SELECTED_POWERPLANT = 'SELECTED_POWERPLANT'
+    public static final String POWERPLANT = 'POWERPLANT'
     public static final String ORDER = 'ORDER'
     public static final String REVERSER_ORDER = 'REVERSE_ORDER'
     public static final String SORT = 'SORT'

@@ -42,7 +42,7 @@ public class ApplicationAction extends DolphinServerAction{
 
         registry.register(GetPresentationModelCommand.class, new CommandHandler<GetPresentationModelCommand>() {
             private InitializeAttributeCommand createInitializeAttributeCommand(String pmId, String attributeName, Object attributeValue) {
-                return new InitializeAttributeCommand(pmId, attributeName, null, attributeValue, "PowerPlant")
+                return new InitializeAttributeCommand(pmId, attributeName, null, attributeValue, POWERPLANT)
             }
             public void handleCommand(GetPresentationModelCommand cmd, List<Command> response) {
 
@@ -98,7 +98,7 @@ public class ApplicationAction extends DolphinServerAction{
             solrQuery.setParam("facet.field", CITY);
             solrQuery.addFacetField(PLANT_TYPE);
             solrQuery.addFacetField(ZIP)
-            solrQuery.setRows(200000)
+            solrQuery.setRows(10000)
             solrQuery.setFacetLimit(Integer.MAX_VALUE)
             def start = System.currentTimeMillis()
             QueryResponse queryResponse = getSolrServer().query(solrQuery)
@@ -144,7 +144,7 @@ public class ApplicationAction extends DolphinServerAction{
 
     private final NamedCommandHandler getPms = new NamedCommandHandler() {
         private static InitializeAttributeCommand createInitializeAttributeCommand(String pmId, String attributeName, Object attributeValue) {
-            return new InitializeAttributeCommand(pmId, attributeName, null, attributeValue, "PowerPlant")
+            return new InitializeAttributeCommand(pmId, attributeName, null, attributeValue, POWERPLANT)
         }
         @Override
         void handleCommand(NamedCommand command, List<Command> response) {
