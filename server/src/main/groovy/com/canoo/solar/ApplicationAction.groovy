@@ -37,7 +37,7 @@ public class ApplicationAction extends DolphinServerAction{
 
     public void registerIn(ActionRegistry registry) {
         registry.register(GET, filter)
-        registry.register(GET_FIFTY, getPms)
+        registry.register(GET_ROW, getPms)
         registry.register(ValueChangedCommand.class, trigger)
 
         registry.register(GetPresentationModelCommand.class, new CommandHandler<GetPresentationModelCommand>() {
@@ -72,10 +72,10 @@ public class ApplicationAction extends DolphinServerAction{
     private final CommandHandler trigger = new CommandHandler<ValueChangedCommand>() {
         @Override
         public void handleCommand(final ValueChangedCommand command, final List<Command> response) {
-            PresentationModel filterPm = getServerDolphin()[FILTER]
+            PresentationModel orderPm = getServerDolphin()[ORDER]
             PresentationModel statePm = getServerDolphin()[STATE]
-
-            if(!filterPm.findAttributeById(command.attributeId))  return;
+            if (command.getOldValue()==null)return;
+            if(!orderPm.findAttributeById(command.attributeId))  return;
             changeValue statePm[TRIGGER], (statePm[TRIGGER].value)+2
 
         }
@@ -107,11 +107,8 @@ public class ApplicationAction extends DolphinServerAction{
             FacetField field = queryResponse.getFacetField(CITY);
             FacetField fieldtypes = queryResponse.getFacetField(PLANT_TYPE);
             FacetField fieldzip = queryResponse.getFacetField(ZIP);
-            List<Integer> allPositions = new ArrayList<>()
-            result.each {
-                allPositions << it.getFieldValue(POSITION)
-            }
-            response.add(new DataCommand(new HashMap(ids: allPositions )))
+
+            response.add(new DataCommand(new HashMap(size: result.size() )))
             List<String> allCities = new ArrayList<>()
             List<String> allCitiesCount = new ArrayList<>()
             List<String> allTypes = new ArrayList<>()

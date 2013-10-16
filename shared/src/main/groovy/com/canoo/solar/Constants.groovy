@@ -12,6 +12,7 @@ public class Constants {
    static class FilterConstants {
 
     public static final String ID = "id"
+    public static final String IDS = "ids"
     public static final String POSITION = "position"
     public static final String CITY = "city"
     public static final String PLANT_TYPE = "plantType"
@@ -23,16 +24,17 @@ public class Constants {
     public static final String ORDER = 'ORDER'
     public static final String REVERSER_ORDER = 'REVERSE_ORDER'
     public static final String SORT = 'SORT'
+    public static final String SIZE = 'size'
     public static final String TRIGGER = 'TRIGGER'
     public static final String START_INDEX = 'START_INDEX'
     public static final String STATE = 'STATE'
+    public static final String IGNORE = 'IGNORE'
     public static final Integer BATCH_SIZE = 1
 }
     static class CMD {
 
     public static final String GET = "fullDataRequest"
-    public static final String GET_FIFTY = "fiftyDataRequest"
-    public static final String GET_TYPE = "typeDataRequest"
+    public static final String GET_ROW = "rowDataRequest"
 
 }
 }

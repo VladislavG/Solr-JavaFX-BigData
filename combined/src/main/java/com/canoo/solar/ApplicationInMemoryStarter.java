@@ -9,12 +9,12 @@ public class ApplicationInMemoryStarter {
         config.getServerDolphin().registerDefaultActions();
         config.getClientDolphin().getClientConnector().setUiThreadHandler(new JavaFXUiThreadHandler());
         registerApplicationActions(config);
-//        com.canoo.solar.Application.clientDolphin = config.getClientDolphin();
         javafx.application.Application.launch(com.canoo.solar.Application.class);
     }
 
     private static void registerApplicationActions(DefaultInMemoryConfig config) {
         config.getServerDolphin().register(new ApplicationDirector());
+
     }
 
 }
