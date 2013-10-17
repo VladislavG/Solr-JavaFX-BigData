@@ -30,6 +30,7 @@ public class Constants {
     public static final String STATE = 'STATE'
     public static final String IGNORE = 'IGNORE'
     public static final Integer BATCH_SIZE = 1
+    public static final String NUM_COUNT = "numCount"
 }
     static class CMD {
 

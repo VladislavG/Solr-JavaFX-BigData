@@ -12,7 +12,7 @@ import javafx.scene.control.*
  */
 public class Listeners {
 
-    static public void ChoiceBoxListener(CheckBox cb, TableView table, TableColumn col){
+    static public void setChoiceBoxListener(CheckBox cb, TableView table, TableColumn col){
         cb.selectedProperty().addListener(new ChangeListener<Boolean>() {
             @Override
             public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
