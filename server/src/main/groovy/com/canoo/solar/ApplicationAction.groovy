@@ -92,8 +92,9 @@ public class ApplicationAction extends DolphinServerAction{
             solrQuery.setSort(POSITION, SolrQuery.ORDER.asc)
             solrQuery.setFacet(true);
             filterPM.attributes.each {
-                if (it.value=="" || it.value==null || it.value=="All") it.value = "*"
-                solrQuery.addFilterQuery(it.getPropertyName() + ":" + it.value)
+                def value = it.value
+                if (value=="" || value==null || value.toString().contains("Plant Type") || value.toString().contains("Zip-Codes") || value.toString().contains("Cities")) value = "*"
+                solrQuery.addFilterQuery(it.getPropertyName() + ":" + value)
             }
             solrQuery.setParam("facet.field", CITY);
             solrQuery.addFacetField(PLANT_TYPE);
@@ -108,7 +109,7 @@ public class ApplicationAction extends DolphinServerAction{
             FacetField fieldtypes = queryResponse.getFacetField(PLANT_TYPE);
             FacetField fieldzip = queryResponse.getFacetField(ZIP);
 
-            response.add(new DataCommand(new HashMap(size: result.size() )))
+            response.add(new DataCommand(new HashMap(size: result.getNumFound() )))
             List<String> allCities = new ArrayList<>()
             List<String> allCitiesCount = new ArrayList<>()
             List<String> allTypes = new ArrayList<>()
@@ -161,7 +162,8 @@ public class ApplicationAction extends DolphinServerAction{
                     solrQuery.setSort(getServerDolphin().findPresentationModelById(STATE).findAttributeByPropertyName(SORT).getValue().toString(), SolrQuery.ORDER.asc)
                 }
                     filterPM.attributes.each {
-                        if (it.value=="" || it.value==null || it.value=="All") it.value = "*"
+                        def value = it.value
+                        if (value=="" || value==null || value.toString().contains("Plant Type") || value.toString().contains("Zip-Codes") || value.toString().contains("Cities")) it.value = "*"
                         solrQuery.addFilterQuery(it.getPropertyName() + ":" + it.value)
                     }
                     solrQuery.setStart(rowIdx)
