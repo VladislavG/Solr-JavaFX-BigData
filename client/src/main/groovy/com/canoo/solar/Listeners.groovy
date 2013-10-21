@@ -1,30 +1,45 @@
 package com.canoo.solar
+
 import javafx.beans.value.ChangeListener
 import javafx.beans.value.ObservableValue
 import javafx.scene.control.*
+import org.opendolphin.core.PresentationModel
 
-/**
- * Created with IntelliJ IDEA.
- * User: vladislav
- * Date: 17.10.13
- * Time: 14:13
- * To change this template use File | Settings | File Templates.
- */
 public class Listeners {
 
-    static public void setChoiceBoxListener(CheckBox cb, TableView table, TableColumn col){
+    static public void setChoiceBoxListener(CheckBox cb, TableView table, TableColumn col, String propertyName, PresentationModel colOrder){
         cb.selectedProperty().addListener(new ChangeListener<Boolean>() {
             @Override
             public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
                 if (newValue) {
                     table.getColumns().add(col)
+                    Application.addHeaderListener(table.getColumns().size()-1, propertyName)
+                    def i=-1
+                    colOrder.getAttributes().each {
+                        if(it.value > -1){
+                        i++
+                            Application.addHeaderListener(i, it.getPropertyName())
+                        }
+                    }
+
+                    colOrder.findAttributeByPropertyName(propertyName).setValue(i)
                 }
+
                 else {
                     table.getColumns().remove(col)
 
-                    def size = table.getColumns().size()-1
-                    (0..size).each {
-                        Application.addHeaderListener(it)
+                    def order = colOrder.findAttributeByPropertyName(propertyName).getValue()
+                    colOrder.findAttributeByPropertyName(propertyName).setValue(-1)
+
+                    colOrder.getAttributes().each {
+                        if(it.value > order){
+                            it.setValue(it.getValue()-1)
+                        }
+                    }
+                    colOrder.getAttributes().each {
+                        if(it.value > -1){
+                            Application.addHeaderListener(Integer.parseInt(it.getValue().toString()), it.getPropertyName())
+                        }
                     }
                 }
             }

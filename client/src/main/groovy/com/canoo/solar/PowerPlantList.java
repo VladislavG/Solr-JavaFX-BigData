@@ -27,10 +27,6 @@ public class PowerPlantList extends AbstractList<PowerPlant> {
         if (powerPlantMap.containsKey(index)) {
             return powerPlantMap.get(index);
         }
-
-
-
-            System.out.println("creating person for rowIdx " + index + ". size: " + powerPlantMap.size());
             PowerPlant powerPlant = new PowerPlant(index, -1, "not loaded" , "not loaded", "not loaded","not loaded","not loaded");
             powerPlantMap.put(index, powerPlant);
             fillSize.setValue(fillSize.getValue() + 1);

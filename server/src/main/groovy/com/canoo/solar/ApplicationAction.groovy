@@ -170,8 +170,7 @@ public class ApplicationAction extends DolphinServerAction{
                     solrQuery.setRows(1);
                     QueryResponse solrResponse = getSolrServer().query(solrQuery);
                     def result = solrResponse.getResults().get(0)
-                    println "currenty creating PM for index: $rowIdx"
-                    println "Solr took " + (System.currentTimeMillis() -  start )
+//                    println "Solr took " + (System.currentTimeMillis() -  start )
                     response.add(createInitializeAttributeCommand(rowIdx.toString(), ID, result.getFieldValue(ID)))
                     response.add(createInitializeAttributeCommand(rowIdx.toString(), POSITION, result.getFieldValue(POSITION)))
                     response.add(createInitializeAttributeCommand(rowIdx.toString(), NOMINAL_POWER, result.getFieldValue(NOMINAL_POWER)))

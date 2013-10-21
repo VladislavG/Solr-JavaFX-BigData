@@ -1,6 +1,7 @@
 package com.canoo.solar
 
 import javafx.event.EventHandler
+import javafx.event.EventType
 import javafx.geometry.Insets
 import javafx.scene.control.Button
 import javafx.scene.control.CheckBox
@@ -9,9 +10,17 @@ import javafx.scene.control.Label
 import javafx.scene.control.TextField
 import javafx.scene.control.TreeItem
 import javafx.scene.control.TreeView
+import javafx.scene.image.Image
+import javafx.scene.input.ClipboardContent
+import javafx.scene.input.DragEvent
+import javafx.scene.input.Dragboard
 import javafx.scene.input.MouseEvent
+import javafx.scene.input.TransferMode
+import javafx.scene.layout.ColumnConstraints
+import javafx.scene.layout.GridPane
 import javafx.scene.layout.HBox
 import javafx.scene.layout.Pane
+import javafx.scene.layout.Priority
 import javafx.scene.paint.Color
 import javafx.scene.shape.Rectangle
 
@@ -50,11 +59,79 @@ public class Layout {
     }
 
 
-    static public Pane createTreePane(TreeItem root, TreeView tree, Button close, Pane pane, CheckBox checkBox){
+    static public Pane createTreePane(TreeItem root, TreeView tree, Button close, Pane pane, CheckBox checkBox, int treeNumber, GridPane grid){
 
         root.setExpanded(true);
         tree.setRoot(root);
         tree.setShowRoot(true);
+        pane.setMaxHeight(500)
+        tree.setOnDragDetected(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent event) {
+                Dragboard db = pane.startDragAndDrop(TransferMode.MOVE);
+                ClipboardContent cc = new ClipboardContent();
+                cc.putString(String.valueOf(treeNumber));
+                db.setContent(cc);
+
+                event.consume();
+            }
+        });
+
+        tree.setOnDragOver(new EventHandler<DragEvent>() {
+            @Override
+            public void handle(DragEvent event) {
+                Dragboard db = event.getDragboard();
+                boolean accept = false;
+                if (db.hasString()) {
+                    String data = db.getString();
+                    try {
+                        int draggedtreeNumber = Integer.parseInt(data);
+                        if (draggedtreeNumber != treeNumber
+                                && event.getGestureSource() instanceof Pane) {
+                            accept = true;
+                        }
+                    } catch (NumberFormatException exc) {
+                        accept = false;
+                    }
+                }
+                if (accept) {
+                    event.acceptTransferModes(TransferMode.MOVE);
+                }
+            }
+        });
+        tree.setOnDragDropped(new EventHandler<DragEvent>() {
+            @Override
+            public void handle(DragEvent event) {
+                Pane draggedpane = (Pane) event.getGestureSource();
+                // switch panes:
+                int draggedX = GridPane.getColumnIndex(draggedpane);
+                int draggedY = GridPane.getRowIndex(draggedpane);
+                int droppedX = GridPane.getColumnIndex(pane);
+                int droppedY = GridPane.getRowIndex(pane);
+                int droppedS = GridPane.getRowSpan(pane);
+
+                GridPane.setColumnIndex(draggedpane, droppedX);
+                GridPane.setRowSpan(draggedpane, droppedS)
+                GridPane.setRowIndex(draggedpane, droppedY + 1);
+
+                GridPane.setColumnIndex(pane, droppedX)
+                GridPane.setRowIndex(pane, droppedY)
+                GridPane.setRowSpan(pane, 1);
+
+
+                pane.setPrefHeight(pane.getHeight()/2)
+                pane.getChildren().get(0).setPrefHeight(pane.getHeight()/2)
+                draggedpane.setPrefHeight(pane.getHeight()/2)
+                draggedpane.getChildren().get(0).setPrefHeight(pane.getHeight()/2)
+            }
+        });
+
+//        ColumnConstraints column1 = new ColumnConstraints();
+//        column1.setPercentWidth(50);
+//        ColumnConstraints column2 = new ColumnConstraints();
+//        column2.setPercentWidth(50);
+//        grid.getColumnConstraints().addAll(column1, column2);
+
         pane.getChildren().addAll(tree, close)
         close.setOnMouseClicked(new EventHandler<MouseEvent>() {
             @Override
@@ -63,7 +140,6 @@ public class Layout {
             }
         })
         close.relocate(200,0)
-
         return pane;
     }
 
