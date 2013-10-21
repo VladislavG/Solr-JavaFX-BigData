@@ -69,6 +69,7 @@ public class Application extends javafx.application.Application {
     CheckBox typeCB = new CheckBox("Show Types");
     CheckBox nominalCB = new CheckBox("Show Nominal Powers");
     CheckBox zipCB = new CheckBox("Show Zip-Codes");
+    CheckBox positionCB = new CheckBox("Show Positions");
 
     CheckBox cityFilterCB = new CheckBox("Filter by City");
     CheckBox typeFilterCB = new CheckBox("Filter by Type");
@@ -144,7 +145,8 @@ public class Application extends javafx.application.Application {
                 treeCities.getRoot().getChildren().add(checkBoxTreeItem);
 
             }
-            treeCities.getRoot().setValue("Citites ($size)")
+
+        treeCities.getRoot().setValue("Citites ($size)")
             observableListTypes.addAll(data.get(1).get(IDS))
             observableListTypesCount.addAll(data.get(1).get(NUM_COUNT))
             treeTypes.getRoot().getChildren().clear()
@@ -168,9 +170,8 @@ public class Application extends javafx.application.Application {
                 treeZip.getRoot().getChildren().add(checkBoxTreeItem);
             }
             treeZip.getRoot().setValue("Zip-Codes ($size)")
-            def colMaxIndex = table.getColumns().size()-1
-            (0..colMaxIndex).each {
-                addHeaderListener(it)
+            clientDolphin.findPresentationModelById(ORDER_COLUMN).getAttributes().each {
+                addHeaderListener(Integer.parseInt(it.getValue().toString()), it.getPropertyName())
             }
         }
 
@@ -189,11 +190,18 @@ public class Application extends javafx.application.Application {
         clientDolphin.presentationModel(FILTER, [ID, CITY, PLANT_TYPE, ZIP, NOMINAL_POWER]);
         clientDolphin.presentationModel(SELECTED_POWERPLANT, [ID, CITY, PLANT_TYPE, ZIP, NOMINAL_POWER]);
         clientDolphin.presentationModel(ORDER, [CITY, PLANT_TYPE, ZIP])
+        clientDolphin.presentationModel(ORDER_COLUMN, [CITY_COLUMN, TYPE_COLUMN, ZIP_COLUMN, NOMINAL_COLUMN, POSITION_COLUMN])
         clientDolphin.presentationModel(STATE, [TRIGGER, START_INDEX, SORT, REVERSER_ORDER])[TRIGGER].value=0
 
         clientDolphin.getClientModelStore().findPresentationModelById(ORDER).findAttributeByPropertyName(ZIP).setValue(0)
         clientDolphin.getClientModelStore().findPresentationModelById(ORDER).findAttributeByPropertyName(CITY).setValue(0)
         clientDolphin.getClientModelStore().findPresentationModelById(ORDER).findAttributeByPropertyName(PLANT_TYPE).setValue(0)
+
+        clientDolphin.getClientModelStore().findPresentationModelById(ORDER_COLUMN).findAttributeByPropertyName(CITY_COLUMN).setValue(2)
+        clientDolphin.getClientModelStore().findPresentationModelById(ORDER_COLUMN).findAttributeByPropertyName(TYPE_COLUMN).setValue(3)
+        clientDolphin.getClientModelStore().findPresentationModelById(ORDER_COLUMN).findAttributeByPropertyName(ZIP_COLUMN).setValue(1)
+        clientDolphin.getClientModelStore().findPresentationModelById(ORDER_COLUMN).findAttributeByPropertyName(NOMINAL_COLUMN).setValue(4)
+        clientDolphin.getClientModelStore().findPresentationModelById(ORDER_COLUMN).findAttributeByPropertyName(POSITION_COLUMN).setValue(0)
 
         clientDolphin.getClientModelStore().findPresentationModelById(STATE).findAttributeByPropertyName(START_INDEX).setValue(0)
         clientDolphin.getClientModelStore().findPresentationModelById(STATE).findAttributeByPropertyName(SORT).setValue(POSITION)
@@ -212,6 +220,7 @@ public class Application extends javafx.application.Application {
         typeCB.setSelected(true);
         nominalCB.setSelected(true);
         zipCB.setSelected(true);
+        positionCB.setSelected(true);
 
         columnEventBorder.relocate(0, 290)
         filtersEventBorder.relocate(0, 420)
@@ -234,10 +243,12 @@ public class Application extends javafx.application.Application {
         table.getColumns().addAll(positionColumn, zipColumn, cityColumn, typeColumn, nominalColumn);
 
 //        show/hide table Columns on checkbox event
-        Listeners.setChoiceBoxListener(cityCB, table, cityColumn)
-        Listeners.setChoiceBoxListener(typeCB, table, typeColumn)
-        Listeners.setChoiceBoxListener(nominalCB, table, nominalColumn)
-        Listeners.setChoiceBoxListener(zipCB, table, zipColumn)
+        PresentationModel colOrder = clientDolphin.findPresentationModelById(ORDER_COLUMN)
+        Listeners.setChoiceBoxListener(cityCB, table, cityColumn, CITY_COLUMN, colOrder)
+        Listeners.setChoiceBoxListener(typeCB, table, typeColumn, TYPE_COLUMN, colOrder)
+        Listeners.setChoiceBoxListener(nominalCB, table, nominalColumn, NOMINAL_COLUMN, colOrder)
+        Listeners.setChoiceBoxListener(zipCB, table, zipColumn, ZIP_COLUMN, colOrder)
+        Listeners.setChoiceBoxListener(positionCB, table, positionColumn, POSITION_COLUMN, colOrder)
 
         HBox nominalLabelTextDetail = Layout.createPair(nominalLabelDetail, nominalLabelforDetail)
         HBox typeLabelTextDetail = Layout.createPair(typeLabelDetail, typeLabelforDetail)
@@ -250,7 +261,7 @@ public class Application extends javafx.application.Application {
         Layout.createTreePane(rootItem, treeTypes, closeType, typePane, typeFilterCB)
 
         columnsCBs.setPadding(new Insets(20, 0, 0, 10));
-        columnsCBs.getChildren().addAll(cityCB, typeCB, zipCB, nominalCB)
+        columnsCBs.getChildren().addAll(cityCB, typeCB, zipCB, nominalCB, positionCB)
 
         filtersCBs.setPadding(new Insets(25, 0, 0, 10));
         filtersCBs.getChildren().addAll(cityFilterCB, typeFilterCB, zipFilterCB)
@@ -265,8 +276,6 @@ public class Application extends javafx.application.Application {
         setFilterCBListener(typeFilterCB, PLANT_TYPE)
         setFilterCBListener(cityFilterCB, CITY)
         setFilterCBListener(zipFilterCB, ZIP)
-
-
 
         treeTypes.getSelectionModel().selectedItemProperty().addListener(
                 new ChangeListener<TreeItem <String>>() {
@@ -306,7 +315,7 @@ public class Application extends javafx.application.Application {
                             javafx.collections.ObservableList<PowerPlant> newItems = FakeCollections.newObservableList(newFakeList);
                             if (newItems.size()==0) {enableQuery()}
                             table.setItems(newItems)
-
+                            table.getSelectionModel().clearSelection()
 
                         }
                     }
@@ -345,7 +354,7 @@ public class Application extends javafx.application.Application {
                             javafx.collections.ObservableList<PowerPlant> newItems = FakeCollections.newObservableList(newFakeList);
                             if (newItems.size()==0) {enableQuery()}
                             table.setItems(newItems)
-                             
+                            table.getSelectionModel().clearSelection()
                         }
                     }
                 });
@@ -385,7 +394,8 @@ public class Application extends javafx.application.Application {
                             javafx.collections.ObservableList<PowerPlant> newItems = FakeCollections.newObservableList(newFakeList);
                             if (newItems.size()==0) {enableQuery()}
                             table.setItems(newItems)
-                             
+                            table.getSelectionModel().clearSelection()
+
                         }
                     }
                 });
@@ -398,6 +408,7 @@ public class Application extends javafx.application.Application {
         Pane all = new Pane();
         all.getChildren().addAll(details)
         columnStack.getChildren().addAll(columnCBBorder, columnsCBs)
+        columnsCBs.relocate(0, -10)
         columnStack.relocate(0, 290)
         filterStack.getChildren().addAll(filtersCBBorder, filtersCBs)
         filterStack.relocate(0, 420)
@@ -631,9 +642,11 @@ public class Application extends javafx.application.Application {
             public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
                 def orderPm = clientDolphin.findPresentationModelById(ORDER)
                 def filterPm = clientDolphin.findPresentationModelById(FILTER)
-                  
+
+
                 if (newValue) {
                     int i = 1
+
                     orderPm.getAttributes().each {if(it.value > 0) i++}
                     orderPm.findAttributeByPropertyName(propertyName).setValue(i)
                 }
@@ -666,7 +679,8 @@ public class Application extends javafx.application.Application {
             javafx.collections.ObservableList<PowerPlant> newItems = FakeCollections.newObservableList(newFakeList);
             table.setItems(newItems)
             trees.setDisable(false)
-            
+            table.getSelectionModel().clearSelection()
+
 
         }
     }
@@ -676,7 +690,7 @@ public class Application extends javafx.application.Application {
         attribute.addPropertyChangeListener('value', listener)
     }
 
-    public static addHeaderListener(Integer i) {
+    public static addHeaderListener(Integer i, String sortCase) {
         TableHeaderRow rowHeader = TableViews.getTableViewInfo(table).tableHeaderRow
         def header = rowHeader.getChildren().get(1).getColumnHeaders().get(i)
         def sort = clientDolphin.getClientModelStore().findPresentationModelById(STATE).findAttributeByPropertyName(SORT)
@@ -684,8 +698,8 @@ public class Application extends javafx.application.Application {
         header.setOnMouseClicked(new EventHandler<MouseEvent>() {
             public void handle(MouseEvent me) {
                   
-                switch (i){
-                    case 0:
+                switch (sortCase){
+                    case POSITION_COLUMN:
                         if (sort.getValue().toString()==POSITION){
                             if (reverse.getValue()){
                                 reverse.setValue(false)
@@ -697,7 +711,7 @@ public class Application extends javafx.application.Application {
                         sort.setValue(IGNORE)
                         sort.setValue(POSITION)
                         break;
-                    case 1:
+                    case ZIP_COLUMN:
                         if (sort.getValue().toString()==ZIP){
                             if (reverse.getValue()){
                                 reverse.setValue(false)
@@ -709,7 +723,7 @@ public class Application extends javafx.application.Application {
                         sort.setValue(IGNORE)
                         sort.setValue(ZIP)
                         break;
-                    case 2:
+                    case CITY_COLUMN:
                         if (sort.getValue().toString()==CITY){
                             if (reverse.getValue()){
                                 reverse.setValue(false)
@@ -721,7 +735,7 @@ public class Application extends javafx.application.Application {
                         sort.setValue(IGNORE)
                         sort.setValue(CITY)
                         break;
-                    case 3:
+                    case TYPE_COLUMN:
                         if (sort.getValue().toString()==PLANT_TYPE){
                             if (reverse.getValue()){
                                 reverse.setValue(false)
@@ -733,7 +747,7 @@ public class Application extends javafx.application.Application {
                         sort.setValue(IGNORE)
                         sort.setValue(PLANT_TYPE)
                         break;
-                    case 4:
+                    case NOMINAL_COLUMN:
                         if (sort.getValue().toString()==NOMINAL_POWER){
                             if (reverse.getValue()){
                                 reverse.setValue(false)
