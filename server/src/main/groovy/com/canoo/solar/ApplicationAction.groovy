@@ -1,5 +1,8 @@
 package com.canoo.solar
 
+import com.google.common.collect.Multimap
+import org.apache.commons.collections.MultiHashMap
+import org.apache.commons.collections.MultiMap
 import org.apache.solr.client.solrj.SolrQuery
 import org.apache.solr.client.solrj.SolrServer
 import org.apache.solr.client.solrj.SolrServerException
@@ -83,19 +86,50 @@ public class ApplicationAction extends DolphinServerAction{
     private final NamedCommandHandler filter = new NamedCommandHandler() {
         @Override
         void handleCommand(NamedCommand command, List<Command> response) {
-
-
-
+            def orderPM = getServerDolphin().findPresentationModelById(ORDER)
             def filterPM = getServerDolphin().findPresentationModelById(FILTER)
             SolrQuery solrQuery = new SolrQuery("*:*")
             solrQuery.addField(POSITION)
             solrQuery.setSort(POSITION, SolrQuery.ORDER.asc)
             solrQuery.setFacet(true);
+            Map orders = new HashMap()
+            MultiMap ordersWithQueries = new MultiHashMap()
+
+            orderPM.attributes.each {
+                def value = it.getValue()
+                orders.put(it.propertyName, value)
+            }
+
             filterPM.attributes.each {
+
                 def value = it.value
                 if (value=="" || value==null || value.toString().contains("Plant Type") || value.toString().contains("Zip-Codes") || value.toString().contains("Cities")) value = "*"
-                solrQuery.addFilterQuery(it.getPropertyName() + ":" + value)
+                String query = it.getPropertyName() + ":" + value.toString()
+                ordersWithQueries.put(orders.get(it.propertyName), query)
             }
+
+            (0..ordersWithQueries.size()).each {
+
+                List sameOrder = ordersWithQueries.get(it)
+                if(sameOrder==null)return;
+                String query;
+                query = sameOrder.get(0)
+                if (sameOrder.size()>1){
+                    sameOrder.each {
+                        if (sameOrder.get(0) == it) return;
+                        query = query + " OR " + it
+                    }
+                }
+                println query
+                solrQuery.addFilterQuery(query)
+            }
+
+//            filterPM.attributes.each {
+//                def value = it.value
+//                if (value=="" || value==null || value.toString().contains("Plant Type") || value.toString().contains("Zip-Codes") || value.toString().contains("Cities")) value = "*"
+//                solrQuery.addFilterQuery(it.getPropertyName() + ":" + value)
+//            }
+
             solrQuery.setParam("facet.field", CITY);
             solrQuery.addFacetField(PLANT_TYPE);
             solrQuery.addFacetField(ZIP)
@@ -155,17 +189,44 @@ public class ApplicationAction extends DolphinServerAction{
             if (getServerDolphin().getAt(rowIdx.toString()) == null) {
                     def start = System.currentTimeMillis()
                     def filterPM = getServerDolphin().findPresentationModelById(FILTER)
+                    def orderPM = getServerDolphin().findPresentationModelById(ORDER)
                     SolrQuery solrQuery = new SolrQuery("*:*")
                 if (reverse.getValue()) {
                     solrQuery.setSort(getServerDolphin().findPresentationModelById(STATE).findAttributeByPropertyName(SORT).getValue().toString(), SolrQuery.ORDER.desc)
                 } else {
                     solrQuery.setSort(getServerDolphin().findPresentationModelById(STATE).findAttributeByPropertyName(SORT).getValue().toString(), SolrQuery.ORDER.asc)
                 }
-                    filterPM.attributes.each {
-                        def value = it.value
-                        if (value=="" || value==null || value.toString().contains("Plant Type") || value.toString().contains("Zip-Codes") || value.toString().contains("Cities")) it.value = "*"
-                        solrQuery.addFilterQuery(it.getPropertyName() + ":" + it.value)
+                Map orders = new HashMap()
+                MultiMap ordersWithQueries = new MultiHashMap()
+
+                orderPM.attributes.each {
+                    def value = it.getValue()
+                    orders.put(it.propertyName, value)
+                }
+
+                filterPM.attributes.each {
+
+                    def value = it.value
+                    if (value=="" || value==null || value.toString().contains("Plant Type") || value.toString().contains("Zip-Codes") || value.toString().contains("Cities")) value = "*"
+                    String query = it.getPropertyName() + ":" + value.toString()
+                    ordersWithQueries.put(orders.get(it.propertyName), query)
+                }
+
+                (0..ordersWithQueries.size()).each {
+
+                    List sameOrder = ordersWithQueries.get(it)
+                    if(sameOrder==null)return;
+                    String query;
+                    query = sameOrder.get(0)
+                    if (sameOrder.size()>1){
+                        sameOrder.each {
+                            if (sameOrder.get(0) == it) return;
+                            query = query + " OR " + it
+                        }
                     }
+
+                    solrQuery.addFilterQuery(query)
+                }
                     solrQuery.setStart(rowIdx)
                     solrQuery.setRows(1);
                     QueryResponse solrResponse = getSolrServer().query(solrQuery);

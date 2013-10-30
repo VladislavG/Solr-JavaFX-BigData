@@ -3,6 +3,7 @@ package com.canoo.solar
 import javafx.event.EventHandler
 import javafx.event.EventType
 import javafx.geometry.Insets
+import javafx.geometry.Pos
 import javafx.scene.control.Button
 import javafx.scene.control.CheckBox
 import javafx.scene.control.ChoiceBox
@@ -21,8 +22,14 @@ import javafx.scene.layout.GridPane
 import javafx.scene.layout.HBox
 import javafx.scene.layout.Pane
 import javafx.scene.layout.Priority
+import javafx.scene.layout.RowConstraints
+import javafx.scene.layout.VBox
 import javafx.scene.paint.Color
 import javafx.scene.shape.Rectangle
+import org.opendolphin.core.Attribute
+import org.opendolphin.core.PresentationModel
+import org.opendolphin.core.client.ClientDolphin
+import static com.canoo.solar.Constants.FilterConstants.*
 
 /**
  * Created with IntelliJ IDEA.
@@ -32,6 +39,8 @@ import javafx.scene.shape.Rectangle
  * To change this template use File | Settings | File Templates.
  */
 public class Layout {
+    static ClientDolphin clientDolphin;
+
     static public Rectangle createEventBorder(){
 
         Rectangle eventBorder = new Rectangle()
@@ -59,80 +68,44 @@ public class Layout {
     }
 
 
-    static public Pane createTreePane(TreeItem root, TreeView tree, Button close, Pane pane, CheckBox checkBox, int treeNumber, GridPane grid){
-
+    static public Pane createTreePane(TreeItem root, TreeView tree, Button close, Pane pane, CheckBox checkBox, Attribute orderAtt, HBox grid){
+        Rectangle dragBorder = new Rectangle()
+        dragBorder.setHeight(30)
+        dragBorder.setWidth(250)
+        dragBorder.setFill(Color.WHITESMOKE)
+        dragBorder.setStroke(Color.INDIANRED)
+        dragBorder.setStrokeWidth(1)
+        VBox treeAndDrag = new VBox()
         root.setExpanded(true);
         tree.setRoot(root);
         tree.setShowRoot(true);
-        pane.setMaxHeight(500)
-        tree.setOnDragDetected(new EventHandler<MouseEvent>() {
+//        pane.setMaxHeight(500)
+
+
+        treeAndDrag.setOnDragDetected(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent event) {
                 Dragboard db = pane.startDragAndDrop(TransferMode.MOVE);
                 ClipboardContent cc = new ClipboardContent();
-                cc.putString(String.valueOf(treeNumber));
+                cc.putString(String.valueOf(treeAndDrag.getParent().toString()));
                 db.setContent(cc);
-
                 event.consume();
             }
         });
 
-        tree.setOnDragOver(new EventHandler<DragEvent>() {
+        pane.setOnDragDone(new EventHandler<DragEvent>() {
             @Override
-            public void handle(DragEvent event) {
-                Dragboard db = event.getDragboard();
-                boolean accept = false;
-                if (db.hasString()) {
-                    String data = db.getString();
-                    try {
-                        int draggedtreeNumber = Integer.parseInt(data);
-                        if (draggedtreeNumber != treeNumber
-                                && event.getGestureSource() instanceof Pane) {
-                            accept = true;
-                        }
-                    } catch (NumberFormatException exc) {
-                        accept = false;
-                    }
-                }
-                if (accept) {
-                    event.acceptTransferModes(TransferMode.MOVE);
-                }
+            void handle(DragEvent t) {
+                Pane draggedpane = (Pane) t.getGestureSource();
+                VBox draggedBox = draggedpane.getParent()
+                HBox bigBox = draggedBox.getParent()
+                orderAtt.setValue(bigBox.getChildren().findIndexOf {it.equals(draggedBox)}+1)
+                println orderAtt.propertyName + " " + (bigBox.getChildren().findIndexOf {it.equals(draggedBox)}+1)
             }
-        });
-        tree.setOnDragDropped(new EventHandler<DragEvent>() {
-            @Override
-            public void handle(DragEvent event) {
-                Pane draggedpane = (Pane) event.getGestureSource();
-                // switch panes:
-                int draggedX = GridPane.getColumnIndex(draggedpane);
-                int draggedY = GridPane.getRowIndex(draggedpane);
-                int droppedX = GridPane.getColumnIndex(pane);
-                int droppedY = GridPane.getRowIndex(pane);
-                int droppedS = GridPane.getRowSpan(pane);
+        })
 
-                GridPane.setColumnIndex(draggedpane, droppedX);
-                GridPane.setRowSpan(draggedpane, droppedS)
-                GridPane.setRowIndex(draggedpane, droppedY + 1);
-
-                GridPane.setColumnIndex(pane, droppedX)
-                GridPane.setRowIndex(pane, droppedY)
-                GridPane.setRowSpan(pane, 1);
-
-
-                pane.setPrefHeight(pane.getHeight()/2)
-                pane.getChildren().get(0).setPrefHeight(pane.getHeight()/2)
-                draggedpane.setPrefHeight(pane.getHeight()/2)
-                draggedpane.getChildren().get(0).setPrefHeight(pane.getHeight()/2)
-            }
-        });
-
-//        ColumnConstraints column1 = new ColumnConstraints();
-//        column1.setPercentWidth(50);
-//        ColumnConstraints column2 = new ColumnConstraints();
-//        column2.setPercentWidth(50);
-//        grid.getColumnConstraints().addAll(column1, column2);
-
-        pane.getChildren().addAll(tree, close)
+        treeAndDrag.getChildren().addAll(dragBorder, tree)
+        pane.getChildren().addAll(treeAndDrag, close)
         close.setOnMouseClicked(new EventHandler<MouseEvent>() {
             @Override
             void handle(MouseEvent t) {
