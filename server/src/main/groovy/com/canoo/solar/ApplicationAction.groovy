@@ -61,7 +61,7 @@ public class ApplicationAction extends DolphinServerAction{
                     QueryResponse solrResponse = getSolrServer().query(solrQuery);
                     def result = solrResponse.getResults().get(0)
 
-                    println "Solr took " + (System.currentTimeMillis() -  start )
+//                    println "Solr took " + (System.currentTimeMillis() -  start )
                     response.add(createInitializeAttributeCommand(pmId, ID, result.getFieldValue(ID)))
                     response.add(createInitializeAttributeCommand(pmId, POSITION, result.getFieldValue(POSITION)))
                     response.add(createInitializeAttributeCommand(pmId, NOMINAL_POWER, result.getFieldValue(NOMINAL_POWER)))
@@ -108,7 +108,7 @@ public class ApplicationAction extends DolphinServerAction{
                 ordersWithQueries.put(orders.get(it.propertyName), query)
             }
 
-            (0..ordersWithQueries.size()).each {
+            (0..ordersWithQueries.size()-1).each {
 
                 List sameOrder = ordersWithQueries.get(it)
                 if(sameOrder==null)return;
@@ -138,7 +138,7 @@ public class ApplicationAction extends DolphinServerAction{
             def start = System.currentTimeMillis()
             QueryResponse queryResponse = getSolrServer().query(solrQuery)
             def result = queryResponse.getResults()
-            println "Solr took " + (System.currentTimeMillis() -  start )
+//            println "Solr took " + (System.currentTimeMillis() -  start )
             FacetField field = queryResponse.getFacetField(CITY);
             FacetField fieldtypes = queryResponse.getFacetField(PLANT_TYPE);
             FacetField fieldzip = queryResponse.getFacetField(ZIP);
@@ -212,7 +212,7 @@ public class ApplicationAction extends DolphinServerAction{
                     ordersWithQueries.put(orders.get(it.propertyName), query)
                 }
 
-                (0..ordersWithQueries.size()).each {
+                (0..ordersWithQueries.size()-1).each {
 
                     List sameOrder = ordersWithQueries.get(it)
                     if(sameOrder==null)return;

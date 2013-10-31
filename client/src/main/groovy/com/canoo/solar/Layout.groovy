@@ -100,7 +100,6 @@ public class Layout {
                 VBox draggedBox = draggedpane.getParent()
                 HBox bigBox = draggedBox.getParent()
                 orderAtt.setValue(bigBox.getChildren().findIndexOf {it.equals(draggedBox)}+1)
-                println orderAtt.propertyName + " " + (bigBox.getChildren().findIndexOf {it.equals(draggedBox)}+1)
             }
         })
 

@@ -314,7 +314,6 @@ public class Application extends javafx.application.Application {
                     VBox vBoxOrigin = draggedElement.getParent()
                     vBoxOrigin.getChildren().remove(draggedElement)
                     it.getChildren().add(draggedElement)
-                    println "vBox h: ${it.getHeight()}, num of children: ${it.getChildren().size()}"
                     int newHeight = (it.getHeight())/(it.getChildren().size())
                     int newOriginHeight = (vBoxOrigin.getHeight())/(vBoxOrigin.getChildren().size())
                     vBoxOrigin.getChildren().each { originChildPane ->
@@ -648,6 +647,7 @@ public class Application extends javafx.application.Application {
         })
 
         bindAttribute(clientDolphin[ORDER][PLANT_TYPE],{
+
             VBox paneContainer = typePane.getParent()
             List values = new ArrayList()
             if(it.newValue==0){
@@ -672,7 +672,6 @@ public class Application extends javafx.application.Application {
             if (it.oldValue>0){
                 paneContainer.getChildren().each {
                     int newHeight = (paneContainer.getHeight())/(paneContainer.getChildren().size())
-                    println newHeight
                     it.setPrefHeight(newHeight)
                     it.getChildren().get(0).setPrefHeight(newHeight)
                 }
@@ -685,6 +684,7 @@ public class Application extends javafx.application.Application {
         })
 
         bindAttribute(clientDolphin[ORDER][CITY],{
+
             VBox paneContainer = cityPane.getParent()
             List values = new ArrayList()
             if(it.newValue==0){
@@ -709,7 +709,6 @@ public class Application extends javafx.application.Application {
             if (it.oldValue>0){
                 paneContainer.getChildren().each {
                     int newHeight = (paneContainer.getHeight())/(paneContainer.getChildren().size())
-                    println newHeight
                     it.setPrefHeight(newHeight)
                     it.getChildren().get(0).setPrefHeight(newHeight)
                 }
@@ -721,6 +720,7 @@ public class Application extends javafx.application.Application {
             }
         })
         bindAttribute(clientDolphin[ORDER][ZIP],{
+
             VBox paneContainer = zipPane.getParent()
             List values = new ArrayList()
             if(it.newValue==0){
@@ -742,15 +742,11 @@ public class Application extends javafx.application.Application {
                 targetBox.getChildren().add(zipPane)
             }
             if (it.oldValue>0){
-
                 paneContainer.getChildren().each {
-
                     int newHeight = (paneContainer.getHeight())/(paneContainer.getChildren().size())
-                    println newHeight
                     it.setPrefHeight(newHeight)
                     it.getChildren().get(0).setPrefHeight(newHeight)
                 }
-
             }
             zip.setText("")
             clientDolphin.data GET, {data ->
@@ -758,7 +754,6 @@ public class Application extends javafx.application.Application {
 
             }
         })
-
         bindAttribute(clientDolphin[STATE][TRIGGER], {
           disableQuery()
           clearPmsAndPowerPlants()
@@ -776,20 +771,25 @@ public class Application extends javafx.application.Application {
         pmsToRemove.each {
             getFakeList().removePlant(Integer.parseInt(it.getId()))
         }
-    }
 
+    }
     public static void setFilterCBListener(CheckBox checkBox, String propertyName){
         checkBox.selectedProperty().addListener(new ChangeListener<Boolean>() {
             @Override
             public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
                 def orderPm = clientDolphin.findPresentationModelById(ORDER)
                 def filterPm = clientDolphin.findPresentationModelById(FILTER)
-
                 if (newValue) {
                     int i = 1
-
-                    orderPm.getAttributes().each {if(it.value > 0) i++}
+                    List values = new ArrayList()
+                    clientDolphin.findPresentationModelById(ORDER).getAttributes().each {
+                        if(it.value > 0 && !values.contains(it.value)){
+                            values.add(it.value)
+                            i++
+                        }
+                    }
                     orderPm.findAttributeByPropertyName(propertyName).setValue(i)
+                    println orderPm.findAttributeByPropertyName(propertyName)
                 }
                 else {
                     def order = orderPm.findAttributeByPropertyName(propertyName).getValue()
