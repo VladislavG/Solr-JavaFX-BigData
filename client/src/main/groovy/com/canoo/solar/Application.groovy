@@ -1,6 +1,7 @@
 package com.canoo.solar
 
 import com.sun.javafx.scene.control.skin.TableHeaderRow
+import com.sun.xml.internal.bind.v2.schemagen.MultiMap
 import groovyx.gpars.pa.PAWrapper
 import javafx.animation.KeyFrame
 import javafx.animation.Timeline
@@ -95,7 +96,6 @@ public class Application extends javafx.application.Application {
     static VBox col2 = new VBox()
     static VBox col3 = new VBox()
 
-
     VBox details = new VBox()
     static VBox filtersCBs = new VBox()
     static VBox columnsCBs = new VBox()
@@ -150,7 +150,6 @@ public class Application extends javafx.application.Application {
             def size = data.get(0).get("size")
             observableListCities.addAll(data.get(2).get(IDS))
             observableListCitiesCount.addAll(data.get(2).get(NUM_COUNT))
-
             treeCities.getRoot().getChildren().clear()
             observableListCities.each {
                 if(observableListCitiesCount.get(cityCount).toString().equals("0")) return;
@@ -376,12 +375,12 @@ public class Application extends javafx.application.Application {
                         clientDolphin.data GET, { data ->
 
                             if (cityValue > typeValue){
-                                updateCityTree(data)
+                                updateTree(data,treeCities,observableListCities,observableListCitiesCount,2,"Cities")
                                 city.setText("")
                             }
 
                             if (zipValue > typeValue){
-                                updateZipTree(data)
+                                updateTree(data, treeZip, observableListZips, observableListZipsCount, 3, "Zip-Codes")
                                 zip.setText("")
                             }
                             def size = data.get(0).get("size")
@@ -415,11 +414,11 @@ public class Application extends javafx.application.Application {
                         clientDolphin.data GET, { data ->
                             if (typeValue > cityValue){
                                 plantTypes.setText("")
-                                updateTypeTree(data)
+                                updateTree(data,treeTypes, observableListTypes, observableListTypesCount, 1, "Plant Types")
                             }
                             if (zipValue > cityValue){
                                 zip.setText("")
-                                updateZipTree(data)
+                                updateTree(data, treeZip, observableListZips, observableListZipsCount, 3, "Zip-Codes")
                             }
                             def size = data.get(0).get("size")
                             PowerPlantList newFakeList = new PowerPlantList((Integer)size, new OurConsumer<Integer>(){
@@ -454,12 +453,12 @@ public class Application extends javafx.application.Application {
                         clientDolphin.data GET, { data ->
                             if (cityValue > zipValue){
                                 city.setText("")
-                                updateCityTree(data)
+                                updateTree(data,treeCities,observableListCities,observableListCitiesCount,2,"Cities")
 
                             }
                             if (typeValue > zipValue){
                                 plantTypes.setText("")
-                                updateTypeTree(data)
+                                updateTree(data,treeTypes, observableListTypes, observableListTypesCount, 1, "Plant Types")
 
                             }
                             def size = data.get(0).get(SIZE)
@@ -511,51 +510,22 @@ public class Application extends javafx.application.Application {
         return fakedPlantList;
     }
 
-    private void updateCityTree(LinkedList data) {
+    private void updateTree(LinkedList data, TreeView tree, List idsList, List countList, Integer dataIndex, String property) {
 
-        treeCities.getSelectionModel().clearSelection()
-        observableListCitiesCount.clear()
-        observableListCities.clear()
-        observableListCitiesCount.addAll(data.get(2).get(NUM_COUNT))
-        observableListCities.addAll(data.get(2).get(IDS))
+        tree.getSelectionModel().clearSelection()
+        idsList.clear()
+        idsList.addAll(data.get(dataIndex).get(IDS))
+        countList.clear()
+        countList.addAll(data.get(dataIndex).get(NUM_COUNT))
         def size = data.get(0).get(SIZE)
         Map<Integer,Integer> map = new LinkedHashMap<Integer,Integer>();
         List<TreeItem<String>> iteratedList = new ArrayList<TreeItem<String>>()
 
-        for (int i=0; i<observableListCities.size(); i++) {
-            map.put(observableListCities.get(i), observableListCitiesCount.get(i));
+        for (int i=0; i<idsList.size(); i++) {
+            map.put(idsList.get(i), countList.get(i));
         }
 
-        treeCities.getRoot().setValue("Cities ($size)")
-        treeCities.getRoot().getChildren().each {
-            String name = it.getValue().toString().substring(0,it.getValue().toString().lastIndexOf(' ('))
-            def newCount = map.get(name)
-            if (newCount==null)newCount=0;
-            final TreeItem<String> checkBoxTreeItem =
-                new TreeItem<String>(name + " (" + newCount + ")");
-            iteratedList.add(checkBoxTreeItem);
-        }
-
-        Collections.sort(iteratedList, new TreeItemNumberComparator())
-        treeCities.getRoot().getChildren().clear()
-        treeCities.getRoot().getChildren().addAll(iteratedList)
-    }
-    private void updateZipTree(LinkedList data) {
-
-        treeZip.getSelectionModel().clearSelection()
-        observableListZips.clear()
-        observableListZips.addAll(data.get(3).get(IDS))
-        observableListZipsCount.clear()
-        observableListZipsCount.addAll(data.get(3).get(NUM_COUNT))
-        def size = data.get(0).get(SIZE)
-        Map<Integer,Integer> map = new LinkedHashMap<Integer,Integer>();
-        List<TreeItem<String>> iteratedList = new ArrayList<TreeItem<String>>()
-
-        for (int i=0; i<observableListZips.size(); i++) {
-            map.put(observableListZips.get(i), observableListZipsCount.get(i));
-        }
-
-        treeZip.getRoot().getChildren().each {
+        tree.getRoot().getChildren().each {
             String name = it.getValue().toString().substring(0,it.getValue().toString().lastIndexOf(' ('))
 
             def newCount = map.get(name)
@@ -565,45 +535,12 @@ public class Application extends javafx.application.Application {
             iteratedList.add(checkBoxTreeItem);
         }
 
-        treeZip.getRoot().setValue("Zip-Codes ($size)")
+        tree.getRoot().setValue("$property ($size)")
         Collections.sort(iteratedList, new TreeItemNumberComparator())
-        treeZip.getRoot().getChildren().clear()
-        treeZip.getRoot().getChildren().addAll(iteratedList)
+        tree.getRoot().getChildren().clear()
+        tree.getRoot().getChildren().addAll(iteratedList)
 
     }
-    private void updateTypeTree(LinkedList data) {
-
-        treeTypes.getSelectionModel().clearSelection()
-        observableListTypes.clear()
-        observableListTypes.addAll(data.get(1).get(IDS))
-        observableListTypesCount.clear()
-        observableListTypesCount.addAll(data.get(1).get(NUM_COUNT))
-        List<TreeItem<String>> iteratedList = new ArrayList<TreeItem<String>>()
-
-        def size = data.get(0).get(SIZE)
-        Map<Integer,Integer> map = new LinkedHashMap<Integer,Integer>();
-
-        for (int i=0; i<observableListTypes.size(); i++) {
-            map.put(observableListTypes.get(i), observableListTypesCount.get(i));
-        }
-
-        treeTypes.getRoot().getChildren().each {
-            String name = it.getValue().toString().substring(0,it.getValue().toString().lastIndexOf(' ('))
-            def newCount = map.get(name)
-            if (newCount==null)newCount=0;
-
-            final TreeItem<String> checkBoxTreeItem =
-                new TreeItem<String>(name + " (" + newCount + ")");
-
-            iteratedList.add(checkBoxTreeItem);
-        }
-
-        treeTypes.getRoot().setValue("Plant Types ($size)")
-        Collections.sort(iteratedList, new TreeItemNumberComparator())
-        treeTypes.getRoot().getChildren().clear()
-        treeTypes.getRoot().getChildren().addAll(iteratedList)
-    }
-
     private void setupBinding() {
 
         bind 'text' of zip to ZIP of clientDolphin[FILTER]
@@ -669,7 +606,19 @@ public class Application extends javafx.application.Application {
                 VBox targetBox = facetBox.getChildren().get(i-1)
                 targetBox.getChildren().add(typePane)
             }
-            if (it.oldValue>0){
+            if (it.oldValue>0 && it.oldValue>it.newValue){
+                VBox targetBox = facetBox.getChildren().get(it.oldValue-1)
+                targetBox.getChildren().each {
+                    TreeView treeView = it.getChildren().get(0).getChildren().get(1)
+                    Integer selectedIdx = treeView.getSelectionModel().getSelectedIndex()
+                    if (selectedIdx == -1) {
+                        treeView.getSelectionModel().select(treeView.getRoot());
+                        treeView.getSelectionModel().clearSelection()
+                        return;
+                    }
+                    treeView.getSelectionModel().clearSelection(selectedIdx)
+                    treeView.getSelectionModel().select(selectedIdx)
+                }
                 paneContainer.getChildren().each {
                     int newHeight = (paneContainer.getHeight())/(paneContainer.getChildren().size())
                     it.setPrefHeight(newHeight)
@@ -677,9 +626,11 @@ public class Application extends javafx.application.Application {
                 }
             }
             plantTypes.setText("")
+            def cityValue = clientDolphin.findPresentationModelById(ORDER).findAttributeByPropertyName(CITY).getValue()
+            def typeValue = clientDolphin.findPresentationModelById(ORDER).findAttributeByPropertyName(PLANT_TYPE).getValue()
+            def zipValue = clientDolphin.findPresentationModelById(ORDER).findAttributeByPropertyName(ZIP).getValue()
             clientDolphin.data GET, { data ->
-                updateTypeTree(data)
-
+                updateTree(data,treeTypes, observableListTypes, observableListTypesCount, 1, "Plant Types")
             }
         })
 
@@ -706,7 +657,19 @@ public class Application extends javafx.application.Application {
                 VBox targetBox = facetBox.getChildren().get(i-1)
                 targetBox.getChildren().add(cityPane)
             }
-            if (it.oldValue>0){
+            if (it.oldValue>0 && it.oldValue>it.newValue){
+                VBox targetBox = facetBox.getChildren().get(it.oldValue-1)
+                targetBox.getChildren().each {
+                    TreeView treeView = it.getChildren().get(0).getChildren().get(1)
+                    Integer selectedIdx = treeView.getSelectionModel().getSelectedIndex()
+                    if (selectedIdx == -1) {
+                        treeView.getSelectionModel().select(treeView.getRoot());
+                        treeView.getSelectionModel().clearSelection()
+                        return;
+                    }
+                    treeView.getSelectionModel().clearSelection(selectedIdx)
+                    treeView.getSelectionModel().select(selectedIdx)
+                }
                 paneContainer.getChildren().each {
                     int newHeight = (paneContainer.getHeight())/(paneContainer.getChildren().size())
                     it.setPrefHeight(newHeight)
@@ -714,9 +677,12 @@ public class Application extends javafx.application.Application {
                 }
             }
             city.setText("")
+            def cityValue = clientDolphin.findPresentationModelById(ORDER).findAttributeByPropertyName(CITY).getValue()
+            def typeValue = clientDolphin.findPresentationModelById(ORDER).findAttributeByPropertyName(PLANT_TYPE).getValue()
+            def zipValue = clientDolphin.findPresentationModelById(ORDER).findAttributeByPropertyName(ZIP).getValue()
             clientDolphin.data GET, {data ->
-                updateCityTree(data)
-                 
+                updateTree(data,treeCities,observableListCities,observableListCitiesCount,2,"Cities")
+//
             }
         })
         bindAttribute(clientDolphin[ORDER][ZIP],{
@@ -741,7 +707,19 @@ public class Application extends javafx.application.Application {
                 VBox targetBox = facetBox.getChildren().get(i-1)
                 targetBox.getChildren().add(zipPane)
             }
-            if (it.oldValue>0){
+            if (it.oldValue>0 && it.oldValue>it.newValue){   ///todo: if newValue is lower than oldvalue deselect everythign in oldvalue's pane
+                VBox targetBox = facetBox.getChildren().get(it.oldValue-1)
+                targetBox.getChildren().each {
+                    TreeView treeView = it.getChildren().get(0).getChildren().get(1)
+                    Integer selectedIdx = treeView.getSelectionModel().getSelectedIndex()
+                    if (selectedIdx == -1) {
+                        treeView.getSelectionModel().select(treeView.getRoot());
+                        treeView.getSelectionModel().clearSelection()
+                        return;
+                    }
+                    treeView.getSelectionModel().clearSelection(selectedIdx)
+                    treeView.getSelectionModel().select(selectedIdx)
+                }
                 paneContainer.getChildren().each {
                     int newHeight = (paneContainer.getHeight())/(paneContainer.getChildren().size())
                     it.setPrefHeight(newHeight)
@@ -749,8 +727,12 @@ public class Application extends javafx.application.Application {
                 }
             }
             zip.setText("")
+            def cityValue = clientDolphin.findPresentationModelById(ORDER).findAttributeByPropertyName(CITY).getValue()
+            def typeValue = clientDolphin.findPresentationModelById(ORDER).findAttributeByPropertyName(PLANT_TYPE).getValue()
+            def zipValue = clientDolphin.findPresentationModelById(ORDER).findAttributeByPropertyName(ZIP).getValue()
             clientDolphin.data GET, {data ->
-                updateZipTree(data)
+                updateTree(data, treeZip, observableListZips, observableListZipsCount, 3, "Zip-Codes")
+
 
             }
         })
