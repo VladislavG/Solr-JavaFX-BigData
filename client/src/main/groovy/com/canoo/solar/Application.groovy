@@ -541,6 +541,72 @@ public class Application extends javafx.application.Application {
         tree.getRoot().getChildren().addAll(iteratedList)
 
     }
+    private void updateFacets(Pane pane, Integer newValue, Integer oldValue, TreeView tree) {
+
+        VBox paneContainer = pane.getParent()
+        List values = new ArrayList()
+        if(newValue==0){
+            tree.getSelectionModel().clearSelection()
+            pane.getParent().getChildren().remove(pane)
+            pane.setPrefHeight(paneContainer.getHeight())
+            pane.getChildren().get(0).setPrefHeight(paneContainer.getHeight())
+        }
+        else if(oldValue==0) {
+            int i = 0
+
+            clientDolphin.findPresentationModelById(ORDER).getAttributes().each {
+                if(it.value > 0 && !values.contains(it.value)){
+                    values.add(it.value)
+                    i++
+                }
+            }
+            VBox targetBox = facetBox.getChildren().get(i-1)
+            targetBox.getChildren().add(pane)
+        }
+        if(oldValue >= 1 && newValue >= 1){
+            if (oldValue < newValue){
+                VBox targetBox = facetBox.getChildren().get(oldValue-1)
+                targetBox.getChildren().each {
+                    TreeView treeView = it.getChildren().get(0).getChildren().get(1)
+                    Integer selectedIdx = treeView.getSelectionModel().getSelectedIndex()
+                    if (selectedIdx == -1) {
+                        treeView.getSelectionModel().select(treeView.getRoot());
+                        treeView.getSelectionModel().clearSelection()
+                        return;
+                    }
+                    treeView.getSelectionModel().clearSelection(selectedIdx)
+                    treeView.getSelectionModel().select(selectedIdx)
+                }
+            } else if(oldValue > newValue){
+                VBox originBox = facetBox.getChildren().get(oldValue-1)
+                originBox.getChildren().each {
+                    TreeView treeView = it.getChildren().get(0).getChildren().get(1)
+                    treeView.getSelectionModel().clearSelection()
+                }
+                treeTypes.getSelectionModel().clearSelection()
+                VBox targetBox = facetBox.getChildren().get(newValue-1)
+                targetBox.getChildren().each {
+                    TreeView treeView = it.getChildren().get(0).getChildren().get(1)
+                    Integer selectedIdx = treeView.getSelectionModel().getSelectedIndex()
+                    if (selectedIdx == -1) {
+                        treeView.getSelectionModel().select(treeView.getRoot());
+                        treeView.getSelectionModel().clearSelection()
+                        return;
+                    }
+                    treeView.getSelectionModel().clearSelection(selectedIdx)
+                    treeView.getSelectionModel().select(selectedIdx)
+                }
+            }
+        }
+        if (oldValue >= 1){
+
+            paneContainer.getChildren().each {
+                int newHeight = (paneContainer.getHeight())/(paneContainer.getChildren().size())
+                it.setPrefHeight(newHeight)
+                it.getChildren().get(0).setPrefHeight(newHeight)
+            }
+        }
+    }
     private void setupBinding() {
 
         bind 'text' of zip to ZIP of clientDolphin[FILTER]
@@ -584,158 +650,30 @@ public class Application extends javafx.application.Application {
         })
 
         bindAttribute(clientDolphin[ORDER][PLANT_TYPE],{
-
-            VBox paneContainer = typePane.getParent()
-            List values = new ArrayList()
-            if(it.newValue==0){
-                treeTypes.getSelectionModel().clearSelection()
-                typePane.getParent().getChildren().remove(typePane)
-                typePane.setPrefHeight(paneContainer.getHeight())
-                typePane.getChildren().get(0).setPrefHeight(paneContainer.getHeight())
-            }
-            else if(it.oldValue==0) {
-                int i = 0
-
-                clientDolphin.findPresentationModelById(ORDER).getAttributes().each {
-                    if(it.value > 0 && !values.contains(it.value)){
-                        values.add(it.value)
-                        i++
-                    }
-                }
-                println PLANT_TYPE + " " + i
-                VBox targetBox = facetBox.getChildren().get(i-1)
-                targetBox.getChildren().add(typePane)
-            }
-            if (it.oldValue>0 && it.oldValue>it.newValue){
-                VBox targetBox = facetBox.getChildren().get(it.oldValue-1)
-                targetBox.getChildren().each {
-                    TreeView treeView = it.getChildren().get(0).getChildren().get(1)
-                    Integer selectedIdx = treeView.getSelectionModel().getSelectedIndex()
-                    if (selectedIdx == -1) {
-                        treeView.getSelectionModel().select(treeView.getRoot());
-                        treeView.getSelectionModel().clearSelection()
-                        return;
-                    }
-                    treeView.getSelectionModel().clearSelection(selectedIdx)
-                    treeView.getSelectionModel().select(selectedIdx)
-                }
-                paneContainer.getChildren().each {
-                    int newHeight = (paneContainer.getHeight())/(paneContainer.getChildren().size())
-                    it.setPrefHeight(newHeight)
-                    it.getChildren().get(0).setPrefHeight(newHeight)
-                }
-            }
+            updateFacets(typePane, it.newValue, it.oldValue, treeTypes)
             plantTypes.setText("")
-            def cityValue = clientDolphin.findPresentationModelById(ORDER).findAttributeByPropertyName(CITY).getValue()
-            def typeValue = clientDolphin.findPresentationModelById(ORDER).findAttributeByPropertyName(PLANT_TYPE).getValue()
-            def zipValue = clientDolphin.findPresentationModelById(ORDER).findAttributeByPropertyName(ZIP).getValue()
             clientDolphin.data GET, { data ->
                 updateTree(data,treeTypes, observableListTypes, observableListTypesCount, 1, "Plant Types")
             }
         })
 
         bindAttribute(clientDolphin[ORDER][CITY],{
-
-            VBox paneContainer = cityPane.getParent()
-            List values = new ArrayList()
-            if(it.newValue==0){
-                treeCities.getSelectionModel().clearSelection()
-                cityPane.getParent().getChildren().remove(cityPane)
-                cityPane.setPrefHeight(paneContainer.getHeight())
-                cityPane.getChildren().get(0).setPrefHeight(paneContainer.getHeight())
-            }
-            else if(it.oldValue==0) {
-                int i = 0
-
-                clientDolphin.findPresentationModelById(ORDER).getAttributes().each {
-                    if(it.value > 0 && !values.contains(it.value)){
-                        values.add(it.value)
-                        i++
-                    }
-                }
-                println CITY + " " + i
-                VBox targetBox = facetBox.getChildren().get(i-1)
-                targetBox.getChildren().add(cityPane)
-            }
-            if (it.oldValue>0 && it.oldValue>it.newValue){
-                VBox targetBox = facetBox.getChildren().get(it.oldValue-1)
-                targetBox.getChildren().each {
-                    TreeView treeView = it.getChildren().get(0).getChildren().get(1)
-                    Integer selectedIdx = treeView.getSelectionModel().getSelectedIndex()
-                    if (selectedIdx == -1) {
-                        treeView.getSelectionModel().select(treeView.getRoot());
-                        treeView.getSelectionModel().clearSelection()
-                        return;
-                    }
-                    treeView.getSelectionModel().clearSelection(selectedIdx)
-                    treeView.getSelectionModel().select(selectedIdx)
-                }
-                paneContainer.getChildren().each {
-                    int newHeight = (paneContainer.getHeight())/(paneContainer.getChildren().size())
-                    it.setPrefHeight(newHeight)
-                    it.getChildren().get(0).setPrefHeight(newHeight)
-                }
-            }
+            updateFacets(cityPane, it.newValue, it.oldValue, treeCities)
             city.setText("")
-            def cityValue = clientDolphin.findPresentationModelById(ORDER).findAttributeByPropertyName(CITY).getValue()
-            def typeValue = clientDolphin.findPresentationModelById(ORDER).findAttributeByPropertyName(PLANT_TYPE).getValue()
-            def zipValue = clientDolphin.findPresentationModelById(ORDER).findAttributeByPropertyName(ZIP).getValue()
             clientDolphin.data GET, {data ->
                 updateTree(data,treeCities,observableListCities,observableListCitiesCount,2,"Cities")
-//
             }
         })
-        bindAttribute(clientDolphin[ORDER][ZIP],{
 
-            VBox paneContainer = zipPane.getParent()
-            List values = new ArrayList()
-            if(it.newValue==0){
-                treeZip.getSelectionModel().clearSelection()
-                zipPane.getParent().getChildren().remove(zipPane)
-                zipPane.setPrefHeight(paneContainer.getHeight())
-                zipPane.getChildren().get(0).setPrefHeight(paneContainer.getHeight())
-            }
-            else if(it.oldValue==0) {
-                int i = 0
-                clientDolphin.findPresentationModelById(ORDER).getAttributes().each {
-                    if(it.value > 0 && !values.contains(it.value)){
-                        values.add(it.value)
-                        i++
-                    }
-                }
-                println ZIP + " " + i
-                VBox targetBox = facetBox.getChildren().get(i-1)
-                targetBox.getChildren().add(zipPane)
-            }
-            if (it.oldValue>0 && it.oldValue>it.newValue){   ///todo: if newValue is lower than oldvalue deselect everythign in oldvalue's pane
-                VBox targetBox = facetBox.getChildren().get(it.oldValue-1)
-                targetBox.getChildren().each {
-                    TreeView treeView = it.getChildren().get(0).getChildren().get(1)
-                    Integer selectedIdx = treeView.getSelectionModel().getSelectedIndex()
-                    if (selectedIdx == -1) {
-                        treeView.getSelectionModel().select(treeView.getRoot());
-                        treeView.getSelectionModel().clearSelection()
-                        return;
-                    }
-                    treeView.getSelectionModel().clearSelection(selectedIdx)
-                    treeView.getSelectionModel().select(selectedIdx)
-                }
-                paneContainer.getChildren().each {
-                    int newHeight = (paneContainer.getHeight())/(paneContainer.getChildren().size())
-                    it.setPrefHeight(newHeight)
-                    it.getChildren().get(0).setPrefHeight(newHeight)
-                }
-            }
+        bindAttribute(clientDolphin[ORDER][ZIP],{
+            updateFacets(zipPane, it.newValue, it.oldValue, treeZip)
             zip.setText("")
-            def cityValue = clientDolphin.findPresentationModelById(ORDER).findAttributeByPropertyName(CITY).getValue()
-            def typeValue = clientDolphin.findPresentationModelById(ORDER).findAttributeByPropertyName(PLANT_TYPE).getValue()
-            def zipValue = clientDolphin.findPresentationModelById(ORDER).findAttributeByPropertyName(ZIP).getValue()
             clientDolphin.data GET, {data ->
                 updateTree(data, treeZip, observableListZips, observableListZipsCount, 3, "Zip-Codes")
 
-
             }
         })
+
         bindAttribute(clientDolphin[STATE][TRIGGER], {
           disableQuery()
           clearPmsAndPowerPlants()
@@ -956,6 +894,7 @@ public class Application extends javafx.application.Application {
         closeType.setDisable(false)
         closeCity.setDisable(false)
         closeZip.setDisable(false)
+        facetBox.setDisable(false)
     }
     public static void disableQuery() {
         treesGrid.setDisable(true)
@@ -963,6 +902,7 @@ public class Application extends javafx.application.Application {
         closeType.setDisable(true)
         closeCity.setDisable(true)
         closeZip.setDisable(true)
+        facetBox.setDisable(true)
     }
 
     private static void loadPresentationModel(int rowIdx) {
