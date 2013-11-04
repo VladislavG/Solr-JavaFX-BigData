@@ -281,67 +281,7 @@ public class Application extends javafx.application.Application {
         Layout.createTreePane(rootItemZip, treeZip, closeZip, zipPane, zipFilterCB, orderPm[ZIP], facetBox)
         Layout.createTreePane(rootItem, treeTypes, closeType, typePane, typeFilterCB, orderPm[PLANT_TYPE], facetBox)
 
-        facetBox.getChildren().each {
-            it.setOnDragOver(new EventHandler<DragEvent>() {
-                @Override
-                public void handle(DragEvent event) {
-                    Dragboard db = event.getDragboard();
-                    boolean accept = false;
-                    if (db.hasString()) {
-                        String data = db.getString();
-                        try {
-                            if (data != (it.toString())
-                                    && event.getGestureSource() instanceof Pane) {
-                                accept = true;
-                            }
-                        } catch (NumberFormatException exc) {
-                            accept = false;
-                        }
-                    }
-                    if (accept) {
-                        event.acceptTransferModes(TransferMode.MOVE);
-                    }
-                }
-            });
-
-
-
-            it.setOnDragDropped(new EventHandler<DragEvent>() {
-                @Override
-                public void handle(DragEvent event) {
-                    Pane draggedElement = (Pane) event.getGestureSource()
-                    VBox vBoxOrigin = draggedElement.getParent()
-                    vBoxOrigin.getChildren().remove(draggedElement)
-                    it.getChildren().add(draggedElement)
-                    int newHeight = (it.getHeight())/(it.getChildren().size())
-                    int newOriginHeight = (vBoxOrigin.getHeight())/(vBoxOrigin.getChildren().size())
-                    vBoxOrigin.getChildren().each { originChildPane ->
-                        originChildPane.setPrefHeight(newOriginHeight)
-                        originChildPane.getChildren().get(0).setPrefHeight(newOriginHeight)
-                    }
-
-                    it.getChildren().each { childPane ->
-
-                        childPane.setPrefHeight(newHeight)
-                        childPane.getChildren().get(0).setPrefHeight(newHeight)
-
-                    }
-
-                    draggedElement.setOnDragDetected(new EventHandler<MouseEvent>() {
-                        @Override
-                        public void handle(MouseEvent e) {
-                            Dragboard db = draggedElement.startDragAndDrop(TransferMode.MOVE);
-                            ClipboardContent cc = new ClipboardContent();
-                            cc.putString(it.toString());
-                            db.setContent(cc);
-                            e.consume();
-                        }
-                    });
-                }
-            });
-
-//            it.setMaxHeight(500)
-        }
+        addDragging()
 
         columnsCBs.setPadding(new Insets(20, 0, 0, 10));
         columnsCBs.getChildren().addAll(cityCB, typeCB, zipCB, nominalCB, positionCB)
@@ -541,6 +481,7 @@ public class Application extends javafx.application.Application {
         tree.getRoot().getChildren().addAll(iteratedList)
 
     }
+
     private void updateFacets(Pane pane, Integer newValue, Integer oldValue, TreeView tree) {
 
         VBox paneContainer = pane.getParent()
@@ -548,6 +489,21 @@ public class Application extends javafx.application.Application {
         if(newValue==0){
             tree.getSelectionModel().clearSelection()
             pane.getParent().getChildren().remove(pane)
+            VBox originBox = facetBox.getChildren().get(oldValue-1)
+            if (originBox.getChildren().size() > 0) {
+                originBox.getChildren().each {
+                    TreeView treeView = it.getChildren().get(0).getChildren().get(1)
+                    Integer selectedIdx = treeView.getSelectionModel().getSelectedIndex()
+                    if (selectedIdx == -1) {
+                        treeView.getSelectionModel().select(treeView.getRoot());
+                        treeView.getSelectionModel().clearSelection()
+                    }
+                    treeView.getSelectionModel().clearSelection()
+                    treeView.getSelectionModel().select(selectedIdx)
+                }
+
+            }
+
             pane.setPrefHeight(paneContainer.getHeight())
             pane.getChildren().get(0).setPrefHeight(paneContainer.getHeight())
         }
@@ -560,30 +516,43 @@ public class Application extends javafx.application.Application {
                     i++
                 }
             }
-            VBox targetBox = facetBox.getChildren().get(i-1)
+            VBox targetBox = new VBox()
+            try {
+                targetBox = facetBox.getChildren().get(i-1)
+            }
+            catch (Exception e){
+                VBox newVbox = new VBox()
+                facetBox.getChildren().add(i-1, newVbox)
+            }
+
+            targetBox = facetBox.getChildren().get(i-1)
             targetBox.getChildren().add(pane)
         }
-        if(oldValue >= 1 && newValue >= 1){
+
+        if (oldValue >= 1 && newValue >= 1){
             if (oldValue < newValue){
-                VBox targetBox = facetBox.getChildren().get(oldValue-1)
-                targetBox.getChildren().each {
+                VBox originBox = facetBox.getChildren().get(oldValue-1)
+                originBox.getChildren().each {
                     TreeView treeView = it.getChildren().get(0).getChildren().get(1)
                     Integer selectedIdx = treeView.getSelectionModel().getSelectedIndex()
                     if (selectedIdx == -1) {
                         treeView.getSelectionModel().select(treeView.getRoot());
                         treeView.getSelectionModel().clearSelection()
-                        return;
                     }
-                    treeView.getSelectionModel().clearSelection(selectedIdx)
+                    treeView.getSelectionModel().clearSelection()
                     treeView.getSelectionModel().select(selectedIdx)
                 }
             } else if(oldValue > newValue){
-                VBox originBox = facetBox.getChildren().get(oldValue-1)
-                originBox.getChildren().each {
-                    TreeView treeView = it.getChildren().get(0).getChildren().get(1)
-                    treeView.getSelectionModel().clearSelection()
+                try {
+                    VBox originBox = facetBox.getChildren().get(oldValue-1)
+                    originBox.getChildren().each {
+                        TreeView treeView = it.getChildren().get(0).getChildren().get(1)
+                        treeView.getSelectionModel().clearSelection()
+                    }
+                }catch (Exception e){
+                    println "Exception $e"
                 }
-                treeTypes.getSelectionModel().clearSelection()
+                tree.getSelectionModel().clearSelection()
                 VBox targetBox = facetBox.getChildren().get(newValue-1)
                 targetBox.getChildren().each {
                     TreeView treeView = it.getChildren().get(0).getChildren().get(1)
@@ -591,13 +560,13 @@ public class Application extends javafx.application.Application {
                     if (selectedIdx == -1) {
                         treeView.getSelectionModel().select(treeView.getRoot());
                         treeView.getSelectionModel().clearSelection()
-                        return;
                     }
-                    treeView.getSelectionModel().clearSelection(selectedIdx)
+                    treeView.getSelectionModel().clearSelection()
                     treeView.getSelectionModel().select(selectedIdx)
                 }
             }
         }
+
         if (oldValue >= 1){
 
             paneContainer.getChildren().each {
@@ -605,7 +574,52 @@ public class Application extends javafx.application.Application {
                 it.setPrefHeight(newHeight)
                 it.getChildren().get(0).setPrefHeight(newHeight)
             }
+            VBox originBox = facetBox.getChildren().get(oldValue-1)
+            if(originBox.getChildren().size() == 0){
+                if (oldValue == 1) {
+                    if (newValue == 0){
+                        tree.getSelectionModel().select(tree.getRoot());
+                        tree.getSelectionModel().clearSelection()
+                    }
+                    else{
+                        VBox targetBox = facetBox.getChildren().get(newValue-1)
+                        targetBox.getChildren().each {
+                            TreeView treeView = it.getChildren().get(0).getChildren().get(1)
+                            Integer selectedIdx = treeView.getSelectionModel().getSelectedIndex()
+                            if (selectedIdx == -1) {
+                                treeView.getSelectionModel().select(treeView.getRoot());
+                                treeView.getSelectionModel().clearSelection()
+                            }
+                            treeView.getSelectionModel().clearSelection(selectedIdx)
+                            treeView.getSelectionModel().select(selectedIdx)
+                        }
+                    }
+                }
+
+                else{
+                    VBox previousBox = facetBox.getChildren().get(oldValue-2)
+                    previousBox.getChildren().each {
+                        TreeView treeView = it.getChildren().get(0).getChildren().get(1)
+                        Integer selectedIdx = treeView.getSelectionModel().getSelectedIndex()
+                        if (selectedIdx == -1) {
+                            treeView.getSelectionModel().select(treeView.getRoot());
+                            treeView.getSelectionModel().clearSelection()
+                        }
+                        treeView.getSelectionModel().clearSelection()
+                        treeView.getSelectionModel().select(selectedIdx)
+                    }
+                }
+
+                clientDolphin.findPresentationModelById(ORDER).getAttributes().each {
+                    if(it.value >= oldValue){
+                        it.setValue(it.value-1)
+                    }
+                }
+                facetBox.getChildren().remove(originBox)
+            }
         }
+
+        addDragging()
     }
     private void setupBinding() {
 
@@ -650,24 +664,24 @@ public class Application extends javafx.application.Application {
         })
 
         bindAttribute(clientDolphin[ORDER][PLANT_TYPE],{
-            updateFacets(typePane, it.newValue, it.oldValue, treeTypes)
             plantTypes.setText("")
+            updateFacets(typePane, it.newValue, it.oldValue, treeTypes)
             clientDolphin.data GET, { data ->
                 updateTree(data,treeTypes, observableListTypes, observableListTypesCount, 1, "Plant Types")
             }
         })
 
         bindAttribute(clientDolphin[ORDER][CITY],{
-            updateFacets(cityPane, it.newValue, it.oldValue, treeCities)
             city.setText("")
+            updateFacets(cityPane, it.newValue, it.oldValue, treeCities)
             clientDolphin.data GET, {data ->
                 updateTree(data,treeCities,observableListCities,observableListCitiesCount,2,"Cities")
             }
         })
 
         bindAttribute(clientDolphin[ORDER][ZIP],{
-            updateFacets(zipPane, it.newValue, it.oldValue, treeZip)
             zip.setText("")
+            updateFacets(zipPane, it.newValue, it.oldValue, treeZip)
             clientDolphin.data GET, {data ->
                 updateTree(data, treeZip, observableListZips, observableListZipsCount, 3, "Zip-Codes")
 
@@ -712,17 +726,17 @@ public class Application extends javafx.application.Application {
                     println orderPm.findAttributeByPropertyName(propertyName)
                 }
                 else {
+
                     def order = orderPm.findAttributeByPropertyName(propertyName).getValue()
-
                     orderPm.findAttributeByPropertyName(propertyName).setValue(0)
-                    orderPm.getAttributes().each {
-                        if(it.value > order){
-                            filterPm.findAttributeByPropertyName(it.getPropertyName()).setValue("")
-                            it.setValue(it.getValue()-1)
-                            println it.getPropertyName() + " " + it.getValue()
-
-                        }
-                    }
+//                    orderPm.getAttributes().each {
+//                        if(it.value > order){
+//                            filterPm.findAttributeByPropertyName(it.getPropertyName()).setValue("")
+//                            it.setValue(it.getValue()-1)
+//                            println it.getPropertyName() + " " + it.getValue()
+//
+//                        }
+//                    }
                 }
             }
         });
@@ -903,6 +917,68 @@ public class Application extends javafx.application.Application {
         closeCity.setDisable(true)
         closeZip.setDisable(true)
         facetBox.setDisable(true)
+    }
+    public static void addDragging() {
+        facetBox.getChildren().each {
+            it.setOnDragOver(new EventHandler<DragEvent>() {
+                @Override
+                public void handle(DragEvent event) {
+                    Dragboard db = event.getDragboard();
+                    boolean accept = false;
+                    if (db.hasString()) {
+                        String data = db.getString();
+                        try {
+                            if (data != (it.toString())
+                                    && event.getGestureSource() instanceof Pane) {
+                                accept = true;
+                            }
+                        } catch (NumberFormatException exc) {
+                            accept = false;
+                        }
+                    }
+                    if (accept) {
+                        event.acceptTransferModes(TransferMode.MOVE);
+                    }
+                }
+            });
+
+
+
+            it.setOnDragDropped(new EventHandler<DragEvent>() {
+                @Override
+                public void handle(DragEvent event) {
+                    Pane draggedElement = (Pane) event.getGestureSource()
+                    VBox vBoxOrigin = draggedElement.getParent()
+                    vBoxOrigin.getChildren().remove(draggedElement)
+                    it.getChildren().add(draggedElement)
+                    int newHeight = (it.getHeight())/(it.getChildren().size())
+                    int newOriginHeight = (vBoxOrigin.getHeight())/(vBoxOrigin.getChildren().size())
+                    vBoxOrigin.getChildren().each { originChildPane ->
+                        originChildPane.setPrefHeight(newOriginHeight)
+                        originChildPane.getChildren().get(0).setPrefHeight(newOriginHeight)
+                    }
+
+                    it.getChildren().each { childPane ->
+
+                        childPane.setPrefHeight(newHeight)
+                        childPane.getChildren().get(0).setPrefHeight(newHeight)
+
+                    }
+
+                    draggedElement.setOnDragDetected(new EventHandler<MouseEvent>() {
+                        @Override
+                        public void handle(MouseEvent e) {
+                            Dragboard db = draggedElement.startDragAndDrop(TransferMode.MOVE);
+                            ClipboardContent cc = new ClipboardContent();
+                            cc.putString(it.toString());
+                            db.setContent(cc);
+                            e.consume();
+                        }
+                    });
+                }
+            });
+
+        }
     }
 
     private static void loadPresentationModel(int rowIdx) {
