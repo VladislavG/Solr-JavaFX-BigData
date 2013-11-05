@@ -44,7 +44,7 @@ public class Layout {
     static public Rectangle createEventBorder(){
 
         Rectangle eventBorder = new Rectangle()
-        eventBorder.setStroke(Color.INDIANRED)
+        eventBorder.setStroke(Color.CRIMSON)
         eventBorder.setStrokeWidth(2)
         eventBorder.setWidth(40)
         eventBorder.setHeight(100)
@@ -56,7 +56,7 @@ public class Layout {
     }
     static public Rectangle createCBsBorder(){
         Rectangle border = new Rectangle()
-        border.setStroke(Color.INDIANRED)
+        border.setStroke(Color.CRIMSON)
         border.setStrokeWidth(2)
         border.setWidth(170)
         border.setHeight(100)
@@ -73,8 +73,10 @@ public class Layout {
         dragBorder.setHeight(30)
         dragBorder.setWidth(250)
         dragBorder.setFill(Color.WHITESMOKE)
-        dragBorder.setStroke(Color.INDIANRED)
+        dragBorder.setStroke(Color.CRIMSON)
         dragBorder.setStrokeWidth(1)
+        dragBorder.setArcWidth(10)
+        dragBorder.setArcHeight(10)
         VBox treeAndDrag = new VBox()
         root.setExpanded(true);
         tree.setRoot(root);

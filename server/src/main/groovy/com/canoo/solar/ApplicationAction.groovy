@@ -99,14 +99,14 @@ public class ApplicationAction extends DolphinServerAction{
                 def value = it.getValue()
                 orders.put(it.propertyName, value)
             }
-
             filterPM.attributes.each {
 
                 def value = it.value
-                if (value=="" || value==null || value.toString().contains("Plant Type") || value.toString().contains("Zip-Codes") || value.toString().contains("Cities")) value = "*"
+                if (value=="" || value==null || value.toString().contains("Plant Types") || value.toString().contains("Zip-Codes") || value.toString().contains("Cities")) value = "*"
                 String query = it.getPropertyName() + ":" + value.toString()
                 ordersWithQueries.put(orders.get(it.propertyName), query)
             }
+
 
             (0..ordersWithQueries.size()-1).each {
 

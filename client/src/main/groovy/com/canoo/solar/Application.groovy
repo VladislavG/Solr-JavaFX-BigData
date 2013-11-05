@@ -23,6 +23,7 @@ import javafx.scene.layout.BorderPane
 import javafx.scene.layout.GridPane
 import javafx.scene.layout.HBox
 import javafx.scene.layout.Pane
+import javafx.scene.layout.Priority
 import javafx.scene.layout.RowConstraints
 import javafx.scene.layout.VBox
 import javafx.util.Duration
@@ -88,8 +89,9 @@ public class Application extends javafx.application.Application {
     Pane columnStack = new Pane()
     Pane filterStack = new Pane()
     static Pane tableStack = new Pane()
-    Pane pane = new Pane()
+    static Pane pane = new Pane()
     static GridPane treesGrid = new GridPane()
+    static Pane all = new Pane();
 
     static HBox facetBox = new HBox()
     static VBox col1 = new VBox()
@@ -112,7 +114,7 @@ public class Application extends javafx.application.Application {
     final Label city = new Label();
     final Label zip = new Label();
 
-    final Separator separator = new Separator();
+    static Separator separator = new Separator();
     TextField nominalText = new TextField()
 
     Pane typePane = new Pane()
@@ -121,6 +123,7 @@ public class Application extends javafx.application.Application {
     static Button closeZip = new Button("X")
     Pane cityPane = new Pane()
     static Button closeCity = new Button("X")
+
 
     public static PowerPlantList fakedPlantList = new PowerPlantList(1370000, new OurConsumer<Integer>(){
         @Override
@@ -156,10 +159,10 @@ public class Application extends javafx.application.Application {
                 cityCount++
                 final TreeItem<String> checkBoxTreeItem =
                     new TreeItem<String>(it.toString() + " (" + observableListCitiesCount.get(cityCount-1).toString() + ")");
+
                 treeCities.getRoot().getChildren().add(checkBoxTreeItem);
             }
             treeCities.getRoot().setValue("Cities ($size)")
-
             observableListTypes.addAll(data.get(1).get(IDS))
             observableListTypesCount.addAll(data.get(1).get(NUM_COUNT))
             treeTypes.getRoot().getChildren().clear()
@@ -193,7 +196,7 @@ public class Application extends javafx.application.Application {
         Pane root = setupStage();
         setupBinding();
 
-        Scene scene = new Scene(root, 1280, 670)
+        Scene scene = new Scene(root, 1280, 660)
         scene.stylesheets << 'demo.css'
 
         stage.setScene(scene);
@@ -315,13 +318,13 @@ public class Application extends javafx.application.Application {
                         clientDolphin.data GET, { data ->
 
                             if (cityValue > typeValue){
-                                updateTree(data,treeCities,observableListCities,observableListCitiesCount,2,"Cities")
                                 city.setText("")
+                                updateTree(data,treeCities,observableListCities,observableListCitiesCount,2,"Cities")
                             }
 
                             if (zipValue > typeValue){
-                                updateTree(data, treeZip, observableListZips, observableListZipsCount, 3, "Zip-Codes")
                                 zip.setText("")
+                                updateTree(data, treeZip, observableListZips, observableListZipsCount, 3, "Zip-Codes")
                             }
                             def size = data.get(0).get("size")
                             PowerPlantList newFakeList = new PowerPlantList((Integer)size, new OurConsumer<Integer>(){
@@ -422,7 +425,7 @@ public class Application extends javafx.application.Application {
         Animation.setMouseEventSliding(columnEventBorder, columnStack, Animation.timelineRight, Animation.timelineLeft, columns)
         Animation.setMouseEventSliding(filtersEventBorder, filterStack, Animation.timelineRightFilters, Animation.timelineLeftFilters, filter)
 
-        Pane all = new Pane();
+
         all.getChildren().addAll(details)
         columnStack.getChildren().addAll(columnCBBorder, columnsCBs)
         columnsCBs.relocate(0, -10)
@@ -483,11 +486,10 @@ public class Application extends javafx.application.Application {
     }
 
     private void updateFacets(Pane pane, Integer newValue, Integer oldValue, TreeView tree) {
-
+        tree.getSelectionModel().clearSelection()
         VBox paneContainer = pane.getParent()
         List values = new ArrayList()
         if(newValue==0){
-            tree.getSelectionModel().clearSelection()
             pane.getParent().getChildren().remove(pane)
             VBox originBox = facetBox.getChildren().get(oldValue-1)
             if (originBox.getChildren().size() > 0) {
@@ -501,7 +503,6 @@ public class Application extends javafx.application.Application {
                     treeView.getSelectionModel().clearSelection()
                     treeView.getSelectionModel().select(selectedIdx)
                 }
-
             }
 
             pane.setPrefHeight(paneContainer.getHeight())
@@ -524,7 +525,6 @@ public class Application extends javafx.application.Application {
                 VBox newVbox = new VBox()
                 facetBox.getChildren().add(i-1, newVbox)
             }
-
             targetBox = facetBox.getChildren().get(i-1)
             targetBox.getChildren().add(pane)
         }
@@ -533,6 +533,7 @@ public class Application extends javafx.application.Application {
             if (oldValue < newValue){
                 VBox originBox = facetBox.getChildren().get(oldValue-1)
                 originBox.getChildren().each {
+
                     TreeView treeView = it.getChildren().get(0).getChildren().get(1)
                     Integer selectedIdx = treeView.getSelectionModel().getSelectedIndex()
                     if (selectedIdx == -1) {
@@ -544,14 +545,17 @@ public class Application extends javafx.application.Application {
                 }
             } else if(oldValue > newValue){
                 try {
-                    VBox originBox = facetBox.getChildren().get(oldValue-1)
-                    originBox.getChildren().each {
-                        TreeView treeView = it.getChildren().get(0).getChildren().get(1)
-                        treeView.getSelectionModel().clearSelection()
+                    (newValue..(oldValue-2)).each {
+                        VBox betweenBox = facetBox.getChildren().get(it)
+                        betweenBox.getChildren().each {
+                            TreeView treeView = it.getChildren().get(0).getChildren().get(1)
+                            treeView.getSelectionModel().clearSelection()
+                        }
                     }
                 }catch (Exception e){
                     println "Exception $e"
                 }
+
                 tree.getSelectionModel().clearSelection()
                 VBox targetBox = facetBox.getChildren().get(newValue-1)
                 targetBox.getChildren().each {
@@ -595,7 +599,6 @@ public class Application extends javafx.application.Application {
                         }
                     }
                 }
-
                 else{
                     VBox previousBox = facetBox.getChildren().get(oldValue-2)
                     previousBox.getChildren().each {
@@ -738,6 +741,7 @@ public class Application extends javafx.application.Application {
 //                        }
 //                    }
                 }
+
             }
         });
     }
