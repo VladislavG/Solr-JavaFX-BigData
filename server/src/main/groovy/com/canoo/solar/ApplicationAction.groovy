@@ -88,6 +88,7 @@ public class ApplicationAction extends DolphinServerAction{
         void handleCommand(NamedCommand command, List<Command> response) {
             def orderPM = getServerDolphin().findPresentationModelById(ORDER)
             def filterPM = getServerDolphin().findPresentationModelById(FILTER)
+            def filterAutoPM = getServerDolphin().findPresentationModelById(FILTER_AUTOFILL)
             SolrQuery solrQuery = new SolrQuery("*:*")
             solrQuery.addField(POSITION)
             solrQuery.setSort(POSITION, SolrQuery.ORDER.asc)
@@ -100,7 +101,7 @@ public class ApplicationAction extends DolphinServerAction{
                 orders.put(it.propertyName, value)
             }
             filterPM.attributes.each {
-
+                if (it.propertyName == ALL)return;
                 def value = it.value
                 if (value=="" || value==null || value.toString().contains("Plant Types") || value.toString().contains("Zip-Codes") || value.toString().contains("Cities")) value = "*"
                 String query = it.getPropertyName() + ":" + value.toString()
@@ -123,6 +124,32 @@ public class ApplicationAction extends DolphinServerAction{
                 println query
                 solrQuery.addFilterQuery(query)
             }
+
+            filterAutoPM.attributes.each {
+
+                def value = it.value
+                if (value=="" || value==null || value.toString().contains("Plant Types") || value.toString().contains("Zip-Codes") || value.toString().contains("Cities")) value = "*"
+                String query = it.getPropertyName().substring(0, it.getPropertyName().lastIndexOf("_")) + ":" + value.toString()
+                println query
+                solrQuery.addFilterQuery(query)
+            }
+
+
+            String freeSearchString = ""
+            int i = 2;
+            filterPM.attributes.each {
+                i++;
+                println it.propertyName + " " + it.value
+                if (it.propertyName == ALL || it.propertyName == NOMINAL_POWER)return
+                Object value = filterPM.findAttributeByPropertyName(ALL).getValue()
+                if (value == null || value == "") value = "*"
+                String query  = it.propertyName + ":" + value.toString()
+                if (i < filterPM.attributes.size()){
+                    query = query + " OR "
+                }
+                freeSearchString = freeSearchString + query
+            }
+            solrQuery.addFilterQuery(freeSearchString)
 
 //            filterPM.attributes.each {
 //                def value = it.value
@@ -189,6 +216,7 @@ public class ApplicationAction extends DolphinServerAction{
             if (getServerDolphin().getAt(rowIdx.toString()) == null) {
                     def start = System.currentTimeMillis()
                     def filterPM = getServerDolphin().findPresentationModelById(FILTER)
+                    def filterAutoPM = getServerDolphin().findPresentationModelById(FILTER_AUTOFILL)
                     def orderPM = getServerDolphin().findPresentationModelById(ORDER)
                     SolrQuery solrQuery = new SolrQuery("*:*")
                 if (reverse.getValue()) {
@@ -207,6 +235,7 @@ public class ApplicationAction extends DolphinServerAction{
                 filterPM.attributes.each {
 
                     def value = it.value
+
                     if (value=="" || value==null || value.toString().contains("Plant Type") || value.toString().contains("Zip-Codes") || value.toString().contains("Cities")) value = "*"
                     String query = it.getPropertyName() + ":" + value.toString()
                     ordersWithQueries.put(orders.get(it.propertyName), query)
@@ -227,6 +256,32 @@ public class ApplicationAction extends DolphinServerAction{
 
                     solrQuery.addFilterQuery(query)
                 }
+
+                filterAutoPM.attributes.each {
+
+                    def value = it.value
+                    if (value=="" || value==null || value.toString().contains("Plant Types") || value.toString().contains("Zip-Codes") || value.toString().contains("Cities")) value = "*"
+                    String query = it.getPropertyName().substring(0, it.getPropertyName().lastIndexOf("_")) + ":" + value.toString()
+                    println query
+                    solrQuery.addFilterQuery(query)
+                }
+
+                String freeSearchString = ""
+                int i = 2;
+                filterPM.attributes.each {
+                    i++;
+                    println it.propertyName + " " + it.value
+                    if (it.propertyName == ALL || it.propertyName == NOMINAL_POWER)return
+                    Object value = filterPM.findAttributeByPropertyName(ALL).getValue()
+                    if (value == null || value == "") value = "*"
+                    String query  = it.propertyName + ":" + value.toString()
+                    if (i < filterPM.attributes.size()){
+                        query = query + " OR "
+                    }
+                    freeSearchString = freeSearchString + query
+                }
+                solrQuery.addFilterQuery(freeSearchString)
+
                     solrQuery.setStart(rowIdx)
                     solrQuery.setRows(1);
                     QueryResponse solrResponse = getSolrServer().query(solrQuery);

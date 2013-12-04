@@ -26,6 +26,7 @@ import javafx.scene.layout.RowConstraints
 import javafx.scene.layout.VBox
 import javafx.scene.paint.Color
 import javafx.scene.shape.Rectangle
+import np.com.ngopal.control.AutoFillTextBox
 import org.opendolphin.core.Attribute
 import org.opendolphin.core.PresentationModel
 import org.opendolphin.core.client.ClientDolphin
@@ -44,19 +45,19 @@ public class Layout {
     static public Rectangle createEventBorder(){
 
         Rectangle eventBorder = new Rectangle()
-        eventBorder.setStroke(Color.CRIMSON)
+        eventBorder.setStroke(Color.ALICEBLUE)
         eventBorder.setStrokeWidth(2)
-        eventBorder.setWidth(40)
+        eventBorder.setWidth(20)
         eventBorder.setHeight(100)
         eventBorder.setFill(Color.WHITESMOKE)
         eventBorder.setArcWidth(10)
         eventBorder.setArcHeight(10)
-        eventBorder.setOpacity(0.3)
+        eventBorder.setOpacity(0.5)
         return eventBorder
     }
     static public Rectangle createCBsBorder(){
         Rectangle border = new Rectangle()
-        border.setStroke(Color.CRIMSON)
+        border.setStroke(Color.ALICEBLUE)
         border.setStrokeWidth(2)
         border.setWidth(170)
         border.setHeight(100)
@@ -68,15 +69,15 @@ public class Layout {
     }
 
 
-    static public Pane createTreePane(TreeItem root, TreeView tree, Button close, Pane pane, CheckBox checkBox, Attribute orderAtt, HBox grid){
+    static public Pane createTreePane(TreeItem root, TreeView tree, Button close, Pane pane, CheckBox checkBox, Attribute orderAtt, AutoFillTextBox autoFillTextBox){
         Rectangle dragBorder = new Rectangle()
-        dragBorder.setHeight(30)
+        dragBorder.setHeight(22)
         dragBorder.setWidth(250)
-        dragBorder.setFill(Color.WHITESMOKE)
-        dragBorder.setStroke(Color.CRIMSON)
-        dragBorder.setStrokeWidth(1)
-        dragBorder.setArcWidth(10)
-        dragBorder.setArcHeight(10)
+        dragBorder.setFill(Color.LIGHTGRAY)
+        dragBorder.setStroke(Color.BLACK)
+        dragBorder.setStrokeWidth(0.5)
+        dragBorder.setArcWidth(3)
+        dragBorder.setArcHeight(3)
         VBox treeAndDrag = new VBox()
         root.setExpanded(true);
         tree.setRoot(root);
@@ -111,9 +112,10 @@ public class Layout {
             @Override
             void handle(MouseEvent t) {
                 checkBox.setSelected(false)
+
             }
         })
-        close.relocate(200,0)
+        close.relocate(222,0)
         return pane;
     }
 
@@ -121,7 +123,7 @@ public class Layout {
 
         HBox hBox = new HBox()
         hBox.setSpacing(5);
-        hBox.setPadding(new Insets(10, 0, 0, 10));
+        hBox.setPadding(new Insets(10, 10, 10, 10));
         hBox.getChildren().addAll(detailTooltip, detail)
         return hBox
 

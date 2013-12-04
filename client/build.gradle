@@ -6,6 +6,7 @@ dependencies {
     compile "org.open-dolphin:dolphin-client-javafx:$dolphinVersion"
     compile "org.codehaus.groovyfx:groovyfx:0.2"
     compile "org.open-dolphin:dolphin-client:$dolphinVersion"
+	compile files ('../0_artifacts/autofill.jar') //http://blog.ngopal.com.np/2011/07/04/autofill-textbox-with-filtermode-in-javafx-2-0-custom-control/
 }
 
 mainClassName = 'com.canoo.solar.ApplicationStarter'

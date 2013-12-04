@@ -4,24 +4,33 @@ import com.sun.javafx.scene.control.skin.TableHeaderRow
 import javafx.beans.value.ChangeListener
 import javafx.beans.value.ObservableValue
 import javafx.collections.FXCollections
+import javafx.collections.ListChangeListener
+import javafx.event.Event
 import javafx.event.EventHandler
 import javafx.event.EventType
 import javafx.geometry.Insets
+import javafx.geometry.Orientation
 import javafx.geometry.Pos
 import javafx.scene.Scene
 import javafx.scene.control.*
+import javafx.scene.image.Image
+import javafx.scene.image.ImageView
 import javafx.scene.input.ClipboardContent
 import javafx.scene.input.DragEvent
 import javafx.scene.input.Dragboard
 import javafx.scene.input.KeyCode
 import javafx.scene.input.KeyEvent
+import javafx.scene.input.MouseDragEvent
 import javafx.scene.input.MouseEvent
 import javafx.scene.input.TransferMode
 import javafx.scene.layout.BorderPane
 import javafx.scene.layout.GridPane
+import javafx.stage.StageStyle;
 import javafx.scene.layout.HBox
 import javafx.scene.layout.Pane
 import javafx.scene.layout.VBox
+import javafx.scene.paint.Color
+import np.com.ngopal.control.AutoFillTextBox
 
 import static org.opendolphin.binding.JFXBinder.bind
 import javafx.scene.shape.Rectangle
@@ -63,6 +72,11 @@ public class Application extends javafx.application.Application {
     TextField typeLabelDetail
     TextField nominalLabelDetail
 
+    static AutoFillTextBox zipTextAutoForSearch
+    static AutoFillTextBox typeTextAutoForSearch
+    static AutoFillTextBox cityTextAutoForSearch
+    static AutoFillTextBox nominalTextAutoForSearch
+
     TextField zipTextforSearch
     TextField typeTextforSearch
     TextField cityTextforSearch
@@ -92,14 +106,20 @@ public class Application extends javafx.application.Application {
     static Pane tableStack
     static Pane pane
     static GridPane treesGrid
-    static Pane all
+    static HBox all
 
     static HBox facetBox
+    static HBox searchBox
     static VBox col1
     static VBox col2
     static VBox col3
+    static VBox searchAndAll
+
+    public Rectangle placeholder
+    public Rectangle detailsContainer
 
     VBox details
+    VBox tableBox
     static VBox filtersCBs
     static VBox columnsCBs
     public static Rectangle filtersCBBorder
@@ -115,8 +135,18 @@ public class Application extends javafx.application.Application {
     Label city
     Label zip
 
+    Label plantTypes_auto
+    Label city_auto
+    Label zip_auto
+
+    public static Label total
+    public static Label totalCount
+
     static Separator separator
+    static Separator facetTableSeparator
     TextField nominalText
+    TextField searchField
+    Label searchText
 
     Pane typePane
     static Button closeType
@@ -136,9 +166,9 @@ public class Application extends javafx.application.Application {
     @Override
     public void start(Stage stage) throws Exception {
         initializeComponents();
-        stage.setTitle("Application Title");
         initializePresentationModels();
         disableQuery()
+
         observableListCities.clear()
         observableListTypes.clear()
         observableListZips.clear()
@@ -192,23 +222,28 @@ public class Application extends javafx.application.Application {
         Pane root = setupStage();
         setupBinding();
 
-        Scene scene = new Scene(root, 1280, 660)
+        Scene scene = new Scene(root, 780, 470)
         scene.stylesheets << 'demo.css'
-
+        stage.minWidthProperty().bind(searchAndAll.widthProperty().add(20))
+        stage.maxWidthProperty().bind(searchAndAll.widthProperty().add(20))
         stage.setScene(scene);
-        stage.setTitle(getClass().getName());
+//        stage.initStyle(StageStyle.UTILITY);
+//        stage.setTitle(getClass().getName());
+        stage.setTitle("Power Plants Explorer")
+
         stage.show();
     }
 
     private static void initializePresentationModels () {
-        clientDolphin.presentationModel(FILTER, [ID, CITY, PLANT_TYPE, ZIP, NOMINAL_POWER]);
+        clientDolphin.presentationModel(FILTER, [ID, CITY, PLANT_TYPE, ZIP, NOMINAL_POWER, ALL]);
+        clientDolphin.presentationModel(FILTER_AUTOFILL, [CITY_AUTOFILL, PLANT_TYPE_AUTOFILL, ZIP_AUTOFILL]);
         clientDolphin.presentationModel(SELECTED_POWERPLANT, [ID, CITY, PLANT_TYPE, ZIP, NOMINAL_POWER]);
         clientDolphin.presentationModel(ORDER, [CITY, PLANT_TYPE, ZIP])
         clientDolphin.presentationModel(ORDER_COLUMN, [CITY_COLUMN, TYPE_COLUMN, ZIP_COLUMN, NOMINAL_COLUMN, POSITION_COLUMN])
         clientDolphin.presentationModel(STATE, [TRIGGER, START_INDEX, SORT, REVERSER_ORDER])[TRIGGER].value=0
 
         clientDolphin.getClientModelStore().findPresentationModelById(ORDER).findAttributeByPropertyName(ZIP).setValue(0)
-        clientDolphin.getClientModelStore().findPresentationModelById(ORDER).findAttributeByPropertyName(CITY).setValue(0)
+        clientDolphin.getClientModelStore().findPresentationModelById(ORDER).findAttributeByPropertyName(CITY).setValue(1)
         clientDolphin.getClientModelStore().findPresentationModelById(ORDER).findAttributeByPropertyName(PLANT_TYPE).setValue(0)
 
         clientDolphin.getClientModelStore().findPresentationModelById(ORDER_COLUMN).findAttributeByPropertyName(CITY_COLUMN).setValue(2)
@@ -225,6 +260,38 @@ public class Application extends javafx.application.Application {
     private Pane setupStage() {
 
         facetBox.getChildren().addAll(col1, col2, col3)
+        facetBox.setSpacing(5)
+        facetBox.setMinHeight(445)
+        col1.setMinHeight(445)
+        col1.setSpacing(2)
+        col2.setSpacing(2)
+        col3.setSpacing(2)
+        col2.setMinHeight(445)
+        col3.setMinHeight(445)
+
+        Image image = new Image("search.png");
+        ImageView iv1 = new ImageView();
+        iv1.setImage(image);
+        iv1.setFitHeight(15)
+        iv1.setFitWidth(15)
+
+        placeholder.setArcHeight(15)
+        placeholder.setArcWidth(15)
+        placeholder.setStroke(Color.SKYBLUE)
+        placeholder.setStrokeWidth(5)
+        placeholder.setFill(Color.BLUE)
+        placeholder.setOpacity(0.5)
+        placeholder.getStrokeDashArray().addAll(25d, 20d, 5d, 20d);
+
+        detailsContainer.widthProperty().bind(table.widthProperty())
+        detailsContainer.setFill(Color.LIGHTGRAY)
+        detailsContainer.setHeight(36)
+        detailsContainer.setStrokeWidth(0.5)
+        detailsContainer.setStroke(Color.BLACK)
+        detailsContainer.setArcWidth(3)
+        detailsContainer.setArcHeight(3)
+
+        tableBox.setSpacing(5)
 
         treesGrid.setGridLinesVisible(true)
         typeLabelDetail.setEditable(false)
@@ -239,10 +306,13 @@ public class Application extends javafx.application.Application {
         zipCB.setSelected(true);
         positionCB.setSelected(true);
 
-        columnEventBorder.relocate(0, 290)
-        filtersEventBorder.relocate(0, 420)
+        columnEventBorder.relocate(0, 140)
+        filtersEventBorder.relocate(0, 270)
 
-        table.setMinHeight(660)
+        table.setMaxHeight(381)
+        table.setMinHeight(381)
+        table.setMaxWidth(690)
+//        table.setMinWidth(690)
         table.setItems(items)
         table.setPlaceholder(noData)
 
@@ -254,48 +324,84 @@ public class Application extends javafx.application.Application {
 
         TableColumn<PowerPlant, String> positionColumn = firstColumn()
         TableColumn<PowerPlant, String> zipColumn = secondColumn()
-        zipColumn.setGraphic(zipTextforSearch)
-        zipTextforSearch.setMaxWidth(zipColumn.getWidth()-55)
-        zipTextforSearch.addEventFilter(KeyEvent.KEY_PRESSED, new EventHandler<KeyEvent>() {
+        zipColumn.setGraphic(zipTextAutoForSearch)
+        zipTextAutoForSearch.setMaxWidth(zipColumn.getWidth()-55)
+
+        zipTextAutoForSearch.addEventFilter(KeyEvent.KEY_PRESSED, new EventHandler<KeyEvent>() {
             @Override
             public void handle(KeyEvent event) {
-                if (KeyCode.ENTER == event.getCode()) {
+                if (KeyCode.ENTER == event.getCode() || (KeyCode.BACK_SPACE == event.getCode() && zipTextAutoForSearch.getText().size() == 1)) {
+                    if (KeyCode.BACK_SPACE == event.getCode()){
+                        zip_auto.setText("")
+                    }else{zip_auto.setText(zipTextforSearch.getText())}
                     treeZip.getSelectionModel().clearSelection()
-                    zip.setText(zipTextforSearch.getText())
+                    disableQuery()
+                    clearPmsAndPowerPlants()
                     refreshTable()
                     enableQuery()
                 }
+                else if(KeyCode.ESCAPE == event.getCode()) {
+
+                    zipFilterCB.setSelected(true)
+                    zipTextAutoForSearch.setVisible(false)
+
+                }
+
             }
         });
+        cityTextAutoForSearch.setData(observableListCities)
+        typeTextAutoForSearch.setData(observableListTypes)
+        zipTextAutoForSearch.setData(observableListZips)
+
         TableColumn<PowerPlant, String> cityColumn = thirdColumn()
-        cityColumn.setGraphic(cityTextforSearch)
-        cityTextforSearch.setMaxWidth(cityColumn.getWidth()-55)
-        cityTextforSearch.addEventFilter(KeyEvent.KEY_PRESSED, new EventHandler<KeyEvent>() {
+        cityColumn.setGraphic(cityTextAutoForSearch)
+        cityTextAutoForSearch.setMaxWidth(cityColumn.getWidth()-55)
+        cityTextAutoForSearch.addEventFilter(KeyEvent.KEY_PRESSED, new EventHandler<KeyEvent>() {
             @Override
             public void handle(KeyEvent event) {
-                if (KeyCode.ENTER == event.getCode()) {
+                if (KeyCode.ENTER == event.getCode()|| (KeyCode.BACK_SPACE == event.getCode() && cityTextAutoForSearch.getText().size() == 1)) {
+                    if (KeyCode.BACK_SPACE == event.getCode()){
+                        city_auto.setText("")
+                    }else{city_auto.setText(cityTextAutoForSearch.getText())}
                     treeCities.getSelectionModel().clearSelection()
-                    city.setText(cityTextforSearch.getText())
+                    disableQuery()
+                    clearPmsAndPowerPlants()
                     refreshTable()
                     enableQuery()
+                } else if(KeyCode.ESCAPE == event.getCode()) {
+
+                        cityTextAutoForSearch.setVisible(false)
+                        cityFilterCB.setSelected(true)
+
                 }
             }
         });
 
         TableColumn<PowerPlant, String> typeColumn = fourthColumn()
-        typeColumn.setGraphic(typeTextforSearch)
-        typeTextforSearch.setMaxWidth(typeColumn.getWidth()-55)
-        typeTextforSearch.addEventFilter(KeyEvent.KEY_PRESSED, new EventHandler<KeyEvent>() {
+        typeColumn.setGraphic(typeTextAutoForSearch)
+
+        typeTextAutoForSearch.setMaxWidth(typeColumn.getWidth()-55)
+        typeTextAutoForSearch.addEventFilter(KeyEvent.KEY_PRESSED, new EventHandler<KeyEvent>() {
             @Override
             public void handle(KeyEvent event) {
-                if (KeyCode.ENTER == event.getCode()) {
+                if (KeyCode.ENTER == event.getCode()|| (KeyCode.BACK_SPACE == event.getCode() && typeTextAutoForSearch.getText().size() == 1)) {
+                    if (KeyCode.BACK_SPACE == event.getCode()){
+                        plantTypes_auto.setText("")
+                    }else{plantTypes_auto.setText(typeTextAutoForSearch.getText())}
                     treeTypes.getSelectionModel().clearSelection()
-                    plantTypes.setText(typeTextforSearch.getText())
+                    disableQuery()
+                    clearPmsAndPowerPlants()
                     refreshTable()
                     enableQuery()
+                }else if(KeyCode.ESCAPE == event.getCode()) {
+
+                        typeTextAutoForSearch.setVisible(false)
+                        typeFilterCB.setSelected(true)
+
                 }
             }
         });
+
         TableColumn<PowerPlant, String> nominalColumn = fithColumn()
 //        nominalColumn.setGraphic(nominalTextforSearch)
 //        nominalTextforSearch.setMaxWidth(nominalColumn.getWidth()-75)
@@ -328,9 +434,9 @@ public class Application extends javafx.application.Application {
 
 //        assemble the treeViews and buttons together into a draggable pane
         def orderPm = clientDolphin.findPresentationModelById(ORDER)
-        Layout.createTreePane(rootItemCities, treeCities, closeCity, cityPane, cityFilterCB, orderPm[CITY], facetBox)
-        Layout.createTreePane(rootItemZip, treeZip, closeZip, zipPane, zipFilterCB, orderPm[ZIP], facetBox)
-        Layout.createTreePane(rootItem, treeTypes, closeType, typePane, typeFilterCB, orderPm[PLANT_TYPE], facetBox)
+        Layout.createTreePane(rootItemCities, treeCities, closeCity, cityPane, cityFilterCB, orderPm[CITY], cityTextAutoForSearch)
+        Layout.createTreePane(rootItemZip, treeZip, closeZip, zipPane, zipFilterCB, orderPm[ZIP], zipTextAutoForSearch)
+        Layout.createTreePane(rootItem, treeTypes, closeType, typePane, typeFilterCB, orderPm[PLANT_TYPE], typeTextAutoForSearch)
 
         addDragging()
 
@@ -342,15 +448,27 @@ public class Application extends javafx.application.Application {
         separator.setMinWidth(facetBox.getTranslateX())
 
         details.setSpacing(5);
-        details.setPadding(new Insets(20, 0, 0, 10));
-        details.getChildren().addAll(selectionDetailsLabel, cityLabelTextDetail, idLabelTextDetail, typeLabelTextDetail, nominalLabelTextDetail, zipLabelTextDetail, separator, facetBox)
+        details.setPadding(new Insets(20, 10, 10, 10));
+        details.getChildren().addAll(selectionDetailsLabel, cityLabelTextDetail, idLabelTextDetail, typeLabelTextDetail, nominalLabelTextDetail, zipLabelTextDetail)
+        facetBox.setPadding(new Insets(0, 0, 0, 0));
+        setFilterCBListener(typeFilterCB, PLANT_TYPE, typeTextAutoForSearch)
+        setFilterCBListener(cityFilterCB, CITY, cityTextAutoForSearch)
+        setFilterCBListener(zipFilterCB, ZIP, zipTextAutoForSearch)
 
-        setFilterCBListener(typeFilterCB, PLANT_TYPE)
-        setFilterCBListener(cityFilterCB, CITY)
-        setFilterCBListener(zipFilterCB, ZIP)
-
-
-
+        searchField.addEventFilter(KeyEvent.KEY_PRESSED, new EventHandler<KeyEvent>() {
+            @Override
+            public void handle(KeyEvent event) {
+                if (KeyCode.ENTER == event.getCode() || (KeyCode.BACK_SPACE == event.getCode() && searchField.getText().size() == 1)) {
+                    if (KeyCode.BACK_SPACE == event.getCode()){
+                        searchText.setText("")
+                    }else{searchText.setText(searchField.getText())}
+                    disableQuery()
+                    clearPmsAndPowerPlants()
+                    refreshTable()
+                    enableQuery()
+                }
+            }
+        });
         treeTypes.getSelectionModel().selectedItemProperty().addListener(
                 new ChangeListener<TreeItem <String>>() {
                     public void changed(ObservableValue<? extends TreeItem<String>> observableValue,
@@ -386,6 +504,7 @@ public class Application extends javafx.application.Application {
                             javafx.collections.ObservableList<PowerPlant> newItems = FakeCollections.newObservableList(newFakeList);
                             if (newItems.size()==0) {enableQuery()}
                             table.setItems(newItems)
+                            totalCount.setText(newItems.size() + "/1370000")
                             table.getSelectionModel().clearSelection()
                             clientDolphin.findPresentationModelById(SELECTED_POWERPLANT).getAttributes().each {
                                 it.setValue("")
@@ -427,6 +546,7 @@ public class Application extends javafx.application.Application {
                             javafx.collections.ObservableList<PowerPlant> newItems = FakeCollections.newObservableList(newFakeList);
                             if (newItems.size()==0) {enableQuery()}
                             table.setItems(newItems)
+                            totalCount.setText(newItems.size() + "/1370000")
                             table.getSelectionModel().clearSelection()
                             clientDolphin.findPresentationModelById(SELECTED_POWERPLANT).getAttributes().each {
                                 it.setValue("")
@@ -470,6 +590,7 @@ public class Application extends javafx.application.Application {
                             javafx.collections.ObservableList<PowerPlant> newItems = FakeCollections.newObservableList(newFakeList);
                             if (newItems.size()==0) {enableQuery()}
                             table.setItems(newItems)
+                            totalCount.setText(newItems.size() + "/1370000")
                             table.getSelectionModel().clearSelection()
                             clientDolphin.findPresentationModelById(SELECTED_POWERPLANT).getAttributes().each {
                                 it.setValue("")
@@ -478,27 +599,42 @@ public class Application extends javafx.application.Application {
                     }
                 });
 
+
         Animation.setAnimation(columnStack);
         Animation.setAnimationFilters(filterStack);
         Animation.setMouseEventSliding(columnEventBorder, columnStack, Animation.timelineRight, Animation.timelineLeft, columns)
         Animation.setMouseEventSliding(filtersEventBorder, filterStack, Animation.timelineRightFilters, Animation.timelineLeftFilters, filter)
 
-
-        all.getChildren().addAll(details)
+        facetTableSeparator.setOrientation(Orientation.VERTICAL)
         columnStack.getChildren().addAll(columnCBBorder, columnsCBs)
         columnsCBs.relocate(0, -10)
-        columnStack.relocate(0, 290)
+        columnStack.relocate(0, 140)
         filterStack.getChildren().addAll(filtersCBBorder, filtersCBs)
-        filterStack.relocate(0, 420)
-        columns.relocate(5, 340)
+        filterStack.relocate(0, 270)
+        columns.relocate(-9, 190)
         columns.setRotate(90)
-        filter.relocate(13, 470)
+        filter.relocate(-3, 320)
         filter.setRotate(90)
-        tableStack.getChildren().addAll(table, columns, filter, columnEventBorder, filtersEventBorder, columnStack, filterStack)
-        BorderPane borderPane = new BorderPane();
-        borderPane.setCenter(tableStack);
-        borderPane.setRight(all);
-        pane.getChildren().addAll(borderPane)
+//        tableStack.getChildren().addAll(table)
+//        facetBox.getChildren().add(placeholder)
+        tableStack.getChildren().addAll(detailsContainer, total, totalCount)
+        totalCount.relocate(590, 10)
+        total.relocate(10, 10)
+        tableBox.getChildren().addAll(table, tableStack)
+        all.getChildren().addAll(facetBox,facetTableSeparator,tableBox)
+        all.setSpacing(5)
+        searchBox.getChildren().addAll(iv1, searchField)
+        searchBox.setAlignment(Pos.CENTER_RIGHT)
+        searchBox.setSpacing(5)
+//        all.setPadding(new Insets(10, 10, 0, 25))
+        searchAndAll.getChildren().addAll(searchBox, all)
+        searchAndAll.setPadding(new Insets(10, 10, 0, 25))
+        searchAndAll.setSpacing(5)
+
+        searchField.setMaxWidth(150)
+//        borderPane.setBottom(details)
+        startCity()
+        pane.getChildren().addAll(searchAndAll, columns, filter, columnEventBorder, filtersEventBorder, columnStack, filterStack)
         return pane
     }
 
@@ -507,6 +643,12 @@ public class Application extends javafx.application.Application {
     public static TableView getTable() {
         return table;
     }
+
+    public void startCity() {
+        cityTextAutoForSearch.setVisible(false)
+        updateFacets(cityPane, 1, 0, treeCities)
+    }
+
     public static PowerPlantList getFakeList() {
         return fakedPlantList;
     }
@@ -630,7 +772,7 @@ public class Application extends javafx.application.Application {
         if (oldValue >= 1){
 
             paneContainer.getChildren().each {
-                int newHeight = (paneContainer.getHeight())/(paneContainer.getChildren().size())
+                int newHeight = (paneContainer.getHeight())/(paneContainer.getChildren().size())-10
                 it.setPrefHeight(newHeight)
                 it.getChildren().get(0).setPrefHeight(newHeight)
             }
@@ -686,16 +828,16 @@ public class Application extends javafx.application.Application {
         bind 'text' of city to CITY of clientDolphin[FILTER]
         bind 'text' of plantTypes to PLANT_TYPE of clientDolphin[FILTER]
         bind 'text' of nominalText to NOMINAL_POWER of clientDolphin[FILTER]
+        bind 'text' of searchText to ALL of clientDolphin[FILTER]
+
+        bind 'text' of zip_auto to ZIP_AUTOFILL of clientDolphin[FILTER_AUTOFILL]
+        bind 'text' of city_auto to CITY_AUTOFILL of clientDolphin[FILTER_AUTOFILL]
+        bind 'text' of plantTypes_auto to PLANT_TYPE_AUTOFILL of clientDolphin[FILTER_AUTOFILL]
 
         bind ZIP of clientDolphin[FILTER] to 'text' of zip
         bind CITY of clientDolphin[FILTER] to 'text' of city
         bind PLANT_TYPE of clientDolphin[FILTER] to 'text' of plantTypes
         bind NOMINAL_POWER of clientDolphin[FILTER] to 'text' of nominalText
-
-        bind ZIP of clientDolphin[FILTER] to 'text' of zipTextforSearch
-        bind CITY of clientDolphin[FILTER] to 'text' of cityTextforSearch
-        bind PLANT_TYPE of clientDolphin[FILTER] to 'text' of typeTextforSearch
-        bind NOMINAL_POWER of clientDolphin[FILTER] to 'text' of nominalTextforSearch
 
         bind ZIP of clientDolphin[SELECTED_POWERPLANT] to 'text' of zipLabelDetail
         bind CITY of clientDolphin[SELECTED_POWERPLANT] to 'text' of cityLabelDetail
@@ -772,7 +914,7 @@ public class Application extends javafx.application.Application {
 
     }
 
-    public static void setFilterCBListener(CheckBox checkBox, String propertyName){
+    public static void setFilterCBListener(CheckBox checkBox, String propertyName, AutoFillTextBox autoFillTextBox){
         checkBox.selectedProperty().addListener(new ChangeListener<Boolean>() {
             @Override
             public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
@@ -789,11 +931,14 @@ public class Application extends javafx.application.Application {
                     }
                     orderPm.findAttributeByPropertyName(propertyName).setValue(i)
                     println orderPm.findAttributeByPropertyName(propertyName)
+                    autoFillTextBox.setVisible(false)
                 }
                 else {
 
                     def order = orderPm.findAttributeByPropertyName(propertyName).getValue()
                     orderPm.findAttributeByPropertyName(propertyName).setValue(0)
+                    autoFillTextBox.setVisible(true)
+
 //                    orderPm.getAttributes().each {
 //                        if(it.value > order){                                       //no need to do it again, as its done in the bind attribute
 //                            filterPm.findAttributeByPropertyName(it.getPropertyName()).setValue("")
@@ -819,6 +964,7 @@ public class Application extends javafx.application.Application {
             });
             javafx.collections.ObservableList<PowerPlant> newItems = FakeCollections.newObservableList(newFakeList);
             table.setItems(newItems)
+            totalCount.setText(newItems.size() + "/1370000")
             treesGrid.setDisable(false)
             table.getSelectionModel().clearSelection()
 
@@ -916,7 +1062,7 @@ public class Application extends javafx.application.Application {
             }
         });
         result.setSortable(false)
-        result.setPrefWidth(120)
+        result.setPrefWidth(150)
         return result
     }
     public static TableColumn<PowerPlant, String> fourthColumn() {
@@ -928,7 +1074,7 @@ public class Application extends javafx.application.Application {
             }
         });
         result.setSortable(false)
-        result.setPrefWidth(120)
+        result.setPrefWidth(150)
         return result;
     }
     public static TableColumn<PowerPlant, String> fithColumn() {
@@ -940,7 +1086,7 @@ public class Application extends javafx.application.Application {
             }
         });
         result.setSortable(false)
-        result.setPrefWidth(140)
+        result.setPrefWidth(120)
         return result;
     }
     public static TableColumn<PowerPlant, String> firstColumn() {
@@ -964,7 +1110,7 @@ public class Application extends javafx.application.Application {
             }
         });
         result.setSortable(false)
-        result.setPrefWidth(120)
+        result.setPrefWidth(150)
         return result;
     }
 
@@ -975,6 +1121,10 @@ public class Application extends javafx.application.Application {
         closeCity.setDisable(false)
         closeZip.setDisable(false)
         facetBox.setDisable(false)
+        zipTextAutoForSearch.setDisable(false)
+        cityTextAutoForSearch.setDisable(false)
+        typeTextAutoForSearch.setDisable(false)
+        searchBox.setDisable(false)
     }
     public static void disableQuery() {
         treesGrid.setDisable(true)
@@ -983,6 +1133,11 @@ public class Application extends javafx.application.Application {
         closeCity.setDisable(true)
         closeZip.setDisable(true)
         facetBox.setDisable(true)
+        zipTextAutoForSearch.setDisable(true)
+        cityTextAutoForSearch.setDisable(true)
+        typeTextAutoForSearch.setDisable(true)
+        searchBox.setDisable(true)
+
     }
     public static void addDragging() {
         facetBox.getChildren().each {
@@ -1017,7 +1172,7 @@ public class Application extends javafx.application.Application {
                     VBox vBoxOrigin = draggedElement.getParent()
                     vBoxOrigin.getChildren().remove(draggedElement)
                     it.getChildren().add(draggedElement)
-                    int newHeight = (it.getHeight())/(it.getChildren().size())
+                    int newHeight = (it.getHeight())/(it.getChildren().size())-10
                     int newOriginHeight = (vBoxOrigin.getHeight())/(vBoxOrigin.getChildren().size())
                     vBoxOrigin.getChildren().each { originChildPane ->
                         originChildPane.setPrefHeight(newOriginHeight)
@@ -1092,9 +1247,14 @@ public class Application extends javafx.application.Application {
         nominalLabelDetail = new TextField("Power")
         noData = new Label("No Data")
 
-        zipTextforSearch = new TextField()
-        typeTextforSearch = new TextField()
-        cityTextforSearch = new TextField()
+        zipTextAutoForSearch = new AutoFillTextBox()
+        cityTextAutoForSearch = new AutoFillTextBox()
+        typeTextAutoForSearch = new AutoFillTextBox()
+        nominalTextAutoForSearch = new AutoFillTextBox()
+
+        zipTextforSearch = zipTextAutoForSearch.textbox
+        typeTextforSearch = typeTextAutoForSearch.textbox
+        cityTextforSearch = cityTextAutoForSearch.textbox
         nominalTextforSearch = new TextField()
 
         rootItemCities = new TreeItem<String>();
@@ -1113,6 +1273,7 @@ public class Application extends javafx.application.Application {
         positionCB = new CheckBox("Show Positions");
 
         cityFilterCB = new CheckBox("Filter by City");
+        cityFilterCB.setSelected(true)
         typeFilterCB = new CheckBox("Filter by Type");
         zipFilterCB = new CheckBox("Filter by Zip");
 
@@ -1121,12 +1282,18 @@ public class Application extends javafx.application.Application {
         tableStack = new Pane()
         pane = new Pane()
         treesGrid = new GridPane()
-        all = new Pane();
+        all = new HBox();
 
+        tableBox = new VBox()
         facetBox = new HBox()
+        searchBox = new HBox()
         col1 = new VBox()
         col2 = new VBox()
         col3 = new VBox()
+        searchAndAll = new VBox()
+
+        placeholder = new Rectangle(50,420)
+        detailsContainer = new Rectangle()
 
         details = new VBox()
         filtersCBs = new VBox()
@@ -1140,12 +1307,22 @@ public class Application extends javafx.application.Application {
         treeTypes = new TreeView();
         treeZip = new TreeView();
 
+        plantTypes_auto = new Label();
+        city_auto = new Label();
+        zip_auto = new Label();
+
         plantTypes = new Label();
         city = new Label();
         zip = new Label();
 
+        total = new Label("Total:")
+        totalCount = new Label("1370000/1370000")
+
         separator = new Separator();
+        facetTableSeparator = new Separator();
         nominalText = new TextField()
+        searchField = new TextField()
+        searchText = new Label()
 
         typePane = new Pane()
         closeType = new Button("X")

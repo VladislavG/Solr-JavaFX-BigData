@@ -15,10 +15,15 @@ public class Constants {
     public static final String IDS = "ids"
     public static final String POSITION = "position"
     public static final String CITY = "city"
+    public static final String ALL = "all"
     public static final String PLANT_TYPE = "plantType"
     public static final String ZIP = "zipCode"
     public static final String NOMINAL_POWER = "nominalPower"
     public static final String FILTER = 'FILTER'
+    public static final String CITY_AUTOFILL = "city_a"
+    public static final String PLANT_TYPE_AUTOFILL = "plantType_a"
+    public static final String ZIP_AUTOFILL = "zipCode_a"
+    public static final String FILTER_AUTOFILL = 'FILTER_AUTOFILL'
     public static final String SELECTED_POWERPLANT = 'SELECTED_POWERPLANT'
     public static final String POWERPLANT = 'POWERPLANT'
     public static final String ORDER = 'ORDER'

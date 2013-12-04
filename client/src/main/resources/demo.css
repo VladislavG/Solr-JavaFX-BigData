@@ -1,14 +1,14 @@
 .label {
-    -fx-text-fill: crimson;
+    -fx-text-fill: black;
 }
 .table-view .label {
-	-fx-text-fill: crimson;
+	-fx-text-fill: BLACK;
 }
 .tooltip {
     -fx-background-color:firebrick;
 }
 .tree-view {
-    -fx-text-fill: saddlebrown;
+    -fx-text-fill: black;
 }
 
 
@@ -39,7 +39,7 @@
 }
 
 .root{
-    -fx-background-color: lightgray;
+    -fx-background-color: rgba(182, 215, 168, 0.89);
 }
 
 .invalid {
