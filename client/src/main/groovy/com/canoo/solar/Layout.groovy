@@ -25,6 +25,10 @@ import javafx.scene.layout.Priority
 import javafx.scene.layout.RowConstraints
 import javafx.scene.layout.VBox
 import javafx.scene.paint.Color
+import javafx.scene.paint.CycleMethod
+import javafx.scene.paint.LinearGradient
+import javafx.scene.paint.LinearGradientBuilder
+import javafx.scene.paint.Stop
 import javafx.scene.shape.Rectangle
 import np.com.ngopal.control.AutoFillTextBox
 import org.opendolphin.core.Attribute
@@ -70,10 +74,22 @@ public class Layout {
 
 
     static public Pane createTreePane(TreeItem root, TreeView tree, Button close, Pane pane, CheckBox checkBox, Attribute orderAtt, AutoFillTextBox autoFillTextBox){
+
         Rectangle dragBorder = new Rectangle()
+
         dragBorder.setHeight(22)
-        dragBorder.setWidth(250)
-        dragBorder.setFill(Color.LIGHTGRAY)
+        dragBorder.setWidth(200)
+        LinearGradient linearGrad = LinearGradientBuilder.create()
+                .startX(0)
+                .startY(0)
+                .endX(0)
+                .endY(22)
+                .proportional(false)
+                .cycleMethod(CycleMethod.NO_CYCLE)
+                .stops( new Stop(0.1f, Color.rgb(245, 245, 245, 1)),
+                new Stop(1.0f, Color.rgb(179, 179, 179, 1)))
+                .build();
+        dragBorder.setFill(linearGrad)
         dragBorder.setStroke(Color.BLACK)
         dragBorder.setStrokeWidth(0.5)
         dragBorder.setArcWidth(3)
@@ -82,6 +98,7 @@ public class Layout {
         root.setExpanded(true);
         tree.setRoot(root);
         tree.setShowRoot(true);
+        tree.setMaxWidth(200)
 //        pane.setMaxHeight(500)
 
 
@@ -115,7 +132,7 @@ public class Layout {
 
             }
         })
-        close.relocate(222,0)
+        close.relocate(167,-5)
         return pane;
     }
 

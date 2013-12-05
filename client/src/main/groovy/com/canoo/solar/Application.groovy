@@ -4,10 +4,7 @@ import com.sun.javafx.scene.control.skin.TableHeaderRow
 import javafx.beans.value.ChangeListener
 import javafx.beans.value.ObservableValue
 import javafx.collections.FXCollections
-import javafx.collections.ListChangeListener
-import javafx.event.Event
 import javafx.event.EventHandler
-import javafx.event.EventType
 import javafx.geometry.Insets
 import javafx.geometry.Orientation
 import javafx.geometry.Pos
@@ -20,12 +17,13 @@ import javafx.scene.input.DragEvent
 import javafx.scene.input.Dragboard
 import javafx.scene.input.KeyCode
 import javafx.scene.input.KeyEvent
-import javafx.scene.input.MouseDragEvent
 import javafx.scene.input.MouseEvent
 import javafx.scene.input.TransferMode
-import javafx.scene.layout.BorderPane
 import javafx.scene.layout.GridPane
-import javafx.stage.StageStyle;
+import javafx.scene.paint.CycleMethod
+import javafx.scene.paint.LinearGradient
+import javafx.scene.paint.LinearGradientBuilder
+import javafx.scene.paint.Stop
 import javafx.scene.layout.HBox
 import javafx.scene.layout.Pane
 import javafx.scene.layout.VBox
@@ -96,6 +94,9 @@ public class Application extends javafx.application.Application {
     CheckBox nominalCB
     CheckBox zipCB
     CheckBox positionCB
+    CheckBox avgkwhCB
+    CheckBox latitudeCB
+    CheckBox longitudeCB
 
     CheckBox cityFilterCB
     CheckBox typeFilterCB
@@ -115,8 +116,8 @@ public class Application extends javafx.application.Application {
     static VBox col3
     static VBox searchAndAll
 
-    public Rectangle placeholder
-    public Rectangle detailsContainer
+    public static Rectangle placeholder
+    public static Rectangle detailsContainer
 
     VBox details
     VBox tableBox
@@ -239,7 +240,7 @@ public class Application extends javafx.application.Application {
         clientDolphin.presentationModel(FILTER_AUTOFILL, [CITY_AUTOFILL, PLANT_TYPE_AUTOFILL, ZIP_AUTOFILL]);
         clientDolphin.presentationModel(SELECTED_POWERPLANT, [ID, CITY, PLANT_TYPE, ZIP, NOMINAL_POWER]);
         clientDolphin.presentationModel(ORDER, [CITY, PLANT_TYPE, ZIP])
-        clientDolphin.presentationModel(ORDER_COLUMN, [CITY_COLUMN, TYPE_COLUMN, ZIP_COLUMN, NOMINAL_COLUMN, POSITION_COLUMN])
+        clientDolphin.presentationModel(ORDER_COLUMN, [CITY_COLUMN, TYPE_COLUMN, ZIP_COLUMN, NOMINAL_COLUMN, POSITION_COLUMN, AVGKWH_COLUMN, LAT_COLUMN, LON_COLUMN])
         clientDolphin.presentationModel(STATE, [TRIGGER, START_INDEX, SORT, REVERSER_ORDER])[TRIGGER].value=0
 
         clientDolphin.getClientModelStore().findPresentationModelById(ORDER).findAttributeByPropertyName(ZIP).setValue(0)
@@ -250,6 +251,9 @@ public class Application extends javafx.application.Application {
         clientDolphin.getClientModelStore().findPresentationModelById(ORDER_COLUMN).findAttributeByPropertyName(TYPE_COLUMN).setValue(3)
         clientDolphin.getClientModelStore().findPresentationModelById(ORDER_COLUMN).findAttributeByPropertyName(ZIP_COLUMN).setValue(1)
         clientDolphin.getClientModelStore().findPresentationModelById(ORDER_COLUMN).findAttributeByPropertyName(NOMINAL_COLUMN).setValue(4)
+        clientDolphin.getClientModelStore().findPresentationModelById(ORDER_COLUMN).findAttributeByPropertyName(AVGKWH_COLUMN).setValue(5)
+        clientDolphin.getClientModelStore().findPresentationModelById(ORDER_COLUMN).findAttributeByPropertyName(LAT_COLUMN).setValue(6)
+        clientDolphin.getClientModelStore().findPresentationModelById(ORDER_COLUMN).findAttributeByPropertyName(LON_COLUMN).setValue(7)
         clientDolphin.getClientModelStore().findPresentationModelById(ORDER_COLUMN).findAttributeByPropertyName(POSITION_COLUMN).setValue(0)
 
         clientDolphin.getClientModelStore().findPresentationModelById(STATE).findAttributeByPropertyName(START_INDEX).setValue(0)
@@ -268,12 +272,23 @@ public class Application extends javafx.application.Application {
         col3.setSpacing(2)
         col2.setMinHeight(445)
         col3.setMinHeight(445)
+        col1.setMaxWidth(200)
+        col2.setMaxWidth(200)
+        col3.setMaxWidth(200)
+
+        closeZip.setScaleX(0.8)
+        closeZip.setScaleY(0.8)
+        closeCity.setScaleX(0.8)
+        closeCity.setScaleY(0.8)
+        closeType.setScaleX(0.8)
+        closeType.setScaleY(0.8)
 
         Image image = new Image("search.png");
         ImageView iv1 = new ImageView();
         iv1.setImage(image);
         iv1.setFitHeight(15)
         iv1.setFitWidth(15)
+
 
         placeholder.setArcHeight(15)
         placeholder.setArcWidth(15)
@@ -284,7 +299,17 @@ public class Application extends javafx.application.Application {
         placeholder.getStrokeDashArray().addAll(25d, 20d, 5d, 20d);
 
         detailsContainer.widthProperty().bind(table.widthProperty())
-        detailsContainer.setFill(Color.LIGHTGRAY)
+        LinearGradient linearGrad = LinearGradientBuilder.create()
+                .startX(0)
+                .startY(0)
+                .endX(0)
+                .endY(50)
+                .proportional(false)
+                .cycleMethod(CycleMethod.NO_CYCLE)
+                .stops( new Stop(0.1f, Color.rgb(245, 245, 245, 1)),
+                new Stop(1.0f, Color.rgb(179, 179, 179, 1)))
+                .build();
+        detailsContainer.setFill(linearGrad)
         detailsContainer.setHeight(36)
         detailsContainer.setStrokeWidth(0.5)
         detailsContainer.setStroke(Color.BLACK)
@@ -340,21 +365,27 @@ public class Application extends javafx.application.Application {
                     refreshTable()
                     enableQuery()
                 }
-                else if(KeyCode.ESCAPE == event.getCode()) {
-
-                    zipFilterCB.setSelected(true)
-                    zipTextAutoForSearch.setVisible(false)
-
-                }
-
             }
         });
+
+        zipTextAutoForSearch.getTextbox().setOnMouseClicked(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent mouseEvent) {
+
+                if(mouseEvent.getClickCount() == 2){
+                    zipTextAutoForSearch.setVisible(false)
+                    zipFilterCB.setSelected(true)
+                }
+            }
+        });
+
         cityTextAutoForSearch.setData(observableListCities)
         typeTextAutoForSearch.setData(observableListTypes)
         zipTextAutoForSearch.setData(observableListZips)
 
         TableColumn<PowerPlant, String> cityColumn = thirdColumn()
         cityColumn.setGraphic(cityTextAutoForSearch)
+
         cityTextAutoForSearch.setMaxWidth(cityColumn.getWidth()-55)
         cityTextAutoForSearch.addEventFilter(KeyEvent.KEY_PRESSED, new EventHandler<KeyEvent>() {
             @Override
@@ -368,12 +399,19 @@ public class Application extends javafx.application.Application {
                     clearPmsAndPowerPlants()
                     refreshTable()
                     enableQuery()
-                } else if(KeyCode.ESCAPE == event.getCode()) {
+                }
+            }
+        });
 
+        cityTextAutoForSearch.getTextbox().setOnMouseClicked(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent mouseEvent) {
+
+                    if(mouseEvent.getClickCount() == 2){
                         cityTextAutoForSearch.setVisible(false)
                         cityFilterCB.setSelected(true)
+                    }
 
-                }
             }
         });
 
@@ -393,29 +431,27 @@ public class Application extends javafx.application.Application {
                     clearPmsAndPowerPlants()
                     refreshTable()
                     enableQuery()
-                }else if(KeyCode.ESCAPE == event.getCode()) {
-
-                        typeTextAutoForSearch.setVisible(false)
-                        typeFilterCB.setSelected(true)
-
                 }
             }
         });
 
+        typeTextAutoForSearch.getTextbox().setOnMouseClicked(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent mouseEvent) {
+
+                if(mouseEvent.getClickCount() == 2){
+                    typeTextAutoForSearch.setVisible(false)
+                    typeFilterCB.setSelected(true)
+                }
+
+            }
+        });
+
         TableColumn<PowerPlant, String> nominalColumn = fithColumn()
-//        nominalColumn.setGraphic(nominalTextforSearch)
-//        nominalTextforSearch.setMaxWidth(nominalColumn.getWidth()-75)
-//        nominalTextforSearch.addEventFilter(KeyEvent.KEY_PRESSED, new EventHandler<KeyEvent>() {
-//            @Override
-//            public void handle(KeyEvent event) {
-//                if (KeyCode.ENTER == event.getCode()) {
-//                    nominalText.setText(nominalTextforSearch.getText())
-//                    refreshTable()
-//                    enableQuery()
-//                }
-//            }
-//        });
-        table.getColumns().addAll(positionColumn, zipColumn, cityColumn, typeColumn, nominalColumn);
+        TableColumn<PowerPlant, String> subtypeColumn = sixthColumn()
+        TableColumn<PowerPlant, String> latitudeColumn = seventhColumn()
+        TableColumn<PowerPlant, String> longitudeColumn = eighthColumn()
+        table.getColumns().addAll(positionColumn, zipColumn, cityColumn, typeColumn, nominalColumn, subtypeColumn, latitudeColumn, longitudeColumn);
 
 //        show/hide table Columns on checkbox event
         PresentationModel colOrder = clientDolphin.findPresentationModelById(ORDER_COLUMN)
@@ -424,6 +460,9 @@ public class Application extends javafx.application.Application {
         Listeners.setChoiceBoxListener(nominalCB, table, nominalColumn, NOMINAL_COLUMN, colOrder)
         Listeners.setChoiceBoxListener(zipCB, table, zipColumn, ZIP_COLUMN, colOrder)
         Listeners.setChoiceBoxListener(positionCB, table, positionColumn, POSITION_COLUMN, colOrder)
+        Listeners.setChoiceBoxListener(avgkwhCB, table, subtypeColumn, AVGKWH_COLUMN, colOrder)
+        Listeners.setChoiceBoxListener(latitudeCB, table, latitudeColumn, LAT_COLUMN, colOrder)
+        Listeners.setChoiceBoxListener(longitudeCB, table, longitudeColumn, LON_COLUMN, colOrder)
 
 //        create selection details layout boxes
         HBox nominalLabelTextDetail = Layout.createPair(nominalLabelDetail, nominalLabelforDetail)
@@ -441,7 +480,7 @@ public class Application extends javafx.application.Application {
         addDragging()
 
         columnsCBs.setPadding(new Insets(20, 0, 0, 10));
-        columnsCBs.getChildren().addAll(cityCB, typeCB, zipCB, nominalCB, positionCB)
+        columnsCBs.getChildren().addAll(cityCB, typeCB, zipCB, nominalCB, positionCB/*, avgkwhCB, latitudeCB, longitudeCB*/)
 
         filtersCBs.setPadding(new Insets(25, 0, 0, 10));
         filtersCBs.getChildren().addAll(cityFilterCB, typeFilterCB, zipFilterCB)
@@ -598,7 +637,6 @@ public class Application extends javafx.application.Application {
                         }
                     }
                 });
-
 
         Animation.setAnimation(columnStack);
         Animation.setAnimationFilters(filterStack);
@@ -1047,6 +1085,42 @@ public class Application extends javafx.application.Application {
                         sort.setValue(IGNORE)
                         sort.setValue(NOMINAL_POWER)
                         break;
+                    case AVGKWH_COLUMN:
+                        if (sort.getValue().toString()==AVGKWH){
+                            if (reverse.getValue()){
+                                reverse.setValue(false)
+                            } else reverse.setValue(true)
+                        }
+                        else{
+                            reverse.setValue(false)
+                        }
+                        sort.setValue(IGNORE)
+                        sort.setValue(AVGKWH)
+                        break;
+                    case LAT_COLUMN:
+                        if (sort.getValue().toString()==GPS_LAT){
+                            if (reverse.getValue()){
+                                reverse.setValue(false)
+                            } else reverse.setValue(true)
+                        }
+                        else{
+                            reverse.setValue(false)
+                        }
+                        sort.setValue(IGNORE)
+                        sort.setValue(GPS_LAT)
+                        break;
+                    case LON_COLUMN:
+                        if (sort.getValue().toString()==GPS_LON){
+                            if (reverse.getValue()){
+                                reverse.setValue(false)
+                            } else reverse.setValue(true)
+                        }
+                        else{
+                            reverse.setValue(false)
+                        }
+                        sort.setValue(IGNORE)
+                        sort.setValue(GPS_LON)
+                        break;
                 }
             }
         });
@@ -1083,6 +1157,42 @@ public class Application extends javafx.application.Application {
             @Override
             public ObservableValue<String> call(TableColumn.CellDataFeatures<PowerPlant, String> param) {
                 return param.getValue().nominalProperty();
+            }
+        });
+        result.setSortable(false)
+        result.setPrefWidth(120)
+        return result;
+    }
+    public static TableColumn<PowerPlant, String> sixthColumn() {
+        TableColumn<PowerPlant, String> result = new TableColumn<>("Average kW/h");
+        result.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<PowerPlant, String>, ObservableValue<String>>() {
+            @Override
+            public ObservableValue<String> call(TableColumn.CellDataFeatures<PowerPlant, String> param) {
+                return param.getValue().avgkwhProperty();
+            }
+        });
+        result.setSortable(false)
+        result.setPrefWidth(120)
+        return result;
+    }
+    public static TableColumn<PowerPlant, String> seventhColumn() {
+        TableColumn<PowerPlant, String> result = new TableColumn<>("Latitude");
+        result.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<PowerPlant, String>, ObservableValue<String>>() {
+            @Override
+            public ObservableValue<String> call(TableColumn.CellDataFeatures<PowerPlant, String> param) {
+                return param.getValue().gpslatProperty();
+            }
+        });
+        result.setSortable(false)
+        result.setPrefWidth(120)
+        return result;
+    }
+    public static TableColumn<PowerPlant, String> eighthColumn() {
+        TableColumn<PowerPlant, String> result = new TableColumn<>("Longitude");
+        result.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<PowerPlant, String>, ObservableValue<String>>() {
+            @Override
+            public ObservableValue<String> call(TableColumn.CellDataFeatures<PowerPlant, String> param) {
+                return param.getValue().gpslonProperty();
             }
         });
         result.setSortable(false)
@@ -1140,6 +1250,7 @@ public class Application extends javafx.application.Application {
 
     }
     public static void addDragging() {
+
         facetBox.getChildren().each {
             it.setOnDragOver(new EventHandler<DragEvent>() {
                 @Override
@@ -1218,6 +1329,9 @@ public class Application extends javafx.application.Application {
                 initialPlant.cityProperty().setValue(pm[CITY].getValue().toString())
                 initialPlant.nominalProperty().setValue(pm[NOMINAL_POWER].getValue().toString())
                 initialPlant.positionProperty().setValue(pm[POSITION].getValue().toString())
+                initialPlant.avgkwhProperty().setValue(pm[AVGKWH].getValue().toString())
+                initialPlant.gpslatProperty().setValue(pm[GPS_LAT].getValue().toString())
+                initialPlant.gpslonProperty().setValue(pm[GPS_LON].getValue().toString())
                 initialPlant.setLoadState(LoadState.LOADED);
                 enableQuery()
             }
@@ -1271,6 +1385,9 @@ public class Application extends javafx.application.Application {
         nominalCB = new CheckBox("Show Nominal Powers");
         zipCB = new CheckBox("Show Zip-Codes");
         positionCB = new CheckBox("Show Positions");
+        avgkwhCB = new CheckBox("Show Avg kWh");
+        latitudeCB = new CheckBox("Show Latitude");
+        longitudeCB = new CheckBox("Show Longitude");
 
         cityFilterCB = new CheckBox("Filter by City");
         cityFilterCB.setSelected(true)

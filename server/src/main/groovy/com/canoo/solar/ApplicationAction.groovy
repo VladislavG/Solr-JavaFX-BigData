@@ -1,6 +1,5 @@
 package com.canoo.solar
 
-import com.google.common.collect.Multimap
 import org.apache.commons.collections.MultiHashMap
 import org.apache.commons.collections.MultiMap
 import org.apache.solr.client.solrj.SolrQuery
@@ -17,20 +16,13 @@ import org.opendolphin.core.comm.GetPresentationModelCommand
 import org.opendolphin.core.comm.InitializeAttributeCommand
 import org.opendolphin.core.comm.NamedCommand
 import org.opendolphin.core.comm.ValueChangedCommand
-import org.opendolphin.core.server.DTO
-import org.opendolphin.core.server.Slot;
 import org.opendolphin.core.server.action.DolphinServerAction;
 import org.opendolphin.core.server.comm.ActionRegistry;
 import org.opendolphin.core.server.comm.CommandHandler
 import org.opendolphin.core.server.comm.NamedCommandHandler
-import org.opendolphin.core.server.comm.SimpleCommandHandler;
 
 import static com.canoo.solar.Constants.CMD.*;
-import static com.canoo.solar.Constants.FilterConstants.*;
-
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import static com.canoo.solar.Constants.FilterConstants.*
 
 public class ApplicationAction extends DolphinServerAction{
     private static final String SOLR_INDEX_DIR = "solr";
@@ -68,6 +60,9 @@ public class ApplicationAction extends DolphinServerAction{
                     response.add(createInitializeAttributeCommand(pmId, PLANT_TYPE, result.getFieldValue(PLANT_TYPE)))
                     response.add(createInitializeAttributeCommand(pmId, CITY, result.getFieldValue(CITY)))
                     response.add(createInitializeAttributeCommand(pmId, ZIP, result.getFieldValue(ZIP)))
+                    response.add(createInitializeAttributeCommand(pmId, AVGKWH, result.getFieldValue(AVGKWH)))
+                    response.add(createInitializeAttributeCommand(pmId, GPS_LAT, result.getFieldValue(GPS_LAT)))
+                    response.add(createInitializeAttributeCommand(pmId, GPS_LON, result.getFieldValue(GPS_LON)))
                 }
             }
         })
@@ -293,6 +288,9 @@ public class ApplicationAction extends DolphinServerAction{
                     response.add(createInitializeAttributeCommand(rowIdx.toString(), PLANT_TYPE, result.getFieldValue(PLANT_TYPE)))
                     response.add(createInitializeAttributeCommand(rowIdx.toString(), CITY, result.getFieldValue(CITY)))
                     response.add(createInitializeAttributeCommand(rowIdx.toString(), ZIP, result.getFieldValue(ZIP)))
+                    response.add(createInitializeAttributeCommand(rowIdx.toString(), AVGKWH, result.getFieldValue(AVGKWH)))
+                    response.add(createInitializeAttributeCommand(rowIdx.toString(), GPS_LAT, result.getFieldValue(GPS_LAT)))
+                    response.add(createInitializeAttributeCommand(rowIdx.toString(), GPS_LON, result.getFieldValue(GPS_LON)))
 
             }
         }

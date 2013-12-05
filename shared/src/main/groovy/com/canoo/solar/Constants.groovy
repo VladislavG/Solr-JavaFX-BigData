@@ -18,8 +18,15 @@ public class Constants {
     public static final String ALL = "all"
     public static final String PLANT_TYPE = "plantType"
     public static final String ZIP = "zipCode"
+    public static final String AVGKWH = "average_kWh";
+    public static final String GPS_LAT = "latitude";
+    public static final String GPS_LON = "longitude";
     public static final String NOMINAL_POWER = "nominalPower"
     public static final String FILTER = 'FILTER'
+//    public static final String FILTER_NOT = 'FILTER_NOT'
+//    public static final String TYPE_NOT = 'TYPE_NOT'
+//    public static final String CITY_NOT = 'CITY_NOT'
+//    public static final String ZIP_NOT = 'ZIP_NOT'
     public static final String CITY_AUTOFILL = "city_a"
     public static final String PLANT_TYPE_AUTOFILL = "plantType_a"
     public static final String ZIP_AUTOFILL = "zipCode_a"
@@ -33,6 +40,9 @@ public class Constants {
     public static final String POSITION_COLUMN = 'POSITION_COLUMN'
     public static final String NOMINAL_COLUMN = 'NOMINAL_COLUMN'
     public static final String TYPE_COLUMN = 'TYPE_COLUMN'
+    public static final String AVGKWH_COLUMN = 'AVGKWH_COLUMN'
+    public static final String LAT_COLUMN = 'LAT_COLUMN'
+    public static final String LON_COLUMN = 'LON_COLUMN'
     public static final String REVERSER_ORDER = 'REVERSE_ORDER'
     public static final String SORT = 'SORT'
     public static final String SIZE = 'size'
