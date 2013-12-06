@@ -4,6 +4,7 @@ import javafx.event.EventHandler
 import javafx.event.EventType
 import javafx.geometry.Insets
 import javafx.geometry.Pos
+import javafx.scene.SnapshotParameters
 import javafx.scene.control.Button
 import javafx.scene.control.CheckBox
 import javafx.scene.control.ChoiceBox
@@ -12,6 +13,7 @@ import javafx.scene.control.TextField
 import javafx.scene.control.TreeItem
 import javafx.scene.control.TreeView
 import javafx.scene.image.Image
+import javafx.scene.image.WritableImage
 import javafx.scene.input.ClipboardContent
 import javafx.scene.input.DragEvent
 import javafx.scene.input.Dragboard
@@ -89,6 +91,12 @@ public class Layout {
                 .stops( new Stop(0.1f, Color.rgb(245, 245, 245, 1)),
                 new Stop(1.0f, Color.rgb(179, 179, 179, 1)))
                 .build();
+        Rectangle r = new Rectangle(200, 445)
+        r.setMouseTransparent(true)
+        r.setFill(linearGrad)
+        r.setStroke(Color.BLACK)
+        r.setStrokeWidth(0.5)
+        r.setOpacity(0.2)
         dragBorder.setFill(linearGrad)
         dragBorder.setStroke(Color.BLACK)
         dragBorder.setStrokeWidth(0.5)
@@ -120,6 +128,24 @@ public class Layout {
                 VBox draggedBox = draggedpane.getParent()
                 HBox bigBox = draggedBox.getParent()
                 orderAtt.setValue(bigBox.getChildren().findIndexOf {it.equals(draggedBox)}+1)
+            }
+        })
+
+        pane.setOnDragOver(new EventHandler<DragEvent>() {
+            @Override
+            void handle(DragEvent t) {
+                if (pane.getChildren().contains(r))return;
+                int size = 445.div(pane.getParent().getChildren().size()*2)
+                r.setHeight(size)
+                println size
+                r.setTranslateY(size)
+                pane.getChildren().add(r)
+            }
+        })
+        pane.setOnDragExited(new EventHandler<DragEvent>() {
+            @Override
+            void handle(DragEvent t) {
+                pane.getChildren().remove(r)
             }
         })
 

@@ -35,37 +35,37 @@ public class ApplicationAction extends DolphinServerAction{
         registry.register(GET_ROW, getPms)
         registry.register(ValueChangedCommand.class, trigger)
 
-        registry.register(GetPresentationModelCommand.class, new CommandHandler<GetPresentationModelCommand>() {
-            private InitializeAttributeCommand createInitializeAttributeCommand(String pmId, String attributeName, Object attributeValue) {
-                return new InitializeAttributeCommand(pmId, attributeName, null, attributeValue, POWERPLANT)
-            }
-            public void handleCommand(GetPresentationModelCommand cmd, List<Command> response) {
-
-                String pmId = cmd.pmId
-                if (pmId == null) {
-                    return
-                }
-
-                if (getServerDolphin().getAt(pmId) == null) {
-                    def start = System.currentTimeMillis()
-                    SolrQuery solrQuery = new SolrQuery(POSITION + ":" + pmId);
-                    solrQuery.setRows(1);
-                    QueryResponse solrResponse = getSolrServer().query(solrQuery);
-                    def result = solrResponse.getResults().get(0)
-
-//                    println "Solr took " + (System.currentTimeMillis() -  start )
-                    response.add(createInitializeAttributeCommand(pmId, ID, result.getFieldValue(ID)))
-                    response.add(createInitializeAttributeCommand(pmId, POSITION, result.getFieldValue(POSITION)))
-                    response.add(createInitializeAttributeCommand(pmId, NOMINAL_POWER, result.getFieldValue(NOMINAL_POWER)))
-                    response.add(createInitializeAttributeCommand(pmId, PLANT_TYPE, result.getFieldValue(PLANT_TYPE)))
-                    response.add(createInitializeAttributeCommand(pmId, CITY, result.getFieldValue(CITY)))
-                    response.add(createInitializeAttributeCommand(pmId, ZIP, result.getFieldValue(ZIP)))
-                    response.add(createInitializeAttributeCommand(pmId, AVGKWH, result.getFieldValue(AVGKWH)))
-                    response.add(createInitializeAttributeCommand(pmId, GPS_LAT, result.getFieldValue(GPS_LAT)))
-                    response.add(createInitializeAttributeCommand(pmId, GPS_LON, result.getFieldValue(GPS_LON)))
-                }
-            }
-        })
+//        registry.register(GetPresentationModelCommand.class, new CommandHandler<GetPresentationModelCommand>() {
+//            private InitializeAttributeCommand createInitializeAttributeCommand(String pmId, String attributeName, Object attributeValue) {
+//                return new InitializeAttributeCommand(pmId, attributeName, null, attributeValue, POWERPLANT)
+//            }
+//            public void handleCommand(GetPresentationModelCommand cmd, List<Command> response) {
+//
+//                String pmId = cmd.pmId
+//                if (pmId == null) {
+//                    return
+//                }
+//
+//                if (getServerDolphin().getAt(pmId) == null) {
+//                    def start = System.currentTimeMillis()
+//                    SolrQuery solrQuery = new SolrQuery(POSITION + ":" + pmId);
+//                    solrQuery.setRows(1);
+//                    QueryResponse solrResponse = getSolrServer().query(solrQuery);
+//                    def result = solrResponse.getResults().get(0)
+//
+////                    println "Solr took " + (System.currentTimeMillis() -  start )
+//                    response.add(createInitializeAttributeCommand(pmId, ID, result.getFieldValue(ID)))
+//                    response.add(createInitializeAttributeCommand(pmId, POSITION, result.getFieldValue(POSITION)))
+//                    response.add(createInitializeAttributeCommand(pmId, NOMINAL_POWER, result.getFieldValue(NOMINAL_POWER)))
+//                    response.add(createInitializeAttributeCommand(pmId, PLANT_TYPE, result.getFieldValue(PLANT_TYPE)))
+//                    response.add(createInitializeAttributeCommand(pmId, CITY, result.getFieldValue(CITY)))
+//                    response.add(createInitializeAttributeCommand(pmId, ZIP, result.getFieldValue(ZIP)))
+//                    response.add(createInitializeAttributeCommand(pmId, AVGKWH, result.getFieldValue(AVGKWH)))
+//                    response.add(createInitializeAttributeCommand(pmId, GPS_LAT, result.getFieldValue(GPS_LAT)))
+//                    response.add(createInitializeAttributeCommand(pmId, GPS_LON, result.getFieldValue(GPS_LON)))
+//                }
+//            }
+//        })
     }
     private final CommandHandler trigger = new CommandHandler<ValueChangedCommand>() {
         @Override
@@ -116,7 +116,6 @@ public class ApplicationAction extends DolphinServerAction{
                         query = query + " OR " + it
                     }
                 }
-                println query
                 solrQuery.addFilterQuery(query)
             }
 
@@ -134,7 +133,6 @@ public class ApplicationAction extends DolphinServerAction{
             int i = 2;
             filterPM.attributes.each {
                 i++;
-                println it.propertyName + " " + it.value
                 if (it.propertyName == ALL || it.propertyName == NOMINAL_POWER)return
                 Object value = filterPM.findAttributeByPropertyName(ALL).getValue()
                 if (value == null || value == "") value = "*"
@@ -209,7 +207,7 @@ public class ApplicationAction extends DolphinServerAction{
             }
 
             if (getServerDolphin().getAt(rowIdx.toString()) == null) {
-                    def start = System.currentTimeMillis()
+
                     def filterPM = getServerDolphin().findPresentationModelById(FILTER)
                     def filterAutoPM = getServerDolphin().findPresentationModelById(FILTER_AUTOFILL)
                     def orderPM = getServerDolphin().findPresentationModelById(ORDER)
@@ -257,7 +255,6 @@ public class ApplicationAction extends DolphinServerAction{
                     def value = it.value
                     if (value=="" || value==null || value.toString().contains("Plant Types") || value.toString().contains("Zip-Codes") || value.toString().contains("Cities")) value = "*"
                     String query = it.getPropertyName().substring(0, it.getPropertyName().lastIndexOf("_")) + ":" + value.toString()
-                    println query
                     solrQuery.addFilterQuery(query)
                 }
 
@@ -265,7 +262,6 @@ public class ApplicationAction extends DolphinServerAction{
                 int i = 2;
                 filterPM.attributes.each {
                     i++;
-                    println it.propertyName + " " + it.value
                     if (it.propertyName == ALL || it.propertyName == NOMINAL_POWER)return
                     Object value = filterPM.findAttributeByPropertyName(ALL).getValue()
                     if (value == null || value == "") value = "*"
@@ -279,9 +275,10 @@ public class ApplicationAction extends DolphinServerAction{
 
                     solrQuery.setStart(rowIdx)
                     solrQuery.setRows(1);
+                    def start = System.currentTimeMillis()
                     QueryResponse solrResponse = getSolrServer().query(solrQuery);
                     def result = solrResponse.getResults().get(0)
-//                    println "Solr took " + (System.currentTimeMillis() -  start )
+                    println "Solr took " + (System.currentTimeMillis() -  start )
                     response.add(createInitializeAttributeCommand(rowIdx.toString(), ID, result.getFieldValue(ID)))
                     response.add(createInitializeAttributeCommand(rowIdx.toString(), POSITION, result.getFieldValue(POSITION)))
                     response.add(createInitializeAttributeCommand(rowIdx.toString(), NOMINAL_POWER, result.getFieldValue(NOMINAL_POWER)))

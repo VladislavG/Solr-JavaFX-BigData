@@ -8,6 +8,7 @@ import javafx.event.EventHandler
 import javafx.geometry.Insets
 import javafx.geometry.Orientation
 import javafx.geometry.Pos
+import javafx.scene.Cursor
 import javafx.scene.Scene
 import javafx.scene.control.*
 import javafx.scene.image.Image
@@ -114,6 +115,12 @@ public class Application extends javafx.application.Application {
     static VBox col1
     static VBox col2
     static VBox col3
+    static VBox col4
+    static VBox col5
+    static VBox col6
+    static VBox col7
+    static VBox col8
+    static VBox col9
     static VBox searchAndAll
 
     public static Rectangle placeholder
@@ -261,20 +268,223 @@ public class Application extends javafx.application.Application {
         clientDolphin.getClientModelStore().findPresentationModelById(STATE).findAttributeByPropertyName(REVERSER_ORDER).setValue(false)
     }
 
+    public static TableView getTable() {
+        return table;
+    }
+
+    /*METHODS*/
+
+    public void startCity() {
+        cityTextAutoForSearch.setVisible(false)
+        updateFacets(cityPane, 1, 0, treeCities)
+    }
+
+    public static PowerPlantList getFakeList() {
+        return fakedPlantList;
+    }
+
+    private void updateTree(LinkedList data, TreeView tree, List idsList, List countList, Integer dataIndex, String property) {
+
+        tree.getSelectionModel().clearSelection()
+        idsList.clear()
+        idsList.addAll(data.get(dataIndex).get(IDS))
+        countList.clear()
+        countList.addAll(data.get(dataIndex).get(NUM_COUNT))
+        def size = data.get(0).get(SIZE)
+        Map<Integer,Integer> map = new LinkedHashMap<Integer,Integer>();
+        List<TreeItem<String>> iteratedList = new ArrayList<TreeItem<String>>()
+
+        for (int i=0; i<idsList.size(); i++) {
+            map.put(idsList.get(i), countList.get(i));
+        }
+
+        tree.getRoot().getChildren().each {
+            String name = it.getValue().toString().substring(0,it.getValue().toString().lastIndexOf(' ('))
+
+            def newCount = map.get(name)
+            if (newCount==null)newCount=0;
+            final TreeItem<String> checkBoxTreeItem =
+                new TreeItem<String>(name + " (" + newCount + ")");
+            iteratedList.add(checkBoxTreeItem);
+        }
+
+        tree.getRoot().setValue("$property ($size)")
+        Collections.sort(iteratedList, new TreeItemNumberComparator())
+        tree.getRoot().getChildren().clear()
+        tree.getRoot().getChildren().addAll(iteratedList)
+
+    }
+
+    private void updateFacets(Pane pane, Integer newValue, Integer oldValue, TreeView tree) {
+        tree.getSelectionModel().clearSelection()
+        VBox paneContainer = pane.getParent()
+        List values = new ArrayList()
+        if(newValue==0){
+            pane.getParent().getChildren().remove(pane)
+            VBox originBox = facetBox.getChildren().get(oldValue-1)
+            if (originBox.getChildren().size() > 0) {
+                originBox.getChildren().each {
+                    TreeView treeView = it.getChildren().get(0).getChildren().get(1)
+                    Integer selectedIdx = treeView.getSelectionModel().getSelectedIndex()
+                    if (selectedIdx == -1) {
+                        treeView.getSelectionModel().select(treeView.getRoot());
+                        treeView.getSelectionModel().clearSelection()
+                    }
+                    treeView.getSelectionModel().clearSelection()
+                    treeView.getSelectionModel().select(selectedIdx)
+                }
+            }
+            pane.setPrefHeight(paneContainer.getHeight())
+            pane.getChildren().get(0).setPrefHeight(paneContainer.getHeight())
+        }
+        else if(oldValue==0) {
+            int i = 0
+
+            clientDolphin.findPresentationModelById(ORDER).getAttributes().each {
+                if(it.value > 0 && !values.contains(it.value)){
+                    values.add(it.value)
+                    i++
+                }
+            }
+            VBox targetBox = new VBox()
+            try {
+                targetBox = facetBox.getChildren().get(i-1)
+            }
+            catch (Exception e){
+                VBox newVbox = new VBox()
+                facetBox.getChildren().add(i-1, newVbox)
+            }
+            targetBox = facetBox.getChildren().get(i-1)
+            targetBox.getChildren().add(pane)
+        }
+
+        if (oldValue >= 1 && newValue >= 1){
+            if (oldValue < newValue){
+                VBox originBox = facetBox.getChildren().get(oldValue-1)
+                originBox.getChildren().each {
+
+                    TreeView treeView = it.getChildren().get(0).getChildren().get(1)
+                    Integer selectedIdx = treeView.getSelectionModel().getSelectedIndex()
+                    if (selectedIdx == -1) {
+                        treeView.getSelectionModel().select(treeView.getRoot());
+                        treeView.getSelectionModel().clearSelection()
+                    }
+                    treeView.getSelectionModel().clearSelection()
+                    treeView.getSelectionModel().select(selectedIdx)
+                }
+            } else if(oldValue > newValue){
+                try {
+                    (newValue..(oldValue-2)).each {
+                        VBox betweenBox = facetBox.getChildren().get(it)
+                        betweenBox.getChildren().each {
+                            TreeView treeView = it.getChildren().get(0).getChildren().get(1)
+                            treeView.getSelectionModel().clearSelection()
+                        }
+                    }
+                }catch (Exception e){
+                    println "Exception $e"
+                }
+
+                tree.getSelectionModel().clearSelection()
+                VBox targetBox = facetBox.getChildren().get(newValue-1)
+                targetBox.getChildren().each {
+                    TreeView treeView = it.getChildren().get(0).getChildren().get(1)
+                    Integer selectedIdx = treeView.getSelectionModel().getSelectedIndex()
+                    if (selectedIdx == -1) {
+                        treeView.getSelectionModel().select(treeView.getRoot());
+                        treeView.getSelectionModel().clearSelection()
+                    }
+                    treeView.getSelectionModel().clearSelection()
+                    treeView.getSelectionModel().select(selectedIdx)
+                }
+            }
+        }
+
+        if (oldValue >= 1){
+
+            paneContainer.getChildren().each {
+                int newHeight = (paneContainer.getHeight())/(paneContainer.getChildren().size())-10
+                it.setPrefHeight(newHeight)
+                it.getChildren().get(0).setPrefHeight(newHeight)
+            }
+            VBox originBox = facetBox.getChildren().get(oldValue-1)
+            if(originBox.getChildren().size() == 0){
+                if (oldValue == 1) {
+                    if (newValue == 0){
+                        tree.getSelectionModel().select(tree.getRoot());
+                        tree.getSelectionModel().clearSelection()
+                    }
+                    else{
+                        VBox targetBox = facetBox.getChildren().get(newValue-1)
+                        targetBox.getChildren().each {
+                            TreeView treeView = it.getChildren().get(0).getChildren().get(1)
+                            Integer selectedIdx = treeView.getSelectionModel().getSelectedIndex()
+                            if (selectedIdx == -1) {
+                                treeView.getSelectionModel().select(treeView.getRoot());
+                                treeView.getSelectionModel().clearSelection()
+                            }
+                            treeView.getSelectionModel().clearSelection(selectedIdx)
+                            treeView.getSelectionModel().select(selectedIdx)
+                        }
+                    }
+                }
+                else{
+                    VBox previousBox = facetBox.getChildren().get(oldValue-2)
+                    previousBox.getChildren().each {
+                        TreeView treeView = it.getChildren().get(0).getChildren().get(1)
+                        Integer selectedIdx = treeView.getSelectionModel().getSelectedIndex()
+                        if (selectedIdx == -1) {
+                            treeView.getSelectionModel().select(treeView.getRoot());
+                            treeView.getSelectionModel().clearSelection()
+                        }
+                        treeView.getSelectionModel().clearSelection()
+                        treeView.getSelectionModel().select(selectedIdx)
+                    }
+                }
+
+                clientDolphin.findPresentationModelById(ORDER).getAttributes().each {
+                    if(it.value >= oldValue){
+                        it.setValue(it.value-1)
+                    }
+                }
+                facetBox.getChildren().remove(originBox)
+            }
+        }
+
+        addDragging()
+    }
     private Pane setupStage() {
 
-        facetBox.getChildren().addAll(col1, col2, col3)
+        facetBox.getChildren().addAll(col1, col2, col3, col4, col5, col6, col7, col8, col9)
         facetBox.setSpacing(5)
         facetBox.setMinHeight(445)
         col1.setMinHeight(445)
         col1.setSpacing(2)
         col2.setSpacing(2)
-        col3.setSpacing(2)
         col2.setMinHeight(445)
+        col4.setSpacing(2)
+        col4.setMaxWidth(200)
+        col4.setMinHeight(445)
+        col5.setSpacing(2)
+        col5.setMaxWidth(200)
+        col5.setMinHeight(445)
+        col7.setSpacing(2)
+        col7.setMaxWidth(200)
+        col7.setMinHeight(445)
+        col8.setSpacing(2)
+        col8.setMaxWidth(200)
+        col8.setMinHeight(445)
+        col9.setSpacing(2)
+        col9.setMaxWidth(200)
+        col9.setMinHeight(445)
+        col6.setSpacing(2)
+        col6.setMaxWidth(200)
+        col6.setMinHeight(445)
+        col3.setSpacing(2)
+        col3.setMaxWidth(200)
         col3.setMinHeight(445)
         col1.setMaxWidth(200)
         col2.setMaxWidth(200)
-        col3.setMaxWidth(200)
 
         closeZip.setScaleX(0.8)
         closeZip.setScaleY(0.8)
@@ -290,13 +500,6 @@ public class Application extends javafx.application.Application {
         iv1.setFitWidth(15)
 
 
-        placeholder.setArcHeight(15)
-        placeholder.setArcWidth(15)
-        placeholder.setStroke(Color.SKYBLUE)
-        placeholder.setStrokeWidth(5)
-        placeholder.setFill(Color.BLUE)
-        placeholder.setOpacity(0.5)
-        placeholder.getStrokeDashArray().addAll(25d, 20d, 5d, 20d);
 
         detailsContainer.widthProperty().bind(table.widthProperty())
         LinearGradient linearGrad = LinearGradientBuilder.create()
@@ -309,6 +512,13 @@ public class Application extends javafx.application.Application {
                 .stops( new Stop(0.1f, Color.rgb(245, 245, 245, 1)),
                 new Stop(1.0f, Color.rgb(179, 179, 179, 1)))
                 .build();
+        placeholder.setArcHeight(10)
+        placeholder.setArcWidth(10)
+        placeholder.setStroke(linearGrad)
+        placeholder.setStrokeWidth(2)
+        placeholder.setFill(Color.WHITE)
+        placeholder.setOpacity(0.5)
+        placeholder.getStrokeDashArray().addAll(15d, 15d, 15d, 15d);
         detailsContainer.setFill(linearGrad)
         detailsContainer.setHeight(36)
         detailsContainer.setStrokeWidth(0.5)
@@ -407,10 +617,10 @@ public class Application extends javafx.application.Application {
             @Override
             public void handle(MouseEvent mouseEvent) {
 
-                    if(mouseEvent.getClickCount() == 2){
-                        cityTextAutoForSearch.setVisible(false)
-                        cityFilterCB.setSelected(true)
-                    }
+                if(mouseEvent.getClickCount() == 2){
+                    cityTextAutoForSearch.setVisible(false)
+                    cityFilterCB.setSelected(true)
+                }
 
             }
         });
@@ -659,7 +869,7 @@ public class Application extends javafx.application.Application {
         totalCount.relocate(590, 10)
         total.relocate(10, 10)
         tableBox.getChildren().addAll(table, tableStack)
-        all.getChildren().addAll(facetBox,facetTableSeparator,tableBox)
+        all.getChildren().addAll(facetBox, placeholder,facetTableSeparator,tableBox)
         all.setSpacing(5)
         searchBox.getChildren().addAll(iv1, searchField)
         searchBox.setAlignment(Pos.CENTER_RIGHT)
@@ -674,191 +884,6 @@ public class Application extends javafx.application.Application {
         startCity()
         pane.getChildren().addAll(searchAndAll, columns, filter, columnEventBorder, filtersEventBorder, columnStack, filterStack)
         return pane
-    }
-
-    /*METHODS*/
-
-    public static TableView getTable() {
-        return table;
-    }
-
-    public void startCity() {
-        cityTextAutoForSearch.setVisible(false)
-        updateFacets(cityPane, 1, 0, treeCities)
-    }
-
-    public static PowerPlantList getFakeList() {
-        return fakedPlantList;
-    }
-
-    private void updateTree(LinkedList data, TreeView tree, List idsList, List countList, Integer dataIndex, String property) {
-
-        tree.getSelectionModel().clearSelection()
-        idsList.clear()
-        idsList.addAll(data.get(dataIndex).get(IDS))
-        countList.clear()
-        countList.addAll(data.get(dataIndex).get(NUM_COUNT))
-        def size = data.get(0).get(SIZE)
-        Map<Integer,Integer> map = new LinkedHashMap<Integer,Integer>();
-        List<TreeItem<String>> iteratedList = new ArrayList<TreeItem<String>>()
-
-        for (int i=0; i<idsList.size(); i++) {
-            map.put(idsList.get(i), countList.get(i));
-        }
-
-        tree.getRoot().getChildren().each {
-            String name = it.getValue().toString().substring(0,it.getValue().toString().lastIndexOf(' ('))
-
-            def newCount = map.get(name)
-            if (newCount==null)newCount=0;
-            final TreeItem<String> checkBoxTreeItem =
-                new TreeItem<String>(name + " (" + newCount + ")");
-            iteratedList.add(checkBoxTreeItem);
-        }
-
-        tree.getRoot().setValue("$property ($size)")
-        Collections.sort(iteratedList, new TreeItemNumberComparator())
-        tree.getRoot().getChildren().clear()
-        tree.getRoot().getChildren().addAll(iteratedList)
-
-    }
-    private void updateFacets(Pane pane, Integer newValue, Integer oldValue, TreeView tree) {
-        tree.getSelectionModel().clearSelection()
-        VBox paneContainer = pane.getParent()
-        List values = new ArrayList()
-        if(newValue==0){
-            pane.getParent().getChildren().remove(pane)
-            VBox originBox = facetBox.getChildren().get(oldValue-1)
-            if (originBox.getChildren().size() > 0) {
-                originBox.getChildren().each {
-                    TreeView treeView = it.getChildren().get(0).getChildren().get(1)
-                    Integer selectedIdx = treeView.getSelectionModel().getSelectedIndex()
-                    if (selectedIdx == -1) {
-                        treeView.getSelectionModel().select(treeView.getRoot());
-                        treeView.getSelectionModel().clearSelection()
-                    }
-                    treeView.getSelectionModel().clearSelection()
-                    treeView.getSelectionModel().select(selectedIdx)
-                }
-            }
-            pane.setPrefHeight(paneContainer.getHeight())
-            pane.getChildren().get(0).setPrefHeight(paneContainer.getHeight())
-        }
-        else if(oldValue==0) {
-            int i = 0
-
-            clientDolphin.findPresentationModelById(ORDER).getAttributes().each {
-                if(it.value > 0 && !values.contains(it.value)){
-                    values.add(it.value)
-                    i++
-                }
-            }
-            VBox targetBox = new VBox()
-            try {
-                targetBox = facetBox.getChildren().get(i-1)
-            }
-            catch (Exception e){
-                VBox newVbox = new VBox()
-                facetBox.getChildren().add(i-1, newVbox)
-            }
-            targetBox = facetBox.getChildren().get(i-1)
-            targetBox.getChildren().add(pane)
-        }
-
-        if (oldValue >= 1 && newValue >= 1){
-            if (oldValue < newValue){
-                VBox originBox = facetBox.getChildren().get(oldValue-1)
-                originBox.getChildren().each {
-
-                    TreeView treeView = it.getChildren().get(0).getChildren().get(1)
-                    Integer selectedIdx = treeView.getSelectionModel().getSelectedIndex()
-                    if (selectedIdx == -1) {
-                        treeView.getSelectionModel().select(treeView.getRoot());
-                        treeView.getSelectionModel().clearSelection()
-                    }
-                    treeView.getSelectionModel().clearSelection()
-                    treeView.getSelectionModel().select(selectedIdx)
-                }
-            } else if(oldValue > newValue){
-                try {
-                    (newValue..(oldValue-2)).each {
-                        VBox betweenBox = facetBox.getChildren().get(it)
-                        betweenBox.getChildren().each {
-                            TreeView treeView = it.getChildren().get(0).getChildren().get(1)
-                            treeView.getSelectionModel().clearSelection()
-                        }
-                    }
-                }catch (Exception e){
-                    println "Exception $e"
-                }
-
-                tree.getSelectionModel().clearSelection()
-                VBox targetBox = facetBox.getChildren().get(newValue-1)
-                targetBox.getChildren().each {
-                    TreeView treeView = it.getChildren().get(0).getChildren().get(1)
-                    Integer selectedIdx = treeView.getSelectionModel().getSelectedIndex()
-                    if (selectedIdx == -1) {
-                        treeView.getSelectionModel().select(treeView.getRoot());
-                        treeView.getSelectionModel().clearSelection()
-                    }
-                    treeView.getSelectionModel().clearSelection()
-                    treeView.getSelectionModel().select(selectedIdx)
-                }
-            }
-        }
-
-        if (oldValue >= 1){
-
-            paneContainer.getChildren().each {
-                int newHeight = (paneContainer.getHeight())/(paneContainer.getChildren().size())-10
-                it.setPrefHeight(newHeight)
-                it.getChildren().get(0).setPrefHeight(newHeight)
-            }
-            VBox originBox = facetBox.getChildren().get(oldValue-1)
-            if(originBox.getChildren().size() == 0){
-                if (oldValue == 1) {
-                    if (newValue == 0){
-                        tree.getSelectionModel().select(tree.getRoot());
-                        tree.getSelectionModel().clearSelection()
-                    }
-                    else{
-                        VBox targetBox = facetBox.getChildren().get(newValue-1)
-                        targetBox.getChildren().each {
-                            TreeView treeView = it.getChildren().get(0).getChildren().get(1)
-                            Integer selectedIdx = treeView.getSelectionModel().getSelectedIndex()
-                            if (selectedIdx == -1) {
-                                treeView.getSelectionModel().select(treeView.getRoot());
-                                treeView.getSelectionModel().clearSelection()
-                            }
-                            treeView.getSelectionModel().clearSelection(selectedIdx)
-                            treeView.getSelectionModel().select(selectedIdx)
-                        }
-                    }
-                }
-                else{
-                    VBox previousBox = facetBox.getChildren().get(oldValue-2)
-                    previousBox.getChildren().each {
-                        TreeView treeView = it.getChildren().get(0).getChildren().get(1)
-                        Integer selectedIdx = treeView.getSelectionModel().getSelectedIndex()
-                        if (selectedIdx == -1) {
-                            treeView.getSelectionModel().select(treeView.getRoot());
-                            treeView.getSelectionModel().clearSelection()
-                        }
-                        treeView.getSelectionModel().clearSelection()
-                        treeView.getSelectionModel().select(selectedIdx)
-                    }
-                }
-
-                clientDolphin.findPresentationModelById(ORDER).getAttributes().each {
-                    if(it.value >= oldValue){
-                        it.setValue(it.value-1)
-                    }
-                }
-                facetBox.getChildren().remove(originBox)
-            }
-        }
-
-        addDragging()
     }
     private void setupBinding() {
 
@@ -910,6 +935,7 @@ public class Application extends javafx.application.Application {
         bindAttribute(clientDolphin[ORDER][PLANT_TYPE],{
             plantTypes.setText("")
             updateFacets(typePane, it.newValue, it.oldValue, treeTypes)
+            println "TYPE: " + " fromm " + it.oldValue + " to " + it.newValue
             clientDolphin.data GET, { data ->
                 updateTree(data,treeTypes, observableListTypes, observableListTypesCount, 1, "Plant Types")
             }
@@ -918,6 +944,7 @@ public class Application extends javafx.application.Application {
         bindAttribute(clientDolphin[ORDER][CITY],{
             city.setText("")
             updateFacets(cityPane, it.newValue, it.oldValue, treeCities)
+            println "CITY: " + " fromm " + it.oldValue + " to " + it.newValue
             clientDolphin.data GET, {data ->
                 updateTree(data,treeCities,observableListCities,observableListCitiesCount,2,"Cities")
             }
@@ -926,6 +953,7 @@ public class Application extends javafx.application.Application {
         bindAttribute(clientDolphin[ORDER][ZIP],{
             zip.setText("")
             updateFacets(zipPane, it.newValue, it.oldValue, treeZip)
+            println "ZIP: " + " fromm " + it.oldValue + " to " + it.newValue
             clientDolphin.data GET, {data ->
                 updateTree(data, treeZip, observableListZips, observableListZipsCount, 3, "Zip-Codes")
 
@@ -1235,6 +1263,7 @@ public class Application extends javafx.application.Application {
         cityTextAutoForSearch.setDisable(false)
         typeTextAutoForSearch.setDisable(false)
         searchBox.setDisable(false)
+        pane.setCursor(Cursor.DEFAULT)
     }
     public static void disableQuery() {
         treesGrid.setDisable(true)
@@ -1247,9 +1276,79 @@ public class Application extends javafx.application.Application {
         cityTextAutoForSearch.setDisable(true)
         typeTextAutoForSearch.setDisable(true)
         searchBox.setDisable(true)
+        pane.setCursor(Cursor.WAIT)
+
 
     }
     public static void addDragging() {
+        placeholder.setOnDragOver(new EventHandler<DragEvent>() {
+            @Override
+            public void handle(DragEvent event) {
+                Dragboard db = event.getDragboard();
+                boolean accept = false;
+                if (db.hasString()) {
+                    String data = db.getString();
+                    try {
+                        if (event.getGestureSource() instanceof Pane) {
+                            accept = true;
+                        }
+                    } catch (NumberFormatException exc) {
+                        accept = false;
+                    }
+                }
+                if (accept) {
+                    event.acceptTransferModes(TransferMode.MOVE);
+
+                }
+                placeholder.setFill(Color.LIGHTGRAY)
+            }
+        });
+
+        placeholder.setOnDragExited(new EventHandler<DragEvent>() {
+            @Override
+            void handle(DragEvent t) {
+                        placeholder.setFill(Color.ALICEBLUE)
+            }
+        })
+
+
+        placeholder.setOnDragDropped(new EventHandler<DragEvent>() {
+            @Override
+            public void handle(DragEvent event) {
+                Pane draggedElement = (Pane) event.getGestureSource()
+                VBox vBoxOrigin = draggedElement.getParent()
+                vBoxOrigin.getChildren().remove(draggedElement)
+                    int i = 1
+                    List values = new ArrayList()
+                    clientDolphin.findPresentationModelById(ORDER).getAttributes().each {
+                        if(it.value > 0 && !values.contains(it.value)){
+                            values.add(it.value)
+                            i++
+                        }
+                    }
+
+
+                facetBox.getChildren().get(i-1).getChildren().add(draggedElement)
+                int newOriginHeight = (vBoxOrigin.getHeight())/(vBoxOrigin.getChildren().size())
+                vBoxOrigin.getChildren().each { originChildPane ->
+                    originChildPane.setPrefHeight(newOriginHeight)
+                    originChildPane.getChildren().get(0).setPrefHeight(newOriginHeight)
+                }
+
+
+                draggedElement.setOnDragDetected(new EventHandler<MouseEvent>() {
+                    @Override
+                    public void handle(MouseEvent e) {
+                        Dragboard db = draggedElement.startDragAndDrop(TransferMode.MOVE);
+                        ClipboardContent cc = new ClipboardContent();
+                        cc.putString(draggedElement.getParent().toString());
+                        db.setContent(cc);
+
+                        e.consume();
+                    }
+                });
+            }
+        });
 
         facetBox.getChildren().each {
             it.setOnDragOver(new EventHandler<DragEvent>() {
@@ -1260,6 +1359,7 @@ public class Application extends javafx.application.Application {
                     if (db.hasString()) {
                         String data = db.getString();
                         try {
+
                             if (data != (it.toString())
                                     && event.getGestureSource() instanceof Pane) {
                                 accept = true;
@@ -1318,8 +1418,8 @@ public class Application extends javafx.application.Application {
 
         PowerPlant initialPlant = getTable().getItems().get(rowIdx)
         if (initialPlant.getLoadState() == LoadState.LOADING) return;
-
         initialPlant.setLoadState(LoadState.LOADING);
+
         clientDolphin.findPresentationModelById(STATE).findAttributeByPropertyName(START_INDEX).setValue(rowIdx)
         clientDolphin.send GET_ROW, { pms ->
             pms.each { pm ->
@@ -1407,9 +1507,15 @@ public class Application extends javafx.application.Application {
         col1 = new VBox()
         col2 = new VBox()
         col3 = new VBox()
+        col4 = new VBox()
+        col5 = new VBox()
+        col6 = new VBox()
+        col7 = new VBox()
+        col8 = new VBox()
+        col9 = new VBox()
         searchAndAll = new VBox()
 
-        placeholder = new Rectangle(50,420)
+        placeholder = new Rectangle(25,420)
         detailsContainer = new Rectangle()
 
         details = new VBox()
@@ -1447,6 +1553,7 @@ public class Application extends javafx.application.Application {
         closeZip = new Button("X")
         cityPane = new Pane()
         closeCity = new Button("X")
+
 
 
         fakedPlantList = new PowerPlantList(1370000, new OurConsumer<Integer>(){
