@@ -8,6 +8,7 @@ import javafx.scene.SnapshotParameters
 import javafx.scene.control.Button
 import javafx.scene.control.CheckBox
 import javafx.scene.control.ChoiceBox
+import javafx.scene.control.ComboBox
 import javafx.scene.control.Label
 import javafx.scene.control.TextField
 import javafx.scene.control.TreeItem
@@ -48,6 +49,7 @@ import static com.canoo.solar.Constants.FilterConstants.*
 public class Layout {
     static ClientDolphin clientDolphin;
 
+
     static public Rectangle createEventBorder(){
 
         Rectangle eventBorder = new Rectangle()
@@ -75,7 +77,7 @@ public class Layout {
     }
 
 
-    static public Pane createTreePane(TreeItem root, TreeView tree, Button close, Pane pane, CheckBox checkBox, Attribute orderAtt, AutoFillTextBox autoFillTextBox){
+    static public Pane createTreePane(TreeItem root, TreeView tree, Button close, Pane pane, TextField comboBox, Attribute orderAtt){
 
         Rectangle dragBorder = new Rectangle()
 
@@ -154,11 +156,11 @@ public class Layout {
         close.setOnMouseClicked(new EventHandler<MouseEvent>() {
             @Override
             void handle(MouseEvent t) {
-                checkBox.setSelected(false)
+                Application.facetAddRemove(orderAtt.getPropertyName(), comboBox, REMOVE)
 
             }
         })
-        close.relocate(167,-5)
+        close.relocate(170,-7)
         return pane;
     }
 

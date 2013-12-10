@@ -11,6 +11,8 @@ public class Constants {
 
    static class FilterConstants {
 
+    public static final String ADD = "add"
+    public static final String REMOVE = "remove"
     public static final String ID = "id"
     public static final String IDS = "ids"
     public static final String POSITION = "position"
@@ -44,7 +46,9 @@ public class Constants {
     public static final String LAT_COLUMN = 'LAT_COLUMN'
     public static final String LON_COLUMN = 'LON_COLUMN'
     public static final String REVERSER_ORDER = 'REVERSE_ORDER'
+    public static final String CHANGE_FROM = 'CHANGE_FROM'
     public static final String SORT = 'SORT'
+    public static final String HOLD = 'HOLD'
     public static final String SIZE = 'size'
     public static final String TRIGGER = 'TRIGGER'
     public static final String START_INDEX = 'START_INDEX'
