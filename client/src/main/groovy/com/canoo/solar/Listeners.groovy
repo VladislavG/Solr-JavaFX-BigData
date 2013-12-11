@@ -13,12 +13,12 @@ public class Listeners {
             public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
                 if (newValue) {
                     table.getColumns().add(col)
-                    Application.addHeaderListener(table.getColumns().size()-1, propertyName)
+//                    Application.addHeaderListener(table.getColumns().size()-1, propertyName)
                     def i=-1
                     colOrder.getAttributes().each {
                         if(it.value > -1){
                         i++
-                            Application.addHeaderListener(i, it.getPropertyName())
+//                            Application.addHeaderListener(i, it.getPropertyName())
                         }
                     }
 
@@ -38,7 +38,7 @@ public class Listeners {
                     }
                     colOrder.getAttributes().each {
                         if(it.value > -1){
-                            Application.addHeaderListener(Integer.parseInt(it.getValue().toString()), it.getPropertyName())
+//                            Application.addHeaderListener(Integer.parseInt(it.getValue().toString()), it.getPropertyName())
                         }
                     }
                 }

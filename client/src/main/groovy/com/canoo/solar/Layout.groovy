@@ -139,7 +139,6 @@ public class Layout {
                 if (pane.getChildren().contains(r))return;
                 int size = 445.div(pane.getParent().getChildren().size()*2)
                 r.setHeight(size)
-                println size
                 r.setTranslateY(size)
                 pane.getChildren().add(r)
             }

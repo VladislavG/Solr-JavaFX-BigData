@@ -53,7 +53,6 @@ public class ApplicationAction extends DolphinServerAction{
         @Override
         void handleCommand(NamedCommand command, List<Command> response) {
 
-            println "Solr query from: " + command.getId()
 
             def orderPM = getServerDolphin().findPresentationModelById(ORDER)
             def filterPM = getServerDolphin().findPresentationModelById(FILTER)
@@ -117,11 +116,6 @@ public class ApplicationAction extends DolphinServerAction{
             }
             solrQuery.addFilterQuery(freeSearchString)
 
-//            filterPM.attributes.each {
-//                def value = it.value
-//                if (value=="" || value==null || value.toString().contains("Plant Type") || value.toString().contains("Zip-Codes") || value.toString().contains("Cities")) value = "*"
-//                solrQuery.addFilterQuery(it.getPropertyName() + ":" + value)
-//            }
 
             solrQuery.setParam("facet.field", CITY);
             solrQuery.addFacetField(PLANT_TYPE);
@@ -131,7 +125,7 @@ public class ApplicationAction extends DolphinServerAction{
             def start = System.currentTimeMillis()
             QueryResponse queryResponse = getSolrServer().query(solrQuery)
             def result = queryResponse.getResults()
-//            println "Solr took " + (System.currentTimeMillis() -  start )
+            println "Solr took " + queryResponse.getQTime()
             FacetField field = queryResponse.getFacetField(CITY);
             FacetField fieldtypes = queryResponse.getFacetField(PLANT_TYPE);
             FacetField fieldzip = queryResponse.getFacetField(ZIP);
@@ -178,18 +172,42 @@ public class ApplicationAction extends DolphinServerAction{
             if (rowIdx == null) {
                 return
             }
+            ArrayList<String> sortings = new ArrayList<String>()
+            Map colNamestoSolrNames = new HashMap()
+            colNamestoSolrNames.put("Position", POSITION)
+            colNamestoSolrNames.put("Type", PLANT_TYPE)
+            colNamestoSolrNames.put("City", CITY)
+            colNamestoSolrNames.put("Zip", ZIP)
+            colNamestoSolrNames.put("Nominal", NOMINAL_POWER)
+            colNamestoSolrNames.put("Average kW/h", AVGKWH)
+            colNamestoSolrNames.put("latitude", GPS_LAT)
+            colNamestoSolrNames.put("Longitude", GPS_LON)
+            colNamestoSolrNames.put("ASCENDING", SolrQuery.ORDER.desc)
+            colNamestoSolrNames.put("DESCENDING", SolrQuery.ORDER.asc)
 
             if (getServerDolphin().getAt(rowIdx.toString()) == null) {
 
-                    def filterPM = getServerDolphin().findPresentationModelById(FILTER)
-                    def filterAutoPM = getServerDolphin().findPresentationModelById(FILTER_AUTOFILL)
-                    def orderPM = getServerDolphin().findPresentationModelById(ORDER)
-                    SolrQuery solrQuery = new SolrQuery("*:*")
-                if (reverse.getValue()) {
-                    solrQuery.setSort(getServerDolphin().findPresentationModelById(STATE).findAttributeByPropertyName(SORT).getValue().toString(), SolrQuery.ORDER.desc)
-                } else {
-                    solrQuery.setSort(getServerDolphin().findPresentationModelById(STATE).findAttributeByPropertyName(SORT).getValue().toString(), SolrQuery.ORDER.asc)
+                SolrQuery solrQuery = new SolrQuery("*:*")
+                def filterPM = getServerDolphin().findPresentationModelById(FILTER)
+                def filterAutoPM = getServerDolphin().findPresentationModelById(FILTER_AUTOFILL)
+                def orderPM = getServerDolphin().findPresentationModelById(ORDER)
+                def sortString = getServerDolphin().findPresentationModelById(STATE).findAttributeByPropertyName(SORT).getValue().toString()
+
+
+                String[] parts = sortString.split(", ");
+
+                for(int i = 0; i <= parts.size()-1; i++){
+                    sortings.add(i, parts[i])
                 }
+                sortings.each {
+                    solrQuery.addSort(colNamestoSolrNames.get(it.substring(0, it.lastIndexOf(" - "))).toString(), SolrQuery.ORDER.((colNamestoSolrNames.get(it.substring(it.lastIndexOf(" - ")+3))).toString()))
+                }
+
+//                if (reverse.getValue()) {
+//                    solrQuery.setSort(sortString, SolrQuery.ORDER.desc)
+//                } else {
+//                    solrQuery.setSort(sortString, SolrQuery.ORDER.asc)
+//                }
                 Map orders = new HashMap()
                 MultiMap ordersWithQueries = new MultiHashMap()
 
@@ -249,7 +267,9 @@ public class ApplicationAction extends DolphinServerAction{
                     solrQuery.setStart(rowIdx)
                     solrQuery.setRows(1);
                     def start = System.currentTimeMillis()
+
                     QueryResponse solrResponse = getSolrServer().query(solrQuery);
+//                    println "solr took: " + solrResponse.getQTime()
                     def result = solrResponse.getResults().get(0)
                     response.add(createInitializeAttributeCommand(rowIdx.toString(), ID, result.getFieldValue(ID)))
                     response.add(createInitializeAttributeCommand(rowIdx.toString(), POSITION, result.getFieldValue(POSITION)))

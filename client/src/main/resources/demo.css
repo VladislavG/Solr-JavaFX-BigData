@@ -191,6 +191,17 @@
     -fx-skin: "np.com.ngopal.control.AutoFillTextBoxSkin";
 }
 
+
+
+.progress-bar .bar {
+    -fx-background-color:
+        -fx-box-border,
+        linear-gradient(to bottom, derive(-fx-accent,95%), derive(-fx-accent,10%)),
+        dodgerblue; /* this line is the background color of the bar */
+    /*-fx-background-insets: 0, 1, 2;*/
+    -fx-padding: 0.416667em; /* 5 */
+}
+
 .button {
     -fx-background-color:
         linear-gradient(#686868 0%, #232723 25%, #373837 75%, #757575 100%),
