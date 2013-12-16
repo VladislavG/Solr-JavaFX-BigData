@@ -1,31 +1,21 @@
 package com.canoo.solar
 
+import javafx.beans.property.SimpleBooleanProperty
+import javafx.beans.property.SimpleDoubleProperty
 import javafx.event.EventHandler
-import javafx.event.EventType
 import javafx.geometry.Insets
-import javafx.geometry.Pos
-import javafx.scene.SnapshotParameters
 import javafx.scene.control.Button
-import javafx.scene.control.CheckBox
-import javafx.scene.control.ChoiceBox
-import javafx.scene.control.ComboBox
 import javafx.scene.control.Label
 import javafx.scene.control.TextField
 import javafx.scene.control.TreeItem
 import javafx.scene.control.TreeView
-import javafx.scene.image.Image
-import javafx.scene.image.WritableImage
 import javafx.scene.input.ClipboardContent
 import javafx.scene.input.DragEvent
 import javafx.scene.input.Dragboard
 import javafx.scene.input.MouseEvent
 import javafx.scene.input.TransferMode
-import javafx.scene.layout.ColumnConstraints
-import javafx.scene.layout.GridPane
 import javafx.scene.layout.HBox
 import javafx.scene.layout.Pane
-import javafx.scene.layout.Priority
-import javafx.scene.layout.RowConstraints
 import javafx.scene.layout.VBox
 import javafx.scene.paint.Color
 import javafx.scene.paint.CycleMethod
@@ -33,9 +23,7 @@ import javafx.scene.paint.LinearGradient
 import javafx.scene.paint.LinearGradientBuilder
 import javafx.scene.paint.Stop
 import javafx.scene.shape.Rectangle
-import np.com.ngopal.control.AutoFillTextBox
 import org.opendolphin.core.Attribute
-import org.opendolphin.core.PresentationModel
 import org.opendolphin.core.client.ClientDolphin
 import static com.canoo.solar.Constants.FilterConstants.*
 
@@ -48,7 +36,7 @@ import static com.canoo.solar.Constants.FilterConstants.*
  */
 public class Layout {
     static ClientDolphin clientDolphin;
-
+    static SimpleDoubleProperty mousePosition = new SimpleDoubleProperty(0.0);
 
     static public Rectangle createEventBorder(){
 
@@ -77,7 +65,7 @@ public class Layout {
     }
 
 
-    static public Pane createTreePane(TreeItem root, TreeView tree, Button close, Pane pane, TextField comboBox, Attribute orderAtt){
+    static public Pane createTreePane(TreeItem root, TreeView tree, Button close, Pane pane, TextField comboBox, Attribute orderAtt, List bounds){
 
         Rectangle dragBorder = new Rectangle()
 
@@ -109,8 +97,6 @@ public class Layout {
         tree.setRoot(root);
         tree.setShowRoot(true);
         tree.setMaxWidth(200)
-//        pane.setMaxHeight(500)
-
 
         treeAndDrag.setOnDragDetected(new EventHandler<MouseEvent>() {
             @Override
@@ -119,47 +105,72 @@ public class Layout {
                 ClipboardContent cc = new ClipboardContent();
                 cc.putString(String.valueOf(treeAndDrag.getParent().toString()));
                 db.setContent(cc);
+                int i = 0;
+                double newStarting = 126.0;
+                bounds.clear()
+                bounds.add(new IntRange(-75, 125))
+                pane.getParent().getParent().getChildren().each {
+                    i++
+
+                    def width = it.getBoundsInLocal().getWidth()
+                    if(width == 0.0){
+                        newStarting += 15
+                    }else{
+                        Range<Integer> range = new IntRange(newStarting.toInteger(), newStarting.plus(width).toInteger())
+                        bounds.add(range)
+                        newStarting = newStarting.plus(width).plus(1).toInteger()
+                    }
+
+                }
+                pane.setDisable(true)
+
+                db.setContent(cc);
                 event.consume();
             }
         });
+
 
         pane.setOnDragDone(new EventHandler<DragEvent>() {
             @Override
             void handle(DragEvent t) {
                 Pane draggedpane = (Pane) t.getGestureSource();
-                VBox draggedBox = draggedpane.getParent()
-                HBox bigBox = draggedBox.getParent()
-                orderAtt.setValue(bigBox.getChildren().findIndexOf {it.equals(draggedBox)}+1)
+                draggedpane.setDisable(false)
+//                VBox draggedBox = draggedpane.getParent()
+//                HBox bigBox = draggedBox.getParent()
+//                orderAtt.setValue(bigBox.getChildren().findIndexOf {it.equals(draggedBox)}+1)
             }
         })
 
-        pane.setOnDragOver(new EventHandler<DragEvent>() {
-            @Override
-            void handle(DragEvent t) {
-                if (pane.getChildren().contains(r))return;
-                int size = 445.div(pane.getParent().getChildren().size()*2)
-                r.setHeight(size)
-                r.setTranslateY(size)
-                pane.getChildren().add(r)
-            }
-        })
-        pane.setOnDragExited(new EventHandler<DragEvent>() {
-            @Override
-            void handle(DragEvent t) {
-                pane.getChildren().remove(r)
-            }
-        })
+
+//        pane.setOnDragOver(new EventHandler<DragEvent>() {
+//            @Override
+//            void handle(DragEvent t) {
+//                if (pane.getChildren().contains(r))return;
+//                int size = 445.div(pane.getParent().getChildren().size()*2)
+//                r.setHeight(size)
+//                r.setTranslateY(size)
+//                pane.getChildren().add(r)
+//            }
+//        })
+//        pane.setOnDragExited(new EventHandler<DragEvent>() {
+//            @Override
+//            void handle(DragEvent t) {
+//                pane.getChildren().remove(r)
+//            }
+//        })
 
         treeAndDrag.getChildren().addAll(dragBorder, tree)
         pane.getChildren().addAll(treeAndDrag, close)
         close.setOnMouseClicked(new EventHandler<MouseEvent>() {
             @Override
             void handle(MouseEvent t) {
-                Application.facetAddRemove(orderAtt.getPropertyName(), comboBox, REMOVE)
+                UpdateActions.facetAddRemove(orderAtt.getPropertyName(), comboBox, REMOVE)
 
             }
         })
         close.relocate(170,-7)
+        close.setScaleX(0.8)
+        close.setScaleY(0.6)
         return pane;
     }
 
