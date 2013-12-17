@@ -120,6 +120,7 @@ public class ApplicationAction extends DolphinServerAction{
             solrQuery.setParam("facet.field", CITY);
             solrQuery.addFacetField(PLANT_TYPE);
             solrQuery.addFacetField(ZIP)
+            solrQuery.addFacetField(NOMINAL_POWER)
             solrQuery.setRows(10000)
             solrQuery.setFacetLimit(Integer.MAX_VALUE)
             def start = System.currentTimeMillis()
@@ -129,19 +130,22 @@ public class ApplicationAction extends DolphinServerAction{
             FacetField field = queryResponse.getFacetField(CITY);
             FacetField fieldtypes = queryResponse.getFacetField(PLANT_TYPE);
             FacetField fieldzip = queryResponse.getFacetField(ZIP);
+            FacetField fieldnominal = queryResponse.getFacetField(NOMINAL_POWER)
 
-            response.add(new DataCommand(new HashMap(size: result.getNumFound() )))
+            response.add(new DataCommand(new HashMap(size: result.getNumFound())))
             List<String> allCities = new ArrayList<>()
             List<String> allCitiesCount = new ArrayList<>()
             List<String> allTypes = new ArrayList<>()
             List<String> allTypesCount = new ArrayList<>()
             List<String> allZips = new ArrayList<>()
             List<String> allZipsCount = new ArrayList<>()
+            List<String> allNominals = new ArrayList<>()
 
             List<FacetField.Count> values = field.getValues();
             List<FacetField.Count> valuestype = fieldtypes.getValues();
             List<FacetField.Count> valueszip = fieldzip.getValues();
-
+            List<FacetField.Count> valuesnominal = fieldnominal.getValues();
+            double totalNominal = 0.0
             for(FacetField.Count count : values){
                 allCities << count.getName()
                 allCitiesCount << count.getCount()
@@ -154,9 +158,14 @@ public class ApplicationAction extends DolphinServerAction{
                 allZips << count.getName()
                 allZipsCount << count.getCount()
             }
+            for(FacetField.Count count : valuesnominal){
+                totalNominal = totalNominal + count.getName().toDouble()
+            }
+
             response.add(new DataCommand(new HashMap(ids: allTypes, numCount: allTypesCount )))
             response.add(new DataCommand(new HashMap(ids: allCities, numCount: allCitiesCount )))
             response.add(new DataCommand(new HashMap(ids: allZips, numCount: allZipsCount )))
+            response.add(new DataCommand(new HashMap(total: totalNominal)))
 
         }
     }
@@ -168,7 +177,6 @@ public class ApplicationAction extends DolphinServerAction{
         @Override
         void handleCommand(NamedCommand command, List<Command> response) {
             Integer rowIdx = Integer.parseInt(getServerDolphin().findPresentationModelById(STATE).findAttributeByPropertyName(START_INDEX).getValue().toString())
-            def reverse = getServerDolphin().findPresentationModelById(STATE).findAttributeByPropertyName(REVERSER_ORDER)
             if (rowIdx == null) {
                 return
             }
@@ -203,15 +211,11 @@ public class ApplicationAction extends DolphinServerAction{
                     solrQuery.addSort(colNamestoSolrNames.get(it.substring(0, it.lastIndexOf(" - "))).toString(), SolrQuery.ORDER.((colNamestoSolrNames.get(it.substring(it.lastIndexOf(" - ")+3))).toString()))
                 }
 
-//                if (reverse.getValue()) {
-//                    solrQuery.setSort(sortString, SolrQuery.ORDER.desc)
-//                } else {
-//                    solrQuery.setSort(sortString, SolrQuery.ORDER.asc)
-//                }
                 Map orders = new HashMap()
                 MultiMap ordersWithQueries = new MultiHashMap()
 
                 orderPM.attributes.each {
+                    if (it.propertyName.equals(TABLE))return;
                     def value = it.getValue()
                     orders.put(it.propertyName, value)
                 }

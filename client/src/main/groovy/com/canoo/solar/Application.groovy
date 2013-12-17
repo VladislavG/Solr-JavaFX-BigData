@@ -5,6 +5,7 @@ import javafx.animation.KeyValue
 import javafx.animation.Timeline
 import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleDoubleProperty
+import javafx.beans.property.SimpleStringProperty
 import javafx.beans.value.ChangeListener
 import javafx.beans.value.ObservableValue
 import javafx.collections.FXCollections
@@ -72,7 +73,9 @@ public class Application extends javafx.application.Application {
     Label noData
     static long start
     static List<Range<Integer>> bounds = new ArrayList<Range<Integer>>()
+    static List<Double> widths
 
+    Label totalNominalLabel
     TextField cityLabelDetail
     TextField idLabelDetail
     TextField zipLabelDetail
@@ -87,6 +90,8 @@ public class Application extends javafx.application.Application {
     TextField typeTextforSearch
     TextField cityTextforSearch
     TextField nominalTextforSearch
+
+    static Rectangle dragBorder
 
     TreeItem<String> rootItemCities
     TreeItem<String> rootItemZip
@@ -137,6 +142,7 @@ public class Application extends javafx.application.Application {
 
     VBox details
     VBox tableBox
+    static Pane tablePane
     static VBox filtersCBs
     static VBox columnsCBs
     public static Rectangle filtersCBBorder
@@ -162,6 +168,7 @@ public class Application extends javafx.application.Application {
     public static Label total
     public static Label totalCount
 
+    static SimpleStringProperty totalNominal
     Timeline progressLine
 
     static Separator separator
@@ -239,6 +246,8 @@ public class Application extends javafx.application.Application {
 //            clientDolphin.findPresentationModelById(ORDER_COLUMN).getAttributes().each {
 //                addHeaderListener(Integer.parseInt(it.getValue().toString()), it.getPropertyName())
 //            }
+            totalNominal.setValue(data.get(4).get("total").toString())
+
         }
 
         Pane root = setupStage();
@@ -246,8 +255,8 @@ public class Application extends javafx.application.Application {
 
         Scene scene = new Scene(root, 780, 475)
         scene.stylesheets << 'demo.css'
-        stage.minWidthProperty().bind(searchAndAll.widthProperty().add(20))
-        stage.maxWidthProperty().bind(searchAndAll.widthProperty().add(20))
+        stage.minWidthProperty().bind(facetBox.widthProperty().add(50))
+        stage.maxWidthProperty().bind(facetBox.widthProperty().add(50))
         stage.setScene(scene);
         stage.setTitle("Power Plants Explorer")
 
@@ -258,13 +267,14 @@ public class Application extends javafx.application.Application {
         clientDolphin.presentationModel(FILTER, [ID, CITY, PLANT_TYPE, ZIP, NOMINAL_POWER, ALL]);
         clientDolphin.presentationModel(FILTER_AUTOFILL, [CITY_AUTOFILL, PLANT_TYPE_AUTOFILL, ZIP_AUTOFILL]);
         clientDolphin.presentationModel(SELECTED_POWERPLANT, [ID, CITY, PLANT_TYPE, ZIP, NOMINAL_POWER]);
-        clientDolphin.presentationModel(ORDER, [CITY, PLANT_TYPE, ZIP])
+        clientDolphin.presentationModel(ORDER, [CITY, PLANT_TYPE, ZIP, TABLE])
         clientDolphin.presentationModel(ORDER_COLUMN, [CITY_COLUMN, TYPE_COLUMN, ZIP_COLUMN, NOMINAL_COLUMN, POSITION_COLUMN, AVGKWH_COLUMN, LAT_COLUMN, LON_COLUMN])
         clientDolphin.presentationModel(STATE, [TRIGGER, START_INDEX, SORT, REVERSER_ORDER, CHANGE_FROM, HOLD])[TRIGGER].value=0
 
         clientDolphin.getClientModelStore().findPresentationModelById(ORDER).findAttributeByPropertyName(ZIP).setValue(0)
         clientDolphin.getClientModelStore().findPresentationModelById(ORDER).findAttributeByPropertyName(CITY).setValue(1)
         clientDolphin.getClientModelStore().findPresentationModelById(ORDER).findAttributeByPropertyName(PLANT_TYPE).setValue(0)
+        clientDolphin.getClientModelStore().findPresentationModelById(ORDER).findAttributeByPropertyName(TABLE).setValue(0)
 
         clientDolphin.getClientModelStore().findPresentationModelById(ORDER_COLUMN).findAttributeByPropertyName(CITY_COLUMN).setValue(2)
         clientDolphin.getClientModelStore().findPresentationModelById(ORDER_COLUMN).findAttributeByPropertyName(TYPE_COLUMN).setValue(3)
@@ -284,14 +294,10 @@ public class Application extends javafx.application.Application {
 
     private Pane setupStage() {
 
-        facetBox.getChildren().addAll(col1, col2, col3, col4)
-        facetBox.setSpacing(3)
+//        facetBox.getChildren().addAll(col1, col2)
+        facetBox.setSpacing(1)
         facetBox.setMinHeight(445)
-        facetBox.getChildren().each {
-            it.setMinHeight(445)
-            it.setSpacing(2)
-            it.setMaxWidth(200)
-        }
+
 
         Image image = new Image("search.png");
         ImageView iv1 = new ImageView();
@@ -337,6 +343,17 @@ public class Application extends javafx.application.Application {
         })
 
         detailsContainer.widthProperty().bind(table.widthProperty())
+        LinearGradient linearGradDark = LinearGradientBuilder.create()
+                .startX(0)
+                .startY(0)
+                .endX(0)
+                .endY(22)
+                .proportional(false)
+                .cycleMethod(CycleMethod.NO_CYCLE)
+                .stops( new Stop(0.1f, Color.rgb(245, 245, 245, 1)),
+                new Stop(1.0f, Color.rgb(179, 179, 179, 1)))
+                .build();
+
         LinearGradient linearGrad = LinearGradientBuilder.create()
                 .startX(0)
                 .startY(0)
@@ -347,6 +364,15 @@ public class Application extends javafx.application.Application {
                 .stops( new Stop(0.1f, Color.rgb(245, 245, 245, 1)),
                 new Stop(1.0f, Color.rgb(179, 179, 179, 1)))
                 .build();
+
+
+        dragBorder.setHeight(22)
+        dragBorder.widthProperty().bind(table.widthProperty())
+        dragBorder.setFill(linearGradDark)
+        dragBorder.setStroke(Color.BLACK)
+        dragBorder.setStrokeWidth(0.5)
+        dragBorder.setArcWidth(3)
+        dragBorder.setArcHeight(3)
 
         placeholder.setArcHeight(10)
         placeholder.setArcWidth(10)
@@ -362,7 +388,6 @@ public class Application extends javafx.application.Application {
         detailsContainer.setArcWidth(3)
         detailsContainer.setArcHeight(3)
 
-        tableBox.setSpacing(5)
 
         treesGrid.setGridLinesVisible(true)
         typeLabelDetail.setEditable(false)
@@ -397,9 +422,9 @@ public class Application extends javafx.application.Application {
         columnEventBorder.relocate(0, 140)
         filtersEventBorder.relocate(0, 270)
 
-        table.setMaxHeight(381)
-        table.setMinHeight(381)
-        table.setMaxWidth(690)
+        table.setMaxHeight(364)
+        table.setMinHeight(364)
+        table.setMaxWidth(700)
         table.setItems(items)
         table.setPlaceholder(noData)
 
@@ -452,9 +477,9 @@ public class Application extends javafx.application.Application {
 
 //        assemble the treeViews and buttons together into a draggable pane
         def orderPm = clientDolphin.findPresentationModelById(ORDER)
-        Layout.createTreePane(rootItemCities, treeCities, closeCity, cityPane, cityTextAutoForSearch, orderPm[CITY], bounds)
-        Layout.createTreePane(rootItemZip, treeZip, closeZip, zipPane, zipTextAutoForSearch, orderPm[ZIP], bounds)
-        Layout.createTreePane(rootItem, treeTypes, closeType, typePane, typeTextAutoForSearch, orderPm[PLANT_TYPE], bounds)
+        Layout.createTreePane(rootItemCities, treeCities, closeCity, cityPane, cityTextAutoForSearch, orderPm[CITY], bounds, widths)
+        Layout.createTreePane(rootItemZip, treeZip, closeZip, zipPane, zipTextAutoForSearch, orderPm[ZIP], bounds, widths)
+        Layout.createTreePane(rootItem, treeTypes, closeType, typePane, typeTextAutoForSearch, orderPm[PLANT_TYPE], bounds, widths)
 
         addDragging()
 
@@ -464,6 +489,7 @@ public class Application extends javafx.application.Application {
         panesToAttributes.put(typePane, orderPm[PLANT_TYPE])
         panesToAttributes.put(zipPane, orderPm[ZIP])
         panesToAttributes.put(cityPane, orderPm[CITY])
+        panesToAttributes.put(tablePane, orderPm[TABLE])
 
         filtersCBs.setPadding(new Insets(25, 0, 0, 10));
         separator.setMinWidth(facetBox.getTranslateX())
@@ -535,6 +561,7 @@ public class Application extends javafx.application.Application {
                                     loadPresentationModel(rowIndex)
                                 }
                             });
+                            totalNominal.setValue(data.get(4).get("total").toString())
                             javafx.collections.ObservableList<PowerPlant> newItems = FakeCollections.newObservableList(newFakeList);
                             if (newItems.size()==0) {disableControls.setValue(false)}
                             table.setItems(newItems)
@@ -576,7 +603,7 @@ public class Application extends javafx.application.Application {
                                     loadPresentationModel(rowIndex)
                                 }
                             });
-
+                            totalNominal.setValue(data.get(4).get("total").toString())
                             javafx.collections.ObservableList<PowerPlant> newItems = FakeCollections.newObservableList(newFakeList);
                             if (newItems.size()==0) {disableControls.setValue(false)}
                             table.setItems(newItems)
@@ -621,6 +648,8 @@ public class Application extends javafx.application.Application {
                                     loadPresentationModel(rowIndex)
                                 }
                             });
+                            totalNominal.setValue(data.get(4).get("total").toString())
+
                             javafx.collections.ObservableList<PowerPlant> newItems = FakeCollections.newObservableList(newFakeList);
                             if (newItems.size()==0) {disableControls.setValue(false)}
                             table.setItems(newItems)
@@ -638,6 +667,8 @@ public class Application extends javafx.application.Application {
         Animation.setMouseEventSliding(columnEventBorder, columnStack, Animation.timelineRight, Animation.timelineLeft, columns)
         Animation.setMouseEventSliding(filtersEventBorder, filterStack, Animation.timelineRightFilters, Animation.timelineLeftFilters, filter)
 
+
+
         facetTableSeparator.setOrientation(Orientation.VERTICAL)
         columnStack.getChildren().addAll(columnCBBorder, columnsCBs)
         columnsCBs.relocate(0, -10)
@@ -648,17 +679,17 @@ public class Application extends javafx.application.Application {
         columns.setRotate(90)
         filter.relocate(-3, 320)
         filter.setRotate(90)
-        tableStack.getChildren().addAll(detailsContainer, total, totalCount)
+        tableStack.getChildren().addAll(detailsContainer, total, totalNominalLabel, totalCount)
         totalCount.translateXProperty().bind(table.widthProperty().divide(2).subtract(55))
         total.translateXProperty().bind(table.widthProperty().divide(2).subtract(20).multiply(-1))
         progressBar.translateYProperty().bind(pane.heightProperty().subtract(6))
-        tableBox.getChildren().addAll(table, tableStack)
-        all.getChildren().addAll(facetBox, tableBox)
-        all.setSpacing(5)
+        tableBox.getChildren().addAll(dragBorder, table, tableStack)
+        tablePane.getChildren().add(tableBox)
+        tablePane.setPadding(new Insets(0, 0, 0, 6))
         searchBox.getChildren().addAll(iv1, searchField)
         searchBox.setAlignment(Pos.CENTER_RIGHT)
         searchBox.setSpacing(5)
-        searchAndAll.getChildren().addAll(searchBox, all)
+        searchAndAll.getChildren().addAll(searchBox, facetBox)
         searchAndAll.setPadding(new Insets(10, 10, 0, 25))
         searchAndAll.setSpacing(5)
 
@@ -675,6 +706,9 @@ public class Application extends javafx.application.Application {
     public void startCity() {
         cityTextAutoForSearch.setVisible(false)
         updateFacets(cityPane, 1, 0, treeCities)
+        clientDolphin.getClientModelStore().findPresentationModelById(ORDER).findAttributeByPropertyName(TABLE).setValue(2)
+        updateFacets(tablePane, 2, 0, treeCities)
+//        UpdateActions.facetAddRemove(TABLE, cityTextAutoForSearch, ADD)
         UpdateActions.refreshTable()
     }
 
@@ -714,6 +748,8 @@ public class Application extends javafx.application.Application {
         cityTextAutoForSearch.disableProperty().bind(disableControls)
         typeTextAutoForSearch.disableProperty().bind(disableControls)
         searchBox.disableProperty().bind(disableControls)
+
+        totalNominalLabel.textProperty().bind(totalNominal)
 //        table.disableProperty().bind(disableControls)
 
 
@@ -754,6 +790,11 @@ public class Application extends javafx.application.Application {
         bindAttribute(clientDolphin[ORDER][ZIP],{
             zip.setText("")
             updateFacets(zipPane, it.newValue, it.oldValue, treeZip)
+        })
+
+        bindAttribute(clientDolphin[ORDER][TABLE],{
+            table.getSelectionModel().clearSelection()
+            updateFacets(tablePane, it.newValue, it.oldValue, treeZip)
         })
 
         bindAttribute(clientDolphin[STATE][TRIGGER], {
@@ -891,42 +932,76 @@ public class Application extends javafx.application.Application {
 
                     for (int i = 0; i < bounds.size(); i++){
                         if (bounds.get(i).containsWithinBounds(dragEvent.getSceneX().toInteger())){
-//                            draggedBox.getChildren().remove(draggedElement)
-                            println "index of the pane: " + facetBox.getChildren().findIndexOf{draggedBox}
+
                             def oldVal = panesToAttributes.get(draggedElement).getValue()
+
                             def newVal = i+1
 
                             clientDolphin[ORDER].getAttributes().each {
                                 int value = it.getValue()
 
-
                                 if (value >= newVal && value <= oldVal){
                                     if (it.equals(panesToAttributes.get(draggedElement))){
-                                        println it.getPropertyName() + " changed from " + it.getValue() + " to " + (i+1)
                                         it.setValue(i+1)
                                     }else{
-                                        println it.getPropertyName() + " changed from " + it.getValue() + " to " + (value+1)
                                         it.setValue(value+1)
                                     }
                                 }
                                 else if (value >= oldVal && value < newVal){
                                     if (it.equals(panesToAttributes.get(draggedElement))){
-                                        println it.getPropertyName() + " changed from " + it.getValue() + " to " + i
                                         it.setValue(i)
-                                        println it.getPropertyName() + " is " + it.getValue()
                                     }else{
-                                        println it.getPropertyName() + " changed from " + it.getValue() + " to " + (value-1)
                                         it.setValue(value-1)
                                     }
                                 }
                             }
-                            println "pane should be in Vbox: " + i
                         }
                     }
-                    println "done"
                 }
             })
         }
+
+        dragBorder.setOnDragDetected(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent event) {
+                Dragboard db = dragBorder.getParent().getParent().startDragAndDrop(TransferMode.MOVE);
+                ClipboardContent cc = new ClipboardContent();
+                cc.putString(String.valueOf(dragBorder.getParent().toString()));
+                db.setContent(cc);
+                bounds.clear()
+
+                widths.clear()
+                facetBox.getChildren().each {
+
+
+                    def width = it.getBoundsInLocal().getWidth().round(-1)
+                    if(width == 0.0){
+                        return;
+                    }else{
+                        widths.add(width)
+                    }
+                }
+                double newStarting = 25.plus(widths.get(0).div(2))
+                bounds.add(new IntRange(-75, newStarting.toInteger()))
+                for (int c = 1; c < widths.size(); c++) {
+                    Range<Integer> range = new IntRange(newStarting.toInteger(), newStarting.plus((widths.get(c-1) + widths.get(c)).div(2)).toInteger())
+                    bounds.add(range)
+                    newStarting =  newStarting.plus((widths.get(c-1) + widths.get(c)).div(2))
+                }
+                bounds.add(new IntRange(newStarting.toInteger(), newStarting.plus(widths.get(widths.size()-1).div(2)).toInteger()))
+                tablePane.setDisable(true)
+                println bounds
+                event.consume();
+            }
+        });
+
+        tablePane.setOnDragDone(new EventHandler<DragEvent>() {
+            @Override
+            void handle(DragEvent dragEvent) {
+                dragEvent.getGestureSource().setDisable(false)
+
+            }
+        })
 
         facetBox.setOnDragExited(new EventHandler<DragEvent>() {
             @Override
@@ -944,6 +1019,7 @@ public class Application extends javafx.application.Application {
 
             }
         })
+
         facetBox.setOnDragDropped(new EventHandler<DragEvent>() {
             @Override
             void handle(DragEvent dragEvent) {
@@ -957,8 +1033,6 @@ public class Application extends javafx.application.Application {
                 rectangles.each {
                     pane.getChildren().remove(it)
                 }
-
-
             }
         })
 
@@ -979,19 +1053,29 @@ public class Application extends javafx.application.Application {
 
                 Rectangle rectangle = new Rectangle()
                 rectangle.setFill(Color.DODGERBLUE)
-                rectangle.setWidth(200)
+                rectangle.setWidth(dragEvent.getGestureSource().getWidth())
                 rectangle.setHeight(22)
                 rectangle.setOpacity(0.3)
                 pane.getChildren().add(rectangle)
                 rectangle.setTranslateY(40)
-                rectangle.setTranslateX(dragEvent.getSceneX()-100)
+                rectangle.setTranslateX(dragEvent.getSceneX()-dragEvent.getGestureSource().getWidth().div(2))
                 rectangle.setMouseTransparent(true)
+
                 for (int i = 0; i < bounds.size(); i++){
                     if (bounds.get(i).containsWithinBounds(dragEvent.getSceneX().toInteger())){
-                        Rectangle r2 = new Rectangle(2, 422)
-                        r2.relocate(bounds.get(i).getFrom().plus(100),40)
+
+                        Rectangle r2 = new Rectangle(6, 422)
                         r2.setFill(Color.DODGERBLUE)
-                        pane.getChildren().add(r2)
+                        r2.setOpacity(0.8)
+                        try{
+                            r2.relocate(bounds.get(i).getTo().minus(widths.get(i).div(2)).minus(3*i).minus(5),40)
+                            pane.getChildren().add(r2)
+                        }catch (Exception e){
+                            r2.relocate(bounds.get(i).getTo().minus(3*i).minus(5),40)
+                            pane.getChildren().add(r2)
+                        }
+
+
                     }
 
                 }
@@ -1048,6 +1132,8 @@ public class Application extends javafx.application.Application {
         typeLabelDetail = new TextField("Type")
         nominalLabelDetail = new TextField("Power")
         noData = new Label("No Data")
+
+        dragBorder = new Rectangle()
 
         cityTextAutoForSearch = new TextField()
         zipTextAutoForSearch = new TextField()
@@ -1106,6 +1192,9 @@ public class Application extends javafx.application.Application {
         placeholder = new Rectangle(25,420)
         detailsContainer = new Rectangle()
 
+        totalNominal = new SimpleStringProperty()
+        totalNominalLabel = new Label()
+
         details = new VBox()
         filtersCBs = new VBox()
         columnsCBs = new VBox()
@@ -1125,6 +1214,9 @@ public class Application extends javafx.application.Application {
         plantTypes = new Label();
         city = new Label();
         zip = new Label();
+
+        tablePane = new Pane()
+        widths = new ArrayList<Double>()
 
         total = new Label("Total:")
         totalCount = new Label("1377475/1377475")
@@ -1159,22 +1251,20 @@ public class Application extends javafx.application.Application {
 
     private void updateFacets(Pane pane, Integer newValue, Integer oldValue, TreeView tree) {
 
-
         tree.getSelectionModel().clearSelection()
         VBox paneContainer = pane.getParent()
 
-
         if (newValue > 0 && oldValue > 0){
             paneContainer.getChildren().remove(pane)
-            facetBox.getChildren().get(newValue-1).getChildren().add(pane)
+            VBox targetBox = facetBox.getChildren().get(newValue - 1)
+            targetBox.getChildren().add(pane)
         }
         List values = new ArrayList()
         if(newValue==0){
-            pane.getParent().getChildren().remove(pane)
+            paneContainer.getChildren().remove(pane)
             pane.setPrefHeight(paneContainer.getHeight())
             pane.getChildren().get(0).setPrefHeight(paneContainer.getHeight())
         }
-
 
         else if(oldValue==0) {
             int i = 0
@@ -1194,6 +1284,7 @@ public class Application extends javafx.application.Application {
                 facetBox.getChildren().add(i-1, newVbox)
             }
             targetBox = facetBox.getChildren().get(i-1)
+
             targetBox.getChildren().add(pane)
         }
 //
@@ -1284,6 +1375,7 @@ public class Application extends javafx.application.Application {
 //        }
 
         addDragging()
+
     }
 
 

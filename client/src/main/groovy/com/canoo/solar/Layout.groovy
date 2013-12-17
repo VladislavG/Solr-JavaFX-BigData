@@ -65,12 +65,8 @@ public class Layout {
     }
 
 
-    static public Pane createTreePane(TreeItem root, TreeView tree, Button close, Pane pane, TextField comboBox, Attribute orderAtt, List bounds){
+    static public Pane createTreePane(TreeItem root, TreeView tree, Button close, Pane pane, TextField comboBox, Attribute orderAtt, List bounds, List<Double> widths){
 
-        Rectangle dragBorder = new Rectangle()
-
-        dragBorder.setHeight(22)
-        dragBorder.setWidth(200)
         LinearGradient linearGrad = LinearGradientBuilder.create()
                 .startX(0)
                 .startY(0)
@@ -81,18 +77,22 @@ public class Layout {
                 .stops( new Stop(0.1f, Color.rgb(245, 245, 245, 1)),
                 new Stop(1.0f, Color.rgb(179, 179, 179, 1)))
                 .build();
-        Rectangle r = new Rectangle(200, 445)
-        r.setMouseTransparent(true)
-        r.setFill(linearGrad)
-        r.setStroke(Color.BLACK)
-        r.setStrokeWidth(0.5)
-        r.setOpacity(0.2)
+        Rectangle dragBorder = new Rectangle()
+
+        dragBorder.setHeight(22)
+        dragBorder.setWidth(200)
         dragBorder.setFill(linearGrad)
         dragBorder.setStroke(Color.BLACK)
         dragBorder.setStrokeWidth(0.5)
         dragBorder.setArcWidth(3)
         dragBorder.setArcHeight(3)
         VBox treeAndDrag = new VBox()
+        Rectangle r = new Rectangle(200, 445)
+        r.setMouseTransparent(true)
+        r.setFill(linearGrad)
+        r.setStroke(Color.BLACK)
+        r.setStrokeWidth(0.5)
+        r.setOpacity(0.2)
         root.setExpanded(true);
         tree.setRoot(root);
         tree.setShowRoot(true);
@@ -105,25 +105,31 @@ public class Layout {
                 ClipboardContent cc = new ClipboardContent();
                 cc.putString(String.valueOf(treeAndDrag.getParent().toString()));
                 db.setContent(cc);
-                int i = 0;
-                double newStarting = 126.0;
+
+
                 bounds.clear()
-                bounds.add(new IntRange(-75, 125))
+
+                widths.clear()
                 pane.getParent().getParent().getChildren().each {
-                    i++
 
-                    def width = it.getBoundsInLocal().getWidth()
+
+                    def width = it.getBoundsInLocal().getWidth().round(-1)
                     if(width == 0.0){
-                        newStarting += 15
+                        return;
                     }else{
-                        Range<Integer> range = new IntRange(newStarting.toInteger(), newStarting.plus(width).toInteger())
-                        bounds.add(range)
-                        newStarting = newStarting.plus(width).plus(1).toInteger()
+                          widths.add(width)
                     }
-
                 }
+                double newStarting = 25.plus(widths.get(0).div(2))
+                bounds.add(new IntRange(-75, newStarting.toInteger()))
+                for (int c = 1; c < widths.size(); c++) {
+                    Range<Integer> range = new IntRange(newStarting.toInteger(), newStarting.plus((widths.get(c-1) + widths.get(c)).div(2)).toInteger())
+                    bounds.add(range)
+                    newStarting =  newStarting.plus((widths.get(c-1) + widths.get(c)).div(2))
+                }
+                bounds.add(new IntRange(newStarting.toInteger(), newStarting.plus(widths.get(widths.size()-1).div(2)).toInteger()))
                 pane.setDisable(true)
-
+                println bounds
                 db.setContent(cc);
                 event.consume();
             }

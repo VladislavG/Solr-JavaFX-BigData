@@ -20,6 +20,7 @@ public class Constants {
     public static final String ALL = "all"
     public static final String PLANT_TYPE = "plantType"
     public static final String ZIP = "zipCode"
+    public static final String TABLE = "table"
     public static final String AVGKWH = "average_kWh";
     public static final String GPS_LAT = "latitude";
     public static final String GPS_LON = "longitude";

@@ -56,6 +56,7 @@ class UpdateActions {
 
     public static void refreshTable(){
         Application.clientDolphin.data Constants.CMD.GET, { data ->
+            Application.totalNominal.setValue(data.get(4).get("total").toString())
             def size = data.get(0).get(Constants.FilterConstants.SIZE)
             PowerPlantList newFakeList = new PowerPlantList((Integer)size, new OurConsumer<Integer>(){
                 @Override
@@ -132,7 +133,12 @@ class UpdateActions {
                     autoFillTextBox.setVisible(false)
                 }
                 else {
-
+                    def value = orderPm.findAttributeByPropertyName(propertyName).getValue()
+                    Application.clientDolphin.findPresentationModelById(Constants.FilterConstants.ORDER).getAttributes().each {
+                        if(it.value > value){
+                            it.setValue(it.getValue()-1)
+                        }
+                    }
                     orderPm.findAttributeByPropertyName(propertyName).setValue(0)
                     autoFillTextBox.setVisible(true)
                 }
