@@ -56,7 +56,6 @@ class UpdateActions {
 
     public static void refreshTable(){
         Application.clientDolphin.data Constants.CMD.GET, { data ->
-            Application.totalNominal.setValue(data.get(4).get("total").toString())
             def size = data.get(0).get(Constants.FilterConstants.SIZE)
             PowerPlantList newFakeList = new PowerPlantList((Integer)size, new OurConsumer<Integer>(){
                 @Override

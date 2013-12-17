@@ -5,7 +5,6 @@ import javafx.animation.KeyValue
 import javafx.animation.Timeline
 import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleDoubleProperty
-import javafx.beans.property.SimpleStringProperty
 import javafx.beans.value.ChangeListener
 import javafx.beans.value.ObservableValue
 import javafx.collections.FXCollections
@@ -75,7 +74,6 @@ public class Application extends javafx.application.Application {
     static List<Range<Integer>> bounds = new ArrayList<Range<Integer>>()
     static List<Double> widths
 
-    Label totalNominalLabel
     TextField cityLabelDetail
     TextField idLabelDetail
     TextField zipLabelDetail
@@ -168,7 +166,6 @@ public class Application extends javafx.application.Application {
     public static Label total
     public static Label totalCount
 
-    static SimpleStringProperty totalNominal
     Timeline progressLine
 
     static Separator separator
@@ -246,8 +243,6 @@ public class Application extends javafx.application.Application {
 //            clientDolphin.findPresentationModelById(ORDER_COLUMN).getAttributes().each {
 //                addHeaderListener(Integer.parseInt(it.getValue().toString()), it.getPropertyName())
 //            }
-            totalNominal.setValue(data.get(4).get("total").toString())
-
         }
 
         Pane root = setupStage();
@@ -269,7 +264,7 @@ public class Application extends javafx.application.Application {
         clientDolphin.presentationModel(SELECTED_POWERPLANT, [ID, CITY, PLANT_TYPE, ZIP, NOMINAL_POWER]);
         clientDolphin.presentationModel(ORDER, [CITY, PLANT_TYPE, ZIP, TABLE])
         clientDolphin.presentationModel(ORDER_COLUMN, [CITY_COLUMN, TYPE_COLUMN, ZIP_COLUMN, NOMINAL_COLUMN, POSITION_COLUMN, AVGKWH_COLUMN, LAT_COLUMN, LON_COLUMN])
-        clientDolphin.presentationModel(STATE, [TRIGGER, START_INDEX, SORT, REVERSER_ORDER, CHANGE_FROM, HOLD])[TRIGGER].value=0
+        clientDolphin.presentationModel(STATE, [TRIGGER, START_INDEX, SORT, REVERSER_ORDER, CHANGE_FROM, HOLD, TOTAL_NOMINAL])[TRIGGER].value=0
 
         clientDolphin.getClientModelStore().findPresentationModelById(ORDER).findAttributeByPropertyName(ZIP).setValue(0)
         clientDolphin.getClientModelStore().findPresentationModelById(ORDER).findAttributeByPropertyName(CITY).setValue(1)
@@ -290,6 +285,7 @@ public class Application extends javafx.application.Application {
         clientDolphin.getClientModelStore().findPresentationModelById(STATE).findAttributeByPropertyName(REVERSER_ORDER).setValue(false)
         clientDolphin.getClientModelStore().findPresentationModelById(STATE).findAttributeByPropertyName(HOLD).setValue(false)
         clientDolphin.getClientModelStore().findPresentationModelById(STATE).findAttributeByPropertyName(CHANGE_FROM).setValue(0)
+        clientDolphin.getClientModelStore().findPresentationModelById(STATE).findAttributeByPropertyName(TOTAL_NOMINAL).setValue(0.0)
     }
 
     private Pane setupStage() {
@@ -561,7 +557,6 @@ public class Application extends javafx.application.Application {
                                     loadPresentationModel(rowIndex)
                                 }
                             });
-                            totalNominal.setValue(data.get(4).get("total").toString())
                             javafx.collections.ObservableList<PowerPlant> newItems = FakeCollections.newObservableList(newFakeList);
                             if (newItems.size()==0) {disableControls.setValue(false)}
                             table.setItems(newItems)
@@ -603,7 +598,7 @@ public class Application extends javafx.application.Application {
                                     loadPresentationModel(rowIndex)
                                 }
                             });
-                            totalNominal.setValue(data.get(4).get("total").toString())
+                            println clientDolphin[STATE][TOTAL_NOMINAL].getValue()
                             javafx.collections.ObservableList<PowerPlant> newItems = FakeCollections.newObservableList(newFakeList);
                             if (newItems.size()==0) {disableControls.setValue(false)}
                             table.setItems(newItems)
@@ -648,8 +643,6 @@ public class Application extends javafx.application.Application {
                                     loadPresentationModel(rowIndex)
                                 }
                             });
-                            totalNominal.setValue(data.get(4).get("total").toString())
-
                             javafx.collections.ObservableList<PowerPlant> newItems = FakeCollections.newObservableList(newFakeList);
                             if (newItems.size()==0) {disableControls.setValue(false)}
                             table.setItems(newItems)
@@ -679,7 +672,7 @@ public class Application extends javafx.application.Application {
         columns.setRotate(90)
         filter.relocate(-3, 320)
         filter.setRotate(90)
-        tableStack.getChildren().addAll(detailsContainer, total, totalNominalLabel, totalCount)
+        tableStack.getChildren().addAll(detailsContainer, total, totalCount)
         totalCount.translateXProperty().bind(table.widthProperty().divide(2).subtract(55))
         total.translateXProperty().bind(table.widthProperty().divide(2).subtract(20).multiply(-1))
         progressBar.translateYProperty().bind(pane.heightProperty().subtract(6))
@@ -748,8 +741,6 @@ public class Application extends javafx.application.Application {
         cityTextAutoForSearch.disableProperty().bind(disableControls)
         typeTextAutoForSearch.disableProperty().bind(disableControls)
         searchBox.disableProperty().bind(disableControls)
-
-        totalNominalLabel.textProperty().bind(totalNominal)
 //        table.disableProperty().bind(disableControls)
 
 
@@ -803,6 +794,11 @@ public class Application extends javafx.application.Application {
             UpdateActions.clearPmsAndPowerPlants()
             UpdateActions.refreshTable()
         })
+
+         bindAttribute(clientDolphin[STATE][TOTAL_NOMINAL], {
+              println it.oldValue
+              println it.newValue
+         })
 
 
     }
@@ -1191,9 +1187,6 @@ public class Application extends javafx.application.Application {
 
         placeholder = new Rectangle(25,420)
         detailsContainer = new Rectangle()
-
-        totalNominal = new SimpleStringProperty()
-        totalNominalLabel = new Label()
 
         details = new VBox()
         filtersCBs = new VBox()

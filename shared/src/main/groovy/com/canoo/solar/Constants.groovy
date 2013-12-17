@@ -50,6 +50,7 @@ public class Constants {
     public static final String CHANGE_FROM = 'CHANGE_FROM'
     public static final String SORT = 'SORT'
     public static final String HOLD = 'HOLD'
+    public static final String TOTAL_NOMINAL = 'totalNominal'
     public static final String SIZE = 'size'
     public static final String TRIGGER = 'TRIGGER'
     public static final String START_INDEX = 'START_INDEX'
