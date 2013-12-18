@@ -9,6 +9,7 @@ import org.apache.solr.client.solrj.embedded.EmbeddedSolrServer
 import org.apache.solr.client.solrj.response.FacetField
 import org.apache.solr.client.solrj.response.QueryResponse
 import org.apache.solr.core.CoreContainer
+import org.opendolphin.core.Attribute
 import org.opendolphin.core.PresentationModel;
 import org.opendolphin.core.comm.Command
 import org.opendolphin.core.comm.DataCommand
@@ -43,8 +44,12 @@ public class ApplicationAction extends DolphinServerAction{
         public void handleCommand(final ValueChangedCommand command, final List<Command> response) {
             PresentationModel orderPm = getServerDolphin()[ORDER]
             PresentationModel statePm = getServerDolphin()[STATE]
+            List<Long> facetPms = new ArrayList<Long>()
+            getServerDolphin().findAllPresentationModelsByType(FACET).each {
+                facetPms.add(it[ORDER].getId())
+            }
             if (command.getOldValue()==null)return;
-            if(!orderPm.findAttributeById(command.attributeId))  return;
+            if(!facetPms.contains(command.getAttributeId()))  return;
             changeValue statePm[TRIGGER], (statePm[TRIGGER].value)+2
 
         }
@@ -65,10 +70,14 @@ public class ApplicationAction extends DolphinServerAction{
             Map orders = new HashMap()
             MultiMap ordersWithQueries = new MultiHashMap()
 
-            orderPM.attributes.each {
-                def value = it.getValue()
-                orders.put(it.propertyName, value)
+            getServerDolphin().findAllPresentationModelsByType(FACET).each {
+                def value = it[ORDER].getValue()
+                orders.put(it.id, value)
             }
+//            orderPM.attributes.each {
+//                def value = it.getValue()
+//                orders.put(it.propertyName, value)
+//            }
             filterPM.attributes.each {
                 if (it.propertyName == ALL)return;
                 def value = it.value
@@ -162,9 +171,9 @@ public class ApplicationAction extends DolphinServerAction{
             for(FacetField.Count count : valuesnominal){
                  totalNominal = totalNominal + (count.getName().toDouble() * count.getCount().toInteger())
             }
-            println "before: " + statePM[TOTAL_NOMINAL].getValue()
-            statePM[TOTAL_NOMINAL].setValue(totalNominal)
-            println "after: " + statePM[TOTAL_NOMINAL].getValue()
+
+            changeValue statePM[TOTAL_NOMINAL], totalNominal
+
             response.add(new DataCommand(new HashMap(ids: allTypes, numCount: allTypesCount )))
             response.add(new DataCommand(new HashMap(ids: allCities, numCount: allCitiesCount )))
             response.add(new DataCommand(new HashMap(ids: allZips, numCount: allZipsCount )))
@@ -213,18 +222,12 @@ public class ApplicationAction extends DolphinServerAction{
                     solrQuery.addSort(colNamestoSolrNames.get(it.substring(0, it.lastIndexOf(" - "))).toString(), SolrQuery.ORDER.((colNamestoSolrNames.get(it.substring(it.lastIndexOf(" - ")+3))).toString()))
                 }
 
-//                if (reverse.getValue()) {
-//                    solrQuery.setSort(sortString, SolrQuery.ORDER.desc)
-//                } else {
-//                    solrQuery.setSort(sortString, SolrQuery.ORDER.asc)
-//                }
                 Map orders = new HashMap()
                 MultiMap ordersWithQueries = new MultiHashMap()
 
-                orderPM.attributes.each {
-                    if (it.propertyName.equals(TABLE))return;
-                    def value = it.getValue()
-                    orders.put(it.propertyName, value)
+                getServerDolphin().findAllPresentationModelsByType(FACET).each {
+                    def value = it[ORDER].getValue()
+                    orders.put(it.id, value)
                 }
 
                 filterPM.attributes.each {

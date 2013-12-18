@@ -6,6 +6,9 @@ import javafx.scene.control.TreeView
 import javafx.scene.layout.VBox
 import org.opendolphin.core.PresentationModel
 
+import static com.canoo.solar.Constants.FilterConstants.FACET
+import static com.canoo.solar.Constants.FilterConstants.ORDER
+
 /**
  * Created by vladislav on 16.12.13.
  */
@@ -118,27 +121,34 @@ class UpdateActions {
 
     public static void facetAddRemove(String propertyName, TextField autoFillTextBox, String addRemove){
 
-                def orderPm = Application.clientDolphin.findPresentationModelById(Constants.FilterConstants.ORDER)
                 if (addRemove.equals("add")) {
-                    int i = 1
-                    List values = new ArrayList()
-                    Application.clientDolphin.findPresentationModelById(Constants.FilterConstants.ORDER).getAttributes().each {
-                        if(it.value > 0 && !values.contains(it.value)){
-                            values.add(it.value)
-                            i++
+                    List valuesList = new ArrayList()
+                    int c = 1
+
+                    Application.clientDolphin.findAllPresentationModelsByType(FACET).each {
+                        def orderValue = it.findAttributeByPropertyName(ORDER).getValue()
+                        if (orderValue > 0 && !valuesList.contains(orderValue)){
+                            valuesList.add(orderValue)
+                            c++
                         }
                     }
-                    orderPm.findAttributeByPropertyName(propertyName).setValue(i)
+
+
+                    Application.clientDolphin.findPresentationModelById(propertyName)[ORDER].setValue(c)
                     autoFillTextBox.setVisible(false)
                 }
+
                 else {
-                    def value = orderPm.findAttributeByPropertyName(propertyName).getValue()
-                    Application.clientDolphin.findPresentationModelById(Constants.FilterConstants.ORDER).getAttributes().each {
-                        if(it.value > value){
-                            it.setValue(it.getValue()-1)
+                    def orderValue = Application.clientDolphin.findPresentationModelById(propertyName)[ORDER].getValue()
+
+                    Application.clientDolphin.findAllPresentationModelsByType(FACET).each {
+                        def facetOrder = it.findAttributeByPropertyName(ORDER)
+                        if (facetOrder.getValue() > orderValue){
+                            facetOrder.setValue(facetOrder.getValue() - 1)
                         }
                     }
-                    orderPm.findAttributeByPropertyName(propertyName).setValue(0)
+
+                    Application.clientDolphin.findPresentationModelById(propertyName)[ORDER].setValue(0)
                     autoFillTextBox.setVisible(true)
                 }
     }

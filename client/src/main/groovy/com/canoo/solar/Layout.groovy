@@ -6,6 +6,7 @@ import javafx.event.EventHandler
 import javafx.geometry.Insets
 import javafx.scene.control.Button
 import javafx.scene.control.Label
+import javafx.scene.control.SelectionMode
 import javafx.scene.control.TextField
 import javafx.scene.control.TreeItem
 import javafx.scene.control.TreeView
@@ -24,6 +25,7 @@ import javafx.scene.paint.LinearGradientBuilder
 import javafx.scene.paint.Stop
 import javafx.scene.shape.Rectangle
 import org.opendolphin.core.Attribute
+import org.opendolphin.core.PresentationModel
 import org.opendolphin.core.client.ClientDolphin
 import static com.canoo.solar.Constants.FilterConstants.*
 
@@ -65,7 +67,7 @@ public class Layout {
     }
 
 
-    static public Pane createTreePane(TreeItem root, TreeView tree, Button close, Pane pane, TextField comboBox, Attribute orderAtt, List bounds, List<Double> widths){
+    static public Pane createTreePane(TreeItem root, TreeView tree, Button close, Pane pane, TextField comboBox, PresentationModel pm, List bounds, List realBounds, List<Double> widths){
 
         LinearGradient linearGrad = LinearGradientBuilder.create()
                 .startX(0)
@@ -97,6 +99,7 @@ public class Layout {
         tree.setRoot(root);
         tree.setShowRoot(true);
         tree.setMaxWidth(200)
+        tree.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE)
 
         treeAndDrag.setOnDragDetected(new EventHandler<MouseEvent>() {
             @Override
@@ -105,10 +108,8 @@ public class Layout {
                 ClipboardContent cc = new ClipboardContent();
                 cc.putString(String.valueOf(treeAndDrag.getParent().toString()));
                 db.setContent(cc);
-
-
                 bounds.clear()
-
+                realBounds.clear()
                 widths.clear()
                 pane.getParent().getParent().getChildren().each {
 
@@ -129,6 +130,26 @@ public class Layout {
                 }
                 bounds.add(new IntRange(newStarting.toInteger(), newStarting.plus(widths.get(widths.size()-1).div(2)).toInteger()))
                 pane.setDisable(true)
+
+                widths.clear()
+                pane.getParent().getParent().getChildren().each {
+
+
+                    def width = it.getBoundsInLocal().getWidth().round(0)
+                    if(width == 0.0){
+                        return;
+                    }else{
+                        widths.add(width)
+                    }
+                }
+
+                Integer realStarting = 25
+                for (int c = 0; c < widths.size(); c++){
+                    Range<Integer> range = new IntRange(realStarting, realStarting.plus(widths.get(c).toInteger()))
+                    realBounds.add(range)
+                    realStarting = realStarting.plus(widths.get(c).toInteger())
+                }
+                println realBounds
                 println bounds
                 db.setContent(cc);
                 event.consume();
@@ -141,37 +162,15 @@ public class Layout {
             void handle(DragEvent t) {
                 Pane draggedpane = (Pane) t.getGestureSource();
                 draggedpane.setDisable(false)
-//                VBox draggedBox = draggedpane.getParent()
-//                HBox bigBox = draggedBox.getParent()
-//                orderAtt.setValue(bigBox.getChildren().findIndexOf {it.equals(draggedBox)}+1)
             }
         })
-
-
-//        pane.setOnDragOver(new EventHandler<DragEvent>() {
-//            @Override
-//            void handle(DragEvent t) {
-//                if (pane.getChildren().contains(r))return;
-//                int size = 445.div(pane.getParent().getChildren().size()*2)
-//                r.setHeight(size)
-//                r.setTranslateY(size)
-//                pane.getChildren().add(r)
-//            }
-//        })
-//        pane.setOnDragExited(new EventHandler<DragEvent>() {
-//            @Override
-//            void handle(DragEvent t) {
-//                pane.getChildren().remove(r)
-//            }
-//        })
 
         treeAndDrag.getChildren().addAll(dragBorder, tree)
         pane.getChildren().addAll(treeAndDrag, close)
         close.setOnMouseClicked(new EventHandler<MouseEvent>() {
             @Override
             void handle(MouseEvent t) {
-                UpdateActions.facetAddRemove(orderAtt.getPropertyName(), comboBox, REMOVE)
-
+                UpdateActions.facetAddRemove(pm.getId(), comboBox, REMOVE)
             }
         })
         close.relocate(170,-7)
@@ -179,18 +178,5 @@ public class Layout {
         close.setScaleY(0.6)
         return pane;
     }
-
-    static public HBox createPair(TextField detail, Label detailTooltip){
-
-        HBox hBox = new HBox()
-        hBox.setSpacing(5);
-        hBox.setPadding(new Insets(10, 10, 10, 10));
-        hBox.getChildren().addAll(detailTooltip, detail)
-        return hBox
-
-    }
-
-
-
 
 }

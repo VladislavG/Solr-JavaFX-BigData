@@ -18,6 +18,7 @@ import javafx.scene.control.*
 import javafx.scene.image.Image
 import javafx.scene.image.ImageView
 import javafx.scene.input.ClipboardContent
+import javafx.scene.input.DataFormat
 import javafx.scene.input.DragEvent
 import javafx.scene.input.Dragboard
 import javafx.scene.input.KeyCode
@@ -36,6 +37,7 @@ import javafx.scene.layout.Pane
 import javafx.scene.layout.VBox
 import javafx.scene.paint.Color
 import javafx.util.Duration
+import org.opendolphin.core.Tag
 
 import static org.opendolphin.binding.JFXBinder.bind
 import javafx.scene.shape.Rectangle
@@ -72,6 +74,7 @@ public class Application extends javafx.application.Application {
     Label noData
     static long start
     static List<Range<Integer>> bounds = new ArrayList<Range<Integer>>()
+    static List<Range<Integer>> realBounds = new ArrayList<Range<Integer>>()
     static List<Double> widths
 
     TextField cityLabelDetail
@@ -135,18 +138,11 @@ public class Application extends javafx.application.Application {
     static VBox col9
     static VBox searchAndAll
 
-    public static Rectangle placeholder
     public static Rectangle detailsContainer
 
     VBox details
     VBox tableBox
     static Pane tablePane
-    static VBox filtersCBs
-    static VBox columnsCBs
-    public static Rectangle filtersCBBorder
-    public static Rectangle filtersEventBorder
-    public static Rectangle columnCBBorder
-    public static Rectangle columnEventBorder
 
     static TreeView treeCities
     static TreeView treeTypes
@@ -174,11 +170,11 @@ public class Application extends javafx.application.Application {
     TextField searchField
     Label searchText
 
-    Pane typePane
+    static Pane typePane
     static Button closeType
-    Pane zipPane
+    static Pane zipPane
     static Button closeZip
-    Pane cityPane
+    static Pane cityPane
     static Button closeCity
 
     public static PowerPlantList fakedPlantList
@@ -192,8 +188,6 @@ public class Application extends javafx.application.Application {
     public void start(Stage stage) throws Exception {
         initializeComponents();
         initializePresentationModels();
-//        disableControls.setValue(true)
-//      disableQuery()
 
         observableListCities.clear()
         observableListTypes.clear()
@@ -240,9 +234,6 @@ public class Application extends javafx.application.Application {
             }
             treeZip.getRoot().setValue("Zip-Codes ($size)")
 
-//            clientDolphin.findPresentationModelById(ORDER_COLUMN).getAttributes().each {
-//                addHeaderListener(Integer.parseInt(it.getValue().toString()), it.getPropertyName())
-//            }
         }
 
         Pane root = setupStage();
@@ -262,23 +253,22 @@ public class Application extends javafx.application.Application {
         clientDolphin.presentationModel(FILTER, [ID, CITY, PLANT_TYPE, ZIP, NOMINAL_POWER, ALL]);
         clientDolphin.presentationModel(FILTER_AUTOFILL, [CITY_AUTOFILL, PLANT_TYPE_AUTOFILL, ZIP_AUTOFILL]);
         clientDolphin.presentationModel(SELECTED_POWERPLANT, [ID, CITY, PLANT_TYPE, ZIP, NOMINAL_POWER]);
-        clientDolphin.presentationModel(ORDER, [CITY, PLANT_TYPE, ZIP, TABLE])
-        clientDolphin.presentationModel(ORDER_COLUMN, [CITY_COLUMN, TYPE_COLUMN, ZIP_COLUMN, NOMINAL_COLUMN, POSITION_COLUMN, AVGKWH_COLUMN, LAT_COLUMN, LON_COLUMN])
         clientDolphin.presentationModel(STATE, [TRIGGER, START_INDEX, SORT, REVERSER_ORDER, CHANGE_FROM, HOLD, TOTAL_NOMINAL])[TRIGGER].value=0
 
-        clientDolphin.getClientModelStore().findPresentationModelById(ORDER).findAttributeByPropertyName(ZIP).setValue(0)
-        clientDolphin.getClientModelStore().findPresentationModelById(ORDER).findAttributeByPropertyName(CITY).setValue(1)
-        clientDolphin.getClientModelStore().findPresentationModelById(ORDER).findAttributeByPropertyName(PLANT_TYPE).setValue(0)
-        clientDolphin.getClientModelStore().findPresentationModelById(ORDER).findAttributeByPropertyName(TABLE).setValue(0)
+        Map<String, Object> attributeMap = [:]
+        attributeMap.put(ORDER, 0)
+        attributeMap.put(SELECTED_ITEMS, "")
+        attributeMap.put(PANE, "")
 
-        clientDolphin.getClientModelStore().findPresentationModelById(ORDER_COLUMN).findAttributeByPropertyName(CITY_COLUMN).setValue(2)
-        clientDolphin.getClientModelStore().findPresentationModelById(ORDER_COLUMN).findAttributeByPropertyName(TYPE_COLUMN).setValue(3)
-        clientDolphin.getClientModelStore().findPresentationModelById(ORDER_COLUMN).findAttributeByPropertyName(ZIP_COLUMN).setValue(1)
-        clientDolphin.getClientModelStore().findPresentationModelById(ORDER_COLUMN).findAttributeByPropertyName(NOMINAL_COLUMN).setValue(4)
-        clientDolphin.getClientModelStore().findPresentationModelById(ORDER_COLUMN).findAttributeByPropertyName(AVGKWH_COLUMN).setValue(5)
-        clientDolphin.getClientModelStore().findPresentationModelById(ORDER_COLUMN).findAttributeByPropertyName(LAT_COLUMN).setValue(6)
-        clientDolphin.getClientModelStore().findPresentationModelById(ORDER_COLUMN).findAttributeByPropertyName(LON_COLUMN).setValue(7)
-        clientDolphin.getClientModelStore().findPresentationModelById(ORDER_COLUMN).findAttributeByPropertyName(POSITION_COLUMN).setValue(0)
+        clientDolphin.presentationModel(CITY, FACET, attributeMap)[ORDER].value =  1
+        clientDolphin.presentationModel(PLANT_TYPE, FACET, attributeMap)
+        clientDolphin.presentationModel(ZIP, FACET, attributeMap)
+        clientDolphin.presentationModel(TABLE, FACET, attributeMap)
+
+        clientDolphin[CITY][PANE].setValue(cityPane.toString())
+        clientDolphin[PLANT_TYPE][PANE].setValue(typePane.toString())
+        clientDolphin[ZIP][PANE].setValue(zipPane.toString())
+        clientDolphin[TABLE][PANE].setValue(tablePane.toString())
 
         clientDolphin.getClientModelStore().findPresentationModelById(STATE).findAttributeByPropertyName(START_INDEX).setValue(0)
         clientDolphin.getClientModelStore().findPresentationModelById(STATE).findAttributeByPropertyName(SORT).setValue("Position - DESCENDING")
@@ -290,10 +280,8 @@ public class Application extends javafx.application.Application {
 
     private Pane setupStage() {
 
-//        facetBox.getChildren().addAll(col1, col2)
         facetBox.setSpacing(1)
         facetBox.setMinHeight(445)
-
 
         Image image = new Image("search.png");
         ImageView iv1 = new ImageView();
@@ -314,7 +302,6 @@ public class Application extends javafx.application.Application {
                 }else{
                     progressLine.setRate(8)
                 }
-
             }
         })
         progressBar.setVisible(false)
@@ -361,7 +348,6 @@ public class Application extends javafx.application.Application {
                 new Stop(1.0f, Color.rgb(179, 179, 179, 1)))
                 .build();
 
-
         dragBorder.setHeight(22)
         dragBorder.widthProperty().bind(table.widthProperty())
         dragBorder.setFill(linearGradDark)
@@ -370,33 +356,12 @@ public class Application extends javafx.application.Application {
         dragBorder.setArcWidth(3)
         dragBorder.setArcHeight(3)
 
-        placeholder.setArcHeight(10)
-        placeholder.setArcWidth(10)
-        placeholder.setStroke(linearGrad)
-        placeholder.setStrokeWidth(2)
-        placeholder.setFill(Color.WHITE)
-        placeholder.setOpacity(0.5)
-        placeholder.getStrokeDashArray().addAll(15d, 15d, 15d, 15d);
         detailsContainer.setFill(linearGrad)
         detailsContainer.setHeight(36)
         detailsContainer.setStrokeWidth(0.5)
         detailsContainer.setStroke(Color.BLACK)
         detailsContainer.setArcWidth(3)
         detailsContainer.setArcHeight(3)
-
-
-        treesGrid.setGridLinesVisible(true)
-        typeLabelDetail.setEditable(false)
-        cityLabelDetail.setEditable(false)
-        zipLabelDetail.setEditable(false)
-        nominalLabelDetail.setEditable(false)
-        idLabelDetail.setEditable(false)
-
-        cityCB.setSelected(true);
-        typeCB.setSelected(true);
-        nominalCB.setSelected(true);
-        zipCB.setSelected(true);
-        positionCB.setSelected(true);
 
         table.setSortPolicy(new Callback<TableView<PowerPlant>, Boolean>() {
             @Override
@@ -415,12 +380,10 @@ public class Application extends javafx.application.Application {
             }
         })
 
-        columnEventBorder.relocate(0, 140)
-        filtersEventBorder.relocate(0, 270)
-
+        table.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         table.setMaxHeight(364)
         table.setMinHeight(364)
-        table.setMaxWidth(700)
+        table.setMaxWidth(650)
         table.setItems(items)
         table.setPlaceholder(noData)
 
@@ -453,47 +416,12 @@ public class Application extends javafx.application.Application {
 
         table.getColumns().addAll(positionColumn, zipColumn, cityColumn, typeColumn, nominalColumn, subtypeColumn, latitudeColumn, longitudeColumn);
 
-//        show/hide table Columns on checkbox event
-        PresentationModel colOrder = clientDolphin.findPresentationModelById(ORDER_COLUMN)
-        Listeners.setChoiceBoxListener(cityCB, table, cityColumn, CITY_COLUMN, colOrder)
-        Listeners.setChoiceBoxListener(typeCB, table, typeColumn, TYPE_COLUMN, colOrder)
-        Listeners.setChoiceBoxListener(nominalCB, table, nominalColumn, NOMINAL_COLUMN, colOrder)
-        Listeners.setChoiceBoxListener(zipCB, table, zipColumn, ZIP_COLUMN, colOrder)
-        Listeners.setChoiceBoxListener(positionCB, table, positionColumn, POSITION_COLUMN, colOrder)
-        Listeners.setChoiceBoxListener(avgkwhCB, table, subtypeColumn, AVGKWH_COLUMN, colOrder)
-        Listeners.setChoiceBoxListener(latitudeCB, table, latitudeColumn, LAT_COLUMN, colOrder)
-        Listeners.setChoiceBoxListener(longitudeCB, table, longitudeColumn, LON_COLUMN, colOrder)
-
-//        create selection details layout boxes
-        HBox nominalLabelTextDetail = Layout.createPair(nominalLabelDetail, nominalLabelforDetail)
-        HBox typeLabelTextDetail = Layout.createPair(typeLabelDetail, typeLabelforDetail)
-        HBox cityLabelTextDetail = Layout.createPair(cityLabelDetail, cityLabelforDetail)
-        HBox zipLabelTextDetail = Layout.createPair(zipLabelDetail, zipLabelforDetail)
-        HBox idLabelTextDetail = Layout.createPair(idLabelDetail, idLabelforDetail)
-
 //        assemble the treeViews and buttons together into a draggable pane
-        def orderPm = clientDolphin.findPresentationModelById(ORDER)
-        Layout.createTreePane(rootItemCities, treeCities, closeCity, cityPane, cityTextAutoForSearch, orderPm[CITY], bounds, widths)
-        Layout.createTreePane(rootItemZip, treeZip, closeZip, zipPane, zipTextAutoForSearch, orderPm[ZIP], bounds, widths)
-        Layout.createTreePane(rootItem, treeTypes, closeType, typePane, typeTextAutoForSearch, orderPm[PLANT_TYPE], bounds, widths)
+        Layout.createTreePane(rootItemCities, treeCities, closeCity, cityPane, cityTextAutoForSearch, clientDolphin[CITY], bounds, realBounds, widths)
+        Layout.createTreePane(rootItemZip, treeZip, closeZip, zipPane, zipTextAutoForSearch, clientDolphin[ZIP], bounds, realBounds, widths)
+        Layout.createTreePane(rootItem, treeTypes, closeType, typePane, typeTextAutoForSearch, clientDolphin[PLANT_TYPE], bounds, realBounds, widths)
 
         addDragging()
-
-        columnsCBs.setPadding(new Insets(20, 0, 0, 10));
-        columnsCBs.getChildren().addAll(cityCB, typeCB, zipCB, nominalCB, positionCB/*, avgkwhCB, latitudeCB, longitudeCB*/)
-
-        panesToAttributes.put(typePane, orderPm[PLANT_TYPE])
-        panesToAttributes.put(zipPane, orderPm[ZIP])
-        panesToAttributes.put(cityPane, orderPm[CITY])
-        panesToAttributes.put(tablePane, orderPm[TABLE])
-
-        filtersCBs.setPadding(new Insets(25, 0, 0, 10));
-        separator.setMinWidth(facetBox.getTranslateX())
-
-        details.setSpacing(5);
-        details.setPadding(new Insets(20, 10, 10, 10));
-        details.getChildren().addAll(selectionDetailsLabel, cityLabelTextDetail, idLabelTextDetail, typeLabelTextDetail, nominalLabelTextDetail, zipLabelTextDetail)
-        facetBox.setPadding(new Insets(0, 0, 0, 0));
 
         searchField.textProperty().addListener(new ChangeListener<String>() {
             @Override
@@ -530,9 +458,9 @@ public class Application extends javafx.application.Application {
                     public void changed(ObservableValue<? extends TreeItem<String>> observableValue,
                                         TreeItem<String> oldItem, TreeItem<String> newItem) {
 
-                        def cityValue = clientDolphin.findPresentationModelById(ORDER).findAttributeByPropertyName(CITY).getValue()
-                        def typeValue = clientDolphin.findPresentationModelById(ORDER).findAttributeByPropertyName(PLANT_TYPE).getValue()
-                        def zipValue = clientDolphin.findPresentationModelById(ORDER).findAttributeByPropertyName(ZIP).getValue()
+                        def cityValue = clientDolphin.findPresentationModelById(CITY).findAttributeByPropertyName(ORDER).getValue()
+                        def typeValue = clientDolphin.findPresentationModelById(PLANT_TYPE).findAttributeByPropertyName(ORDER).getValue()
+                        def zipValue = clientDolphin.findPresentationModelById(ZIP).findAttributeByPropertyName(ORDER).getValue()
                         if (newItem==null)return;
 
                         String part1 = newItem.getValue().toString().substring(0, newItem.getValue().toString().lastIndexOf(' ('))
@@ -574,9 +502,9 @@ public class Application extends javafx.application.Application {
                     public void changed(ObservableValue<? extends TreeItem<String>> observableValue,
                                         TreeItem<String> oldItem, TreeItem<String> newItem) {
 
-                        def cityValue = clientDolphin.findPresentationModelById(ORDER).findAttributeByPropertyName(CITY).getValue()
-                        def typeValue = clientDolphin.findPresentationModelById(ORDER).findAttributeByPropertyName(PLANT_TYPE).getValue()
-                        def zipValue = clientDolphin.findPresentationModelById(ORDER).findAttributeByPropertyName(ZIP).getValue()
+                        def cityValue = clientDolphin.findPresentationModelById(CITY).findAttributeByPropertyName(ORDER).getValue()
+                        def typeValue = clientDolphin.findPresentationModelById(PLANT_TYPE).findAttributeByPropertyName(ORDER).getValue()
+                        def zipValue = clientDolphin.findPresentationModelById(ZIP).findAttributeByPropertyName(ORDER).getValue()
                         if (newItem==null) return;
                         String part1 = newItem.getValue().toString().substring(0, newItem.getValue().toString().lastIndexOf(' ('))
                         city.setText(part1);
@@ -598,7 +526,6 @@ public class Application extends javafx.application.Application {
                                     loadPresentationModel(rowIndex)
                                 }
                             });
-                            println clientDolphin[STATE][TOTAL_NOMINAL].getValue()
                             javafx.collections.ObservableList<PowerPlant> newItems = FakeCollections.newObservableList(newFakeList);
                             if (newItems.size()==0) {disableControls.setValue(false)}
                             table.setItems(newItems)
@@ -616,9 +543,9 @@ public class Application extends javafx.application.Application {
 
                     public void changed(ObservableValue<? extends TreeItem<String>> observableValue,
                                         TreeItem<String> oldItem, TreeItem<String> newItem) {
-                        def cityValue = clientDolphin.findPresentationModelById(ORDER).findAttributeByPropertyName(CITY).getValue()
-                        def typeValue = clientDolphin.findPresentationModelById(ORDER).findAttributeByPropertyName(PLANT_TYPE).getValue()
-                        def zipValue = clientDolphin.findPresentationModelById(ORDER).findAttributeByPropertyName(ZIP).getValue()
+                        def cityValue = clientDolphin.findPresentationModelById(CITY).findAttributeByPropertyName(ORDER).getValue()
+                        def typeValue = clientDolphin.findPresentationModelById(PLANT_TYPE).findAttributeByPropertyName(ORDER).getValue()
+                        def zipValue = clientDolphin.findPresentationModelById(ZIP).findAttributeByPropertyName(ORDER).getValue()
                         if (newItem==null) return;
 
                         String part1 = newItem.getValue().toString().substring(0, newItem.getValue().toString().lastIndexOf(' ('))
@@ -655,23 +582,6 @@ public class Application extends javafx.application.Application {
                     }
                 });
 
-        Animation.setAnimation(columnStack);
-        Animation.setAnimationFilters(filterStack);
-        Animation.setMouseEventSliding(columnEventBorder, columnStack, Animation.timelineRight, Animation.timelineLeft, columns)
-        Animation.setMouseEventSliding(filtersEventBorder, filterStack, Animation.timelineRightFilters, Animation.timelineLeftFilters, filter)
-
-
-
-        facetTableSeparator.setOrientation(Orientation.VERTICAL)
-        columnStack.getChildren().addAll(columnCBBorder, columnsCBs)
-        columnsCBs.relocate(0, -10)
-        columnStack.relocate(0, 140)
-        filterStack.getChildren().addAll(filtersCBBorder, filtersCBs)
-        filterStack.relocate(0, 270)
-        columns.relocate(-9, 190)
-        columns.setRotate(90)
-        filter.relocate(-3, 320)
-        filter.setRotate(90)
         tableStack.getChildren().addAll(detailsContainer, total, totalCount)
         totalCount.translateXProperty().bind(table.widthProperty().divide(2).subtract(55))
         total.translateXProperty().bind(table.widthProperty().divide(2).subtract(20).multiply(-1))
@@ -698,10 +608,9 @@ public class Application extends javafx.application.Application {
 
     public void startCity() {
         cityTextAutoForSearch.setVisible(false)
-        updateFacets(cityPane, 1, 0, treeCities)
-        clientDolphin.getClientModelStore().findPresentationModelById(ORDER).findAttributeByPropertyName(TABLE).setValue(2)
-        updateFacets(tablePane, 2, 0, treeCities)
-//        UpdateActions.facetAddRemove(TABLE, cityTextAutoForSearch, ADD)
+        updateFacets(cityPane, 1, 0)
+        clientDolphin.getClientModelStore().findPresentationModelById(TABLE)[ORDER].setValue(2)
+        updateFacets(tablePane, 2, 0)
         UpdateActions.refreshTable()
     }
 
@@ -741,7 +650,6 @@ public class Application extends javafx.application.Application {
         cityTextAutoForSearch.disableProperty().bind(disableControls)
         typeTextAutoForSearch.disableProperty().bind(disableControls)
         searchBox.disableProperty().bind(disableControls)
-//        table.disableProperty().bind(disableControls)
 
 
         bindAttribute(clientDolphin[STATE][SORT], {
@@ -767,26 +675,47 @@ public class Application extends javafx.application.Application {
             disableControls.setValue(true)
             UpdateActions.clearPmsAndPowerPlants()
         })
-        bindAttribute(clientDolphin[ORDER][PLANT_TYPE],{
+
+        bindAttribute(clientDolphin[PLANT_TYPE][ORDER],{
             plantTypes.setText("")
-
-            updateFacets(typePane, it.newValue, it.oldValue, treeTypes)
+            updateFacets(typePane, it.newValue, it.oldValue)
         })
 
-        bindAttribute(clientDolphin[ORDER][CITY],{
+        bindAttribute(clientDolphin[CITY][ORDER],{
             city.setText("")
-            updateFacets(cityPane, it.newValue, it.oldValue, treeCities)
+            updateFacets(cityPane, it.newValue, it.oldValue)
         })
 
-        bindAttribute(clientDolphin[ORDER][ZIP],{
+        bindAttribute(clientDolphin[ZIP][ORDER],{
             zip.setText("")
-            updateFacets(zipPane, it.newValue, it.oldValue, treeZip)
+            updateFacets(zipPane, it.newValue, it.oldValue)
         })
 
-        bindAttribute(clientDolphin[ORDER][TABLE],{
+        bindAttribute(clientDolphin[TABLE][ORDER],{
             table.getSelectionModel().clearSelection()
-            updateFacets(tablePane, it.newValue, it.oldValue, treeZip)
+            updateFacets(tablePane, it.newValue, it.oldValue)
         })
+
+//        bindAttribute(clientDolphin[ORDER][PLANT_TYPE],{
+//            plantTypes.setText("")
+//
+//            updateFacets(typePane, it.newValue, it.oldValue)
+//        })
+//
+//        bindAttribute(clientDolphin[ORDER][CITY],{
+//            city.setText("")
+//            updateFacets(cityPane, it.newValue, it.oldValue)
+//        })
+//
+//        bindAttribute(clientDolphin[ORDER][ZIP],{
+//            zip.setText("")
+//            updateFacets(zipPane, it.newValue, it.oldValue)
+//        })
+//
+//        bindAttribute(clientDolphin[ORDER][TABLE],{
+//            table.getSelectionModel().clearSelection()
+//            updateFacets(tablePane, it.newValue, it.oldValue)
+//        })
 
         bindAttribute(clientDolphin[STATE][TRIGGER], {
 
@@ -809,28 +738,6 @@ public class Application extends javafx.application.Application {
     }
 
     public static void addDragging() {
-        placeholder.setOnDragOver(new EventHandler<DragEvent>() {
-            @Override
-            public void handle(DragEvent event) {
-                Dragboard db = event.getDragboard();
-                boolean accept = false;
-                if (db.hasString()) {
-                    String data = db.getString();
-                    try {
-                        if (event.getGestureSource() instanceof Pane) {
-                            accept = true;
-                        }
-                    } catch (NumberFormatException exc) {
-                        accept = false;
-                    }
-                }
-                if (accept) {
-                    event.acceptTransferModes(TransferMode.MOVE);
-
-                }
-                placeholder.setFill(Color.LIGHTGRAY)
-            }
-        });
         facetBox.setOnDragOver(new EventHandler<DragEvent>() {
             @Override
             public void handle(DragEvent event) {
@@ -852,50 +759,6 @@ public class Application extends javafx.application.Application {
                 }
             }
         });
-        placeholder.setOnDragExited(new EventHandler<DragEvent>() {
-            @Override
-            void handle(DragEvent t) {
-                  placeholder.setFill(Color.ALICEBLUE)
-            }
-        })
-        placeholder.setOnDragDropped(new EventHandler<DragEvent>() {
-            @Override
-            public void handle(DragEvent event) {
-                Pane draggedElement = (Pane) event.getGestureSource()
-                VBox vBoxOrigin = draggedElement.getParent()
-                vBoxOrigin.getChildren().remove(draggedElement)
-                    int i = 1
-                    List values = new ArrayList()
-                    clientDolphin.findPresentationModelById(ORDER).getAttributes().each {
-                        if(it.value > 0 && !values.contains(it.value)){
-                            values.add(it.value)
-                            i++
-                        }
-                    }
-
-
-                facetBox.getChildren().get(i-1).getChildren().add(draggedElement)
-                int newOriginHeight = (vBoxOrigin.getHeight())/(vBoxOrigin.getChildren().size())
-                vBoxOrigin.getChildren().each { originChildPane ->
-                    originChildPane.setPrefHeight(newOriginHeight)
-                    originChildPane.getChildren().get(0).setPrefHeight(newOriginHeight)
-                }
-
-
-                draggedElement.setOnDragDetected(new EventHandler<MouseEvent>() {
-                    @Override
-                    public void handle(MouseEvent e) {
-                        Dragboard db = draggedElement.startDragAndDrop(TransferMode.MOVE);
-                        ClipboardContent cc = new ClipboardContent();
-                        cc.putString(draggedElement.getParent().toString());
-                        db.setContent(cc);
-
-                        e.consume();
-                    }
-                });
-            }
-        });
-
         facetBox.getChildren().each {
             it.setOnDragOver(new EventHandler<DragEvent>() {
                 @Override
@@ -926,28 +789,67 @@ public class Application extends javafx.application.Application {
                     Pane draggedElement = (Pane) dragEvent.getGestureSource()
                     VBox draggedBox = draggedElement.getParent()
 
-                    for (int i = 0; i < bounds.size(); i++){
-                        if (bounds.get(i).containsWithinBounds(dragEvent.getSceneX().toInteger())){
-
-                            def oldVal = panesToAttributes.get(draggedElement).getValue()
-
-                            def newVal = i+1
-
-                            clientDolphin[ORDER].getAttributes().each {
-                                int value = it.getValue()
-
-                                if (value >= newVal && value <= oldVal){
-                                    if (it.equals(panesToAttributes.get(draggedElement))){
-                                        it.setValue(i+1)
-                                    }else{
-                                        it.setValue(value+1)
+                    if (dragEvent.getSceneY().toInteger() > 250 ) {
+                        for (int i = 0; i < realBounds.size(); i++){
+                            if (realBounds.get(i).containsWithinBounds(dragEvent.getSceneX().toInteger())){
+                                def oldOrder = 0
+                                clientDolphin.findAllPresentationModelsByType(FACET).each {
+                                    if (it[PANE].getValue().equals(draggedElement.toString())){
+                                        oldOrder = it[ORDER].getValue()
                                     }
                                 }
-                                else if (value >= oldVal && value < newVal){
-                                    if (it.equals(panesToAttributes.get(draggedElement))){
-                                        it.setValue(i)
-                                    }else{
-                                        it.setValue(value-1)
+                                def newOrder = i+1
+
+                                if (draggedElement.getParent().getChildren().size() > 1){
+                                    clientDolphin.findAllPresentationModelsByType(FACET).each {
+                                        if (it[PANE].getValue().equals(draggedElement.toString())){
+                                            it[ORDER].setValue(newOrder)
+                                        }
+                                    }
+                                }else{
+                                    clientDolphin.findAllPresentationModelsByType(FACET).each {
+                                        if (it[PANE].getValue().equals(draggedElement.toString())){
+                                            it[ORDER].setValue(newOrder)
+                                        }
+                                    }
+                                    clientDolphin.findAllPresentationModelsByType(FACET).each {
+                                        int paneOrder = it[ORDER].getValue()
+                                        if (paneOrder > oldOrder){
+                                            it[ORDER].setValue(it[ORDER].getValue()-1)
+                                        }
+                                    }
+                                }
+
+                            }
+                        }
+                    }
+                    else{
+                        for (int i = 0; i < bounds.size(); i++){
+                            if (bounds.get(i).containsWithinBounds(dragEvent.getSceneX().toInteger())){
+                                def oldOrder = 0
+                                clientDolphin.findAllPresentationModelsByType(FACET).each {
+                                    if (it[PANE].getValue().equals(draggedElement.toString())){
+                                        oldOrder = it[ORDER].getValue()
+                                    }
+                                }
+                                def newOrder = i+1
+
+                                clientDolphin.findAllPresentationModelsByType(FACET).each {
+                                    int paneOrder = it[ORDER].getValue()
+
+                                    if (paneOrder >= newOrder && paneOrder <= oldOrder){
+                                        if (it[PANE].getValue().equals(draggedElement.toString())){
+                                            it[ORDER].setValue(i+1)
+                                        }else{
+                                            it[ORDER].setValue(paneOrder+1)
+                                        }
+                                    }
+                                    else if (paneOrder >= oldOrder && paneOrder < newOrder){
+                                        if (it[PANE].getValue().equals(draggedElement.toString())){
+                                            it[ORDER].setValue(i)
+                                        }else{
+                                            it[ORDER].setValue(paneOrder-1)
+                                        }
                                     }
                                 }
                             }
@@ -965,6 +867,7 @@ public class Application extends javafx.application.Application {
                 cc.putString(String.valueOf(dragBorder.getParent().toString()));
                 db.setContent(cc);
                 bounds.clear()
+                realBounds.clear()
 
                 widths.clear()
                 facetBox.getChildren().each {
@@ -977,6 +880,7 @@ public class Application extends javafx.application.Application {
                         widths.add(width)
                     }
                 }
+
                 double newStarting = 25.plus(widths.get(0).div(2))
                 bounds.add(new IntRange(-75, newStarting.toInteger()))
                 for (int c = 1; c < widths.size(); c++) {
@@ -986,6 +890,26 @@ public class Application extends javafx.application.Application {
                 }
                 bounds.add(new IntRange(newStarting.toInteger(), newStarting.plus(widths.get(widths.size()-1).div(2)).toInteger()))
                 tablePane.setDisable(true)
+
+                widths.clear()
+                facetBox.getChildren().each {
+
+
+                    def width = it.getBoundsInLocal().getWidth().round(0)
+                    if(width == 0.0){
+                        return;
+                    }else{
+                        widths.add(width)
+                    }
+                }
+
+                Integer realStarting = 25
+                for (int c = 0; c < widths.size(); c++){
+                    Range<Integer> range = new IntRange(realStarting, realStarting.plus(widths.get(c).toInteger()))
+                    realBounds.add(range)
+                    realStarting = realStarting.plus(widths.get(c).toInteger())
+                }
+                println realBounds
                 println bounds
                 event.consume();
             }
@@ -1025,7 +949,6 @@ public class Application extends javafx.application.Application {
                         rectangles.add(rect)
                     }
                 }
-
                 rectangles.each {
                     pane.getChildren().remove(it)
                 }
@@ -1035,6 +958,16 @@ public class Application extends javafx.application.Application {
         facetBox.setOnDragOver(new EventHandler<DragEvent>() {
             @Override
             void handle(DragEvent dragEvent) {
+                LinearGradient linearGradBlue = LinearGradientBuilder.create()
+                        .startX(0)
+                        .startY(0)
+                        .endX(0)
+                        .endY(50)
+                        .proportional(false)
+                        .cycleMethod(CycleMethod.NO_CYCLE)
+                        .stops( new Stop(0.1f, Color.rgb(30, 144, 255, 1)),
+                        new Stop(1.0f, Color.rgb(100, 149, 237, 1)))
+                        .build();
                 List<Rectangle> rectangles = new ArrayList<Rectangle>()
                 pane.getChildren().each {rect ->
                     if (rect instanceof Rectangle){
@@ -1046,7 +979,6 @@ public class Application extends javafx.application.Application {
                         pane.getChildren().remove(it)
                     }
                 }
-
                 Rectangle rectangle = new Rectangle()
                 rectangle.setFill(Color.DODGERBLUE)
                 rectangle.setWidth(dragEvent.getGestureSource().getWidth())
@@ -1057,23 +989,45 @@ public class Application extends javafx.application.Application {
                 rectangle.setTranslateX(dragEvent.getSceneX()-dragEvent.getGestureSource().getWidth().div(2))
                 rectangle.setMouseTransparent(true)
 
-                for (int i = 0; i < bounds.size(); i++){
-                    if (bounds.get(i).containsWithinBounds(dragEvent.getSceneX().toInteger())){
+                if (dragEvent.getSceneY() > 250){
 
-                        Rectangle r2 = new Rectangle(6, 422)
-                        r2.setFill(Color.DODGERBLUE)
-                        r2.setOpacity(0.8)
-                        try{
-                            r2.relocate(bounds.get(i).getTo().minus(widths.get(i).div(2)).minus(3*i).minus(5),40)
+                    for (int i = 0; i < realBounds.size(); i++){
+                        if (realBounds.get(i).containsWithinBounds(dragEvent.getSceneX().toInteger())){
+                            Rectangle r2 = new Rectangle()
+                            r2.setFill(linearGradBlue)
+                            r2.setOpacity(0.3)
+
+                            r2.setWidth(facetBox.getChildren().get(i).getWidth().minus(6))
+                            r2.setHeight(400.div(facetBox.getChildren().get(i).getChildren().size()+1))
+                            r2.relocate(realBounds.get(i).getFrom(), 400.div(facetBox.getChildren().get(i).getChildren().size()+1).multiply(facetBox.getChildren().get(i).getChildren().size()).plus(62))
                             pane.getChildren().add(r2)
-                        }catch (Exception e){
-                            r2.relocate(bounds.get(i).getTo().minus(3*i).minus(5),40)
-                            pane.getChildren().add(r2)
+                            r2.setMouseTransparent(true)
+                            r2.setFocusTraversable(true)
+
                         }
-
-
                     }
 
+                }else{
+
+                    for (int i = 0; i < bounds.size(); i++){
+                        if (bounds.get(i).containsWithinBounds(dragEvent.getSceneX().toInteger())){
+
+                            Rectangle r2 = new Rectangle(6, 422)
+                            r2.setFill(linearGradBlue)
+                            r2.setOpacity(0.8)
+                            r2.setMouseTransparent(true)
+                            try{
+                                r2.relocate(bounds.get(i).getTo().minus(widths.get(i).div(2)).minus(3*i).minus(7),40)
+                                pane.getChildren().add(r2)
+                            }catch (Exception e){
+                                r2.relocate(bounds.get(i).getTo().minus(3*i).minus(7),40)
+                                pane.getChildren().add(r2)
+                            }
+
+
+                        }
+
+                    }
                 }
             }
         })
@@ -1185,16 +1139,9 @@ public class Application extends javafx.application.Application {
         col9 = new VBox()
         searchAndAll = new VBox()
 
-        placeholder = new Rectangle(25,420)
         detailsContainer = new Rectangle()
 
         details = new VBox()
-        filtersCBs = new VBox()
-        columnsCBs = new VBox()
-        filtersCBBorder = Layout.createCBsBorder()
-        filtersEventBorder = Layout.createEventBorder()
-        columnCBBorder = Layout.createCBsBorder()
-        columnEventBorder = Layout.createEventBorder()
 
         treeCities = new TreeView();
         treeTypes = new TreeView();
@@ -1242,9 +1189,8 @@ public class Application extends javafx.application.Application {
 
     }
 
-    private void updateFacets(Pane pane, Integer newValue, Integer oldValue, TreeView tree) {
+    private void updateFacets(Pane pane, Integer newValue, Integer oldValue) {
 
-        tree.getSelectionModel().clearSelection()
         VBox paneContainer = pane.getParent()
 
         if (newValue > 0 && oldValue > 0){
@@ -1253,6 +1199,7 @@ public class Application extends javafx.application.Application {
             targetBox.getChildren().add(pane)
         }
         List values = new ArrayList()
+        List valuesList = new ArrayList()
         if(newValue==0){
             paneContainer.getChildren().remove(pane)
             pane.setPrefHeight(paneContainer.getHeight())
@@ -1260,46 +1207,38 @@ public class Application extends javafx.application.Application {
         }
 
         else if(oldValue==0) {
-            int i = 0
+            int c = 0
 
-            clientDolphin.findPresentationModelById(ORDER).getAttributes().each {
-                if(it.value > 0 && !values.contains(it.value)){
-                    values.add(it.value)
-                    i++
+            clientDolphin.findAllPresentationModelsByType(FACET).each {
+                def orderValue = it.findAttributeByPropertyName(ORDER).getValue()
+                if (orderValue > 0 && !valuesList.contains(orderValue)){
+                    valuesList.add(orderValue)
+                    c++
                 }
             }
+
             VBox targetBox = new VBox()
             try {
-                targetBox = facetBox.getChildren().get(i-1)
+                targetBox = facetBox.getChildren().get(c-1)
             }
             catch (Exception e){
                 VBox newVbox = new VBox()
-                facetBox.getChildren().add(i-1, newVbox)
+                facetBox.getChildren().add(c-1, newVbox)
             }
-            targetBox = facetBox.getChildren().get(i-1)
+            targetBox = facetBox.getChildren().get(c-1)
 
             targetBox.getChildren().add(pane)
         }
-//
-//        if (oldValue >= 1){
-//
-//            paneContainer.getChildren().each {
-//                int newHeight = (paneContainer.getHeight())/(paneContainer.getChildren().size())-10
-//                it.setPrefHeight(newHeight)
-//                it.getChildren().get(0).setPrefHeight(newHeight)
-//            }
-//            VBox originBox = facetBox.getChildren().get(oldValue-1)
-//            if(originBox.getChildren().size() == 0){
-//
-//                clientDolphin.findPresentationModelById(ORDER).getAttributes().each {
-//                    if(it.value >= oldValue){
-//                        it.setValue(it.value-1)
-//                    }
-//                }
-//                facetBox.getChildren().remove(originBox)
-//                facetBox.getChildren().add(new VBox())
-//            }
-//        }
+
+        if (oldValue >= 1){
+
+            paneContainer.getChildren().each {
+                int newHeight = (paneContainer.getHeight())/(paneContainer.getChildren().size())-10
+                it.setPrefHeight(newHeight)
+                it.getChildren().get(0).setPrefHeight(newHeight)
+            }
+
+        }
 //        if (clientDolphin[STATE][CHANGE_FROM].getValue()==-1)return;
 //        if(newValue == 1){
 //            clientDolphin[STATE][CHANGE_FROM].setValue(-1)
@@ -1348,7 +1287,6 @@ public class Application extends javafx.application.Application {
 //                        treeView.getSelectionModel().clearSelection()
 //                    }
 //                }
-//
 //
 //            }else{
 //                clientDolphin[STATE][CHANGE_FROM].setValue(oldValue-1)

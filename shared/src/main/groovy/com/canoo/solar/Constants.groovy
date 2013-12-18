@@ -17,6 +17,7 @@ public class Constants {
     public static final String IDS = "ids"
     public static final String POSITION = "position"
     public static final String CITY = "city"
+    public static final String FACET = "facet"
     public static final String ALL = "all"
     public static final String PLANT_TYPE = "plantType"
     public static final String ZIP = "zipCode"
@@ -26,10 +27,6 @@ public class Constants {
     public static final String GPS_LON = "longitude";
     public static final String NOMINAL_POWER = "nominalPower"
     public static final String FILTER = 'FILTER'
-//    public static final String FILTER_NOT = 'FILTER_NOT'
-//    public static final String TYPE_NOT = 'TYPE_NOT'
-//    public static final String CITY_NOT = 'CITY_NOT'
-//    public static final String ZIP_NOT = 'ZIP_NOT'
     public static final String CITY_AUTOFILL = "city_a"
     public static final String PLANT_TYPE_AUTOFILL = "plantType_a"
     public static final String ZIP_AUTOFILL = "zipCode_a"
@@ -37,16 +34,9 @@ public class Constants {
     public static final String SELECTED_POWERPLANT = 'SELECTED_POWERPLANT'
     public static final String POWERPLANT = 'POWERPLANT'
     public static final String ORDER = 'ORDER'
-    public static final String ORDER_COLUMN = 'ORDER_COLUMN'
-    public static final String ZIP_COLUMN = 'ZIP_COLUMN'
-    public static final String CITY_COLUMN = 'CITY_COLUMN'
-    public static final String POSITION_COLUMN = 'POSITION_COLUMN'
-    public static final String NOMINAL_COLUMN = 'NOMINAL_COLUMN'
-    public static final String TYPE_COLUMN = 'TYPE_COLUMN'
-    public static final String AVGKWH_COLUMN = 'AVGKWH_COLUMN'
-    public static final String LAT_COLUMN = 'LAT_COLUMN'
-    public static final String LON_COLUMN = 'LON_COLUMN'
     public static final String REVERSER_ORDER = 'REVERSE_ORDER'
+    public static final String SELECTED_ITEMS = 'SELECTED_ITEMS'
+    public static final String PANE = 'PANE'
     public static final String CHANGE_FROM = 'CHANGE_FROM'
     public static final String SORT = 'SORT'
     public static final String HOLD = 'HOLD'
