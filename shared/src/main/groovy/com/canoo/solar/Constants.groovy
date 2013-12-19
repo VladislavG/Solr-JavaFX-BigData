@@ -45,6 +45,11 @@ public class Constants {
     public static final String TRIGGER = 'TRIGGER'
     public static final String START_INDEX = 'START_INDEX'
     public static final String STATE = 'STATE'
+    public static final String ORDER_CHANGE = 'ORDER_CHANGE'
+    public static final String VALUE = 'VALUE'
+    public static final String SCENEX = 'SCENEX'
+    public static final String DRAGGEDPANE = 'DRAGGEDPANE'
+    public static final String SCENEY = 'SCENEY'
     public static final String IGNORE = 'IGNORE'
     public static final Integer BATCH_SIZE = 1
     public static final String NUM_COUNT = "numCount"

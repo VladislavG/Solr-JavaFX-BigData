@@ -253,7 +253,9 @@ public class Application extends javafx.application.Application {
         clientDolphin.presentationModel(FILTER, [ID, CITY, PLANT_TYPE, ZIP, NOMINAL_POWER, ALL]);
         clientDolphin.presentationModel(FILTER_AUTOFILL, [CITY_AUTOFILL, PLANT_TYPE_AUTOFILL, ZIP_AUTOFILL]);
         clientDolphin.presentationModel(SELECTED_POWERPLANT, [ID, CITY, PLANT_TYPE, ZIP, NOMINAL_POWER]);
+        clientDolphin.presentationModel(ORDER_CHANGE, [VALUE, SCENEX, SCENEY, DRAGGEDPANE]);
         clientDolphin.presentationModel(STATE, [TRIGGER, START_INDEX, SORT, REVERSER_ORDER, CHANGE_FROM, HOLD, TOTAL_NOMINAL])[TRIGGER].value=0
+
 
         Map<String, Object> attributeMap = [:]
         attributeMap.put(ORDER, 0)
@@ -279,6 +281,8 @@ public class Application extends javafx.application.Application {
     }
 
     private Pane setupStage() {
+
+        facetBox.getChildren().addAll(col5, col1, col2, col3, col4)
 
         facetBox.setSpacing(1)
         facetBox.setMinHeight(445)
@@ -382,7 +386,7 @@ public class Application extends javafx.application.Application {
 
         table.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         table.setMaxHeight(364)
-        table.setMinHeight(364)
+
         table.setMaxWidth(650)
         table.setItems(items)
         table.setPlaceholder(noData)
@@ -677,56 +681,255 @@ public class Application extends javafx.application.Application {
         })
 
         bindAttribute(clientDolphin[PLANT_TYPE][ORDER],{
-            plantTypes.setText("")
+//            plantTypes.setText("")
             updateFacets(typePane, it.newValue, it.oldValue)
+
         })
 
         bindAttribute(clientDolphin[CITY][ORDER],{
-            city.setText("")
+//            city.setText("")
             updateFacets(cityPane, it.newValue, it.oldValue)
+
         })
 
         bindAttribute(clientDolphin[ZIP][ORDER],{
-            zip.setText("")
+//            zip.setText("")
             updateFacets(zipPane, it.newValue, it.oldValue)
+
         })
 
         bindAttribute(clientDolphin[TABLE][ORDER],{
-            table.getSelectionModel().clearSelection()
+//            table.getSelectionModel().clearSelection()
             updateFacets(tablePane, it.newValue, it.oldValue)
+
         })
 
-//        bindAttribute(clientDolphin[ORDER][PLANT_TYPE],{
-//            plantTypes.setText("")
-//
-//            updateFacets(typePane, it.newValue, it.oldValue)
-//        })
-//
-//        bindAttribute(clientDolphin[ORDER][CITY],{
-//            city.setText("")
-//            updateFacets(cityPane, it.newValue, it.oldValue)
-//        })
-//
-//        bindAttribute(clientDolphin[ORDER][ZIP],{
-//            zip.setText("")
-//            updateFacets(zipPane, it.newValue, it.oldValue)
-//        })
-//
-//        bindAttribute(clientDolphin[ORDER][TABLE],{
-//            table.getSelectionModel().clearSelection()
-//            updateFacets(tablePane, it.newValue, it.oldValue)
-//        })
+        bindAttribute(clientDolphin[ORDER_CHANGE][VALUE], {
+            if (it.newValue.equals(IGNORE) || it.oldValue.equals(IGNORE))return;
+            int sceneX = clientDolphin[ORDER_CHANGE][SCENEX].getValue()
+            int sceneY = clientDolphin[ORDER_CHANGE][SCENEY].getValue()
+            String draggedPane = clientDolphin[ORDER_CHANGE][DRAGGEDPANE].getValue()
+            println "oldval = " + it.oldValue
+            println "newval = " + it.newValue
+            int value = 0
+            boolean firstMoveThenClear = true
+            int childSize = 0
+            int originSize = facetBox.getChildren().get(it.oldValue.minus(1)).getChildren().size()
+            if (it.oldValue > it.newValue){
+                value = it.oldValue
+                firstMoveThenClear = true
+                childSize = facetBox.getChildren().get(it.newValue.minus(1)).getChildren().size()
+            }else{
+                value = it.newValue
+                firstMoveThenClear = false
+                childSize = facetBox.getChildren().get(it.oldValue.minus(1)).getChildren().size()
+            }
+
+            if (childSize == 1){
+                if (firstMoveThenClear){
+                    facetBox.getChildren().each {VBox vbox ->
+                        if (vbox.getParent().findIndexOf {vbox} > value){
+                            vbox.getChildren().each{Pane pane ->
+                                pane.getChildren().get(0).getSelectionModel().clearSelection()
+                            }
+                        }
+                    }
+                    if (sceneY > 250 ) {
+                        for (int i = 0; i < realBounds.size(); i++){
+                            if (realBounds.get(i).containsWithinBounds(sceneX)){
+                                def oldOrder = 0
+                                clientDolphin.findAllPresentationModelsByType(FACET).each {
+                                    if (it[PANE].getValue().equals(draggedPane)){
+                                        oldOrder = it[ORDER].getValue()
+                                    }
+                                }
+                                def newOrder = i+1
+
+                                if (originSize > 1){
+                                    clientDolphin.findAllPresentationModelsByType(FACET).each {
+                                        if (it[PANE].getValue().equals(draggedPane)){
+                                            it[ORDER].setValue(newOrder)
+                                        }
+                                    }
+                                }else{
+                                    clientDolphin.findAllPresentationModelsByType(FACET).each {
+                                        if (it[PANE].getValue().equals(draggedPane)){
+                                            it[ORDER].setValue(newOrder)
+                                        }
+                                    }
+                                    clientDolphin.findAllPresentationModelsByType(FACET).each {
+                                        int paneOrder = it[ORDER].getValue()
+                                        if (paneOrder > oldOrder){
+                                            it[ORDER].setValue(it[ORDER].getValue()-1)
+                                        }
+                                    }
+                                }
+
+                            }
+                        }
+                    }
+                    else{
+                        for (int i = 0; i < bounds.size(); i++){
+                            if (bounds.get(i).containsWithinBounds(sceneX)){
+                                def oldOrder = 0
+                                clientDolphin.findAllPresentationModelsByType(FACET).each {
+                                    if (it[PANE].getValue().equals(draggedPane)){
+                                        oldOrder = it[ORDER].getValue()
+                                    }
+                                }
+                                def newOrder = i+1
+                                if (originSize > 1){
+                                    clientDolphin.findAllPresentationModelsByType(FACET).each {
+                                        int paneOrder = it[ORDER].getValue()
+                                        if (it[PANE].getValue().equals(draggedPane)){
+                                            it[ORDER].setValue(i+1)
+                                        }else{
+                                            if (paneOrder >= newOrder){
+                                                it[ORDER].setValue(paneOrder+1)
+                                            }
+                                        }
+                                    }
+
+                                } else{
+
+                                    clientDolphin.findAllPresentationModelsByType(FACET).each {
+                                        int paneOrder = it[ORDER].getValue()
+
+                                        if (paneOrder >= newOrder && paneOrder <= oldOrder){
+                                            if (it[PANE].getValue().equals(draggedPane)){
+                                                it[ORDER].setValue(i+1)
+                                            }else{
+                                                it[ORDER].setValue(paneOrder+1)
+                                            }
+                                        }
+                                        else if (paneOrder >= oldOrder && paneOrder < newOrder){
+                                            if (it[PANE].getValue().equals(draggedPane)){
+                                                it[ORDER].setValue(i)
+                                            }else{
+                                                it[ORDER].setValue(paneOrder-1)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                }
+                else{
+                    if (sceneY > 250 ) {
+                        for (int i = 0; i < realBounds.size(); i++){
+                            if (realBounds.get(i).containsWithinBounds(sceneX)){
+                                def oldOrder = 0
+                                clientDolphin.findAllPresentationModelsByType(FACET).each {
+                                    if (it[PANE].getValue().equals(draggedPane)){
+                                        oldOrder = it[ORDER].getValue()
+                                    }
+                                }
+                                def newOrder = i+1
+
+                                if (originSize > 1){
+                                    clientDolphin.findAllPresentationModelsByType(FACET).each {
+                                        if (it[PANE].getValue().equals(draggedPane)){
+                                            it[ORDER].setValue(newOrder)
+                                        }
+                                    }
+                                }else{
+                                    clientDolphin.findAllPresentationModelsByType(FACET).each {
+                                        if (it[PANE].getValue().equals(draggedPane)){
+                                            it[ORDER].setValue(newOrder)
+                                        }
+                                    }
+                                    clientDolphin.findAllPresentationModelsByType(FACET).each {
+                                        int paneOrder = it[ORDER].getValue()
+                                        if (paneOrder > oldOrder){
+                                            it[ORDER].setValue(it[ORDER].getValue()-1)
+                                        }
+                                    }
+                                }
+
+                            }
+                        }
+                    }
+                    else{
+                        for (int i = 0; i < bounds.size(); i++){
+                            if (bounds.get(i).containsWithinBounds(sceneX)){
+                                def oldOrder = 0
+                                clientDolphin.findAllPresentationModelsByType(FACET).each {
+                                    if (it[PANE].getValue().equals(draggedPane)){
+                                        oldOrder = it[ORDER].getValue()
+                                    }
+                                }
+                                def newOrder = i+1
+                                if (originSize > 1){
+                                    clientDolphin.findAllPresentationModelsByType(FACET).each {
+                                        int paneOrder = it[ORDER].getValue()
+                                        if (it[PANE].getValue().equals(draggedPane)){
+                                            it[ORDER].setValue(i+1)
+                                        }else{
+                                            if (paneOrder >= newOrder){
+                                                it[ORDER].setValue(paneOrder+1)
+                                            }
+                                        }
+                                    }
+
+                                } else{
+
+                                    clientDolphin.findAllPresentationModelsByType(FACET).each {
+                                        int paneOrder = it[ORDER].getValue()
+
+                                        if (paneOrder >= newOrder && paneOrder <= oldOrder){
+                                            if (it[PANE].getValue().equals(draggedPane)){
+                                                it[ORDER].setValue(i+1)
+                                            }else{
+                                                it[ORDER].setValue(paneOrder+1)
+                                            }
+                                        }
+                                        else if (paneOrder >= oldOrder && paneOrder < newOrder){
+                                            if (it[PANE].getValue().equals(draggedPane)){
+                                                it[ORDER].setValue(i)
+                                            }else{
+                                                it[ORDER].setValue(paneOrder-1)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    facetBox.getChildren().each {VBox vbox ->
+                        if (vbox.getParent().findIndexOf {vbox} > value){
+                            vbox.getChildren().each{Pane pane ->
+                                pane.getChildren().get(0).getSelectionModel().clearSelection()
+                            }
+                        }
+                    }
+                }
+                def model = facetBox.getChildren().get(value-1).getChildren().get(0).getSelectionModel()
+                def selectedItem = model.getSelectedItem()
+                model.clearSelection()
+                model.setSelected(selectedItem)
+            }
+        })
 
         bindAttribute(clientDolphin[STATE][TRIGGER], {
 
             disableControls.setValue(true)
             UpdateActions.clearPmsAndPowerPlants()
             UpdateActions.refreshTable()
+            facetBox.getChildren().each {VBox vBox ->
+                if (vBox.getChildren().size().equals(0))return;
+                int newHeight = 445.div(vBox.getChildren().size())-10
+
+                vBox.getChildren().each {
+                     it.setPrefHeight(newHeight)
+                     it.getChildren().get(0).setPrefHeight(newHeight)
+                }
+
+            }
         })
 
          bindAttribute(clientDolphin[STATE][TOTAL_NOMINAL], {
-              println it.oldValue
-              println it.newValue
          })
 
 
@@ -788,73 +991,121 @@ public class Application extends javafx.application.Application {
                 void handle(DragEvent dragEvent) {
                     Pane draggedElement = (Pane) dragEvent.getGestureSource()
                     VBox draggedBox = draggedElement.getParent()
-
+                    def newVal
+                    def oldVal
                     if (dragEvent.getSceneY().toInteger() > 250 ) {
                         for (int i = 0; i < realBounds.size(); i++){
                             if (realBounds.get(i).containsWithinBounds(dragEvent.getSceneX().toInteger())){
-                                def oldOrder = 0
+                                oldVal = 0
                                 clientDolphin.findAllPresentationModelsByType(FACET).each {
                                     if (it[PANE].getValue().equals(draggedElement.toString())){
-                                        oldOrder = it[ORDER].getValue()
+                                        oldVal = it[ORDER].getValue()
                                     }
                                 }
-                                def newOrder = i+1
-
-                                if (draggedElement.getParent().getChildren().size() > 1){
-                                    clientDolphin.findAllPresentationModelsByType(FACET).each {
-                                        if (it[PANE].getValue().equals(draggedElement.toString())){
-                                            it[ORDER].setValue(newOrder)
-                                        }
-                                    }
-                                }else{
-                                    clientDolphin.findAllPresentationModelsByType(FACET).each {
-                                        if (it[PANE].getValue().equals(draggedElement.toString())){
-                                            it[ORDER].setValue(newOrder)
-                                        }
-                                    }
-                                    clientDolphin.findAllPresentationModelsByType(FACET).each {
-                                        int paneOrder = it[ORDER].getValue()
-                                        if (paneOrder > oldOrder){
-                                            it[ORDER].setValue(it[ORDER].getValue()-1)
-                                        }
-                                    }
-                                }
-
+                                newVal = i+1
                             }
                         }
                     }
                     else{
                         for (int i = 0; i < bounds.size(); i++){
                             if (bounds.get(i).containsWithinBounds(dragEvent.getSceneX().toInteger())){
-                                def oldOrder = 0
+                                oldVal =0
                                 clientDolphin.findAllPresentationModelsByType(FACET).each {
                                     if (it[PANE].getValue().equals(draggedElement.toString())){
-                                        oldOrder = it[ORDER].getValue()
+                                        oldVal = it[ORDER].getValue()
                                     }
                                 }
-                                def newOrder = i+1
-
-                                clientDolphin.findAllPresentationModelsByType(FACET).each {
-                                    int paneOrder = it[ORDER].getValue()
-
-                                    if (paneOrder >= newOrder && paneOrder <= oldOrder){
-                                        if (it[PANE].getValue().equals(draggedElement.toString())){
-                                            it[ORDER].setValue(i+1)
-                                        }else{
-                                            it[ORDER].setValue(paneOrder+1)
-                                        }
-                                    }
-                                    else if (paneOrder >= oldOrder && paneOrder < newOrder){
-                                        if (it[PANE].getValue().equals(draggedElement.toString())){
-                                            it[ORDER].setValue(i)
-                                        }else{
-                                            it[ORDER].setValue(paneOrder-1)
-                                        }
-                                    }
-                                }
+                                newVal = i+1
                             }
                         }
                     }
+                    clientDolphin.findPresentationModelById(ORDER_CHANGE)[SCENEX].setValue(dragEvent.getSceneX().toInteger())
+                    clientDolphin.findPresentationModelById(ORDER_CHANGE)[SCENEY].setValue(dragEvent.getSceneY().toInteger())
+                    clientDolphin.findPresentationModelById(ORDER_CHANGE)[DRAGGEDPANE].setValue(draggedElement.toString())
+                    clientDolphin.findPresentationModelById(ORDER_CHANGE)[VALUE].setValue(IGNORE)
+                    clientDolphin.findPresentationModelById(ORDER_CHANGE)[VALUE].setValue(oldVal)
+                    clientDolphin.findPresentationModelById(ORDER_CHANGE)[VALUE].setValue(newVal)
+
+//                    if (dragEvent.getSceneY().toInteger() > 250 ) {
+//                        for (int i = 0; i < realBounds.size(); i++){
+//                            if (realBounds.get(i).containsWithinBounds(dragEvent.getSceneX().toInteger())){
+//                                def oldOrder = 0
+//                                clientDolphin.findAllPresentationModelsByType(FACET).each {
+//                                    if (it[PANE].getValue().equals(draggedElement.toString())){
+//                                        oldOrder = it[ORDER].getValue()
+//                                    }
+//                                }
+//                                def newOrder = i+1
+//
+//                                if (draggedElement.getParent().getChildren().size() > 1){
+//                                    clientDolphin.findAllPresentationModelsByType(FACET).each {
+//                                        if (it[PANE].getValue().equals(draggedElement.toString())){
+//                                            it[ORDER].setValue(newOrder)
+//                                        }
+//                                    }
+//                                }else{
+//                                    clientDolphin.findAllPresentationModelsByType(FACET).each {
+//                                        if (it[PANE].getValue().equals(draggedElement.toString())){
+//                                            it[ORDER].setValue(newOrder)
+//                                        }
+//                                    }
+//                                    clientDolphin.findAllPresentationModelsByType(FACET).each {
+//                                        int paneOrder = it[ORDER].getValue()
+//                                        if (paneOrder > oldOrder){
+//                                            it[ORDER].setValue(it[ORDER].getValue()-1)
+//                                        }
+//                                    }
+//                                }
+//
+//                            }
+//                        }
+//                    }
+//                    else{
+//                        for (int i = 0; i < bounds.size(); i++){
+//                            if (bounds.get(i).containsWithinBounds(dragEvent.getSceneX().toInteger())){
+//                                def oldOrder = 0
+//                                clientDolphin.findAllPresentationModelsByType(FACET).each {
+//                                    if (it[PANE].getValue().equals(draggedElement.toString())){
+//                                        oldOrder = it[ORDER].getValue()
+//                                    }
+//                                }
+//                                def newOrder = i+1
+//                                if (draggedElement.getParent().getChildren().size() > 1){
+//                                    clientDolphin.findAllPresentationModelsByType(FACET).each {
+//                                        int paneOrder = it[ORDER].getValue()
+//                                        if (it[PANE].getValue().equals(draggedElement.toString())){
+//                                            it[ORDER].setValue(i+1)
+//                                        }else{
+//                                            if (paneOrder >= newOrder){
+//                                                it[ORDER].setValue(paneOrder+1)
+//                                            }
+//                                        }
+//                                    }
+//
+//                                } else{
+//
+//                                    clientDolphin.findAllPresentationModelsByType(FACET).each {
+//                                        int paneOrder = it[ORDER].getValue()
+//
+//                                        if (paneOrder >= newOrder && paneOrder <= oldOrder){
+//                                            if (it[PANE].getValue().equals(draggedElement.toString())){
+//                                                it[ORDER].setValue(i+1)
+//                                            }else{
+//                                                it[ORDER].setValue(paneOrder+1)
+//                                            }
+//                                        }
+//                                        else if (paneOrder >= oldOrder && paneOrder < newOrder){
+//                                            if (it[PANE].getValue().equals(draggedElement.toString())){
+//                                                it[ORDER].setValue(i)
+//                                            }else{
+//                                                it[ORDER].setValue(paneOrder-1)
+//                                            }
+//                                        }
+//                                    }
+//                                }
+//                            }
+//                        }
+//                    }
                 }
             })
         }
@@ -1191,54 +1442,59 @@ public class Application extends javafx.application.Application {
 
     private void updateFacets(Pane pane, Integer newValue, Integer oldValue) {
 
-        VBox paneContainer = pane.getParent()
 
-        if (newValue > 0 && oldValue > 0){
-            paneContainer.getChildren().remove(pane)
-            VBox targetBox = facetBox.getChildren().get(newValue - 1)
-            targetBox.getChildren().add(pane)
+        if (newValue.equals(0)){
+            facetBox.getChildren().get(oldValue.minus(1)).getChildren().remove(pane)
+        } else if(oldValue.equals(0)){
+            facetBox.getChildren().get(newValue.minus(1)).getChildren().add(pane)
+        }else{
+            facetBox.getChildren().get(newValue.minus(1)).getChildren().add(pane)
+            facetBox.getChildren().get(oldValue.minus(1)).getChildren().remove(pane)
         }
-        List values = new ArrayList()
-        List valuesList = new ArrayList()
-        if(newValue==0){
-            paneContainer.getChildren().remove(pane)
-            pane.setPrefHeight(paneContainer.getHeight())
-            pane.getChildren().get(0).setPrefHeight(paneContainer.getHeight())
-        }
+//
+//        VBox paneContainer = pane.getParent()
+//        if (newValue > 0 && oldValue > 0){
+//
+//            paneContainer.getChildren().remove(pane)
+//
+//            VBox targetBox = facetBox.getChildren().get(newValue-1)
+//
+//            targetBox.getChildren().add(pane)
+//        }
+//        List values = new ArrayList()
+//        List valuesList = new ArrayList()
+//        if(newValue==0){
+//            paneContainer.getChildren().remove(pane)
+//            pane.setPrefHeight(paneContainer.getHeight())
+//            pane.getChildren().get(0).setPrefHeight(paneContainer.getHeight())
+//        }
+//
+//        else if(oldValue==0) {
+//            int c = 0
+//
+//            clientDolphin.findAllPresentationModelsByType(FACET).each {
+//                def orderValue = it.findAttributeByPropertyName(ORDER).getValue()
+//                if (orderValue > 0 && !valuesList.contains(orderValue)){
+//                    valuesList.add(orderValue)
+//                    c++
+//                }
+//            }
+//
+//            VBox targetBox = new VBox()
+//            try {
+//                targetBox = facetBox.getChildren().get(c-1)
+//            }
+//            catch (Exception e){
+//                VBox newVbox = new VBox()
+//                facetBox.getChildren().add(c-1, newVbox)
+//            }
+//            targetBox = facetBox.getChildren().get(c-1)
+//
+//            targetBox.getChildren().add(pane)
+//        }
 
-        else if(oldValue==0) {
-            int c = 0
 
-            clientDolphin.findAllPresentationModelsByType(FACET).each {
-                def orderValue = it.findAttributeByPropertyName(ORDER).getValue()
-                if (orderValue > 0 && !valuesList.contains(orderValue)){
-                    valuesList.add(orderValue)
-                    c++
-                }
-            }
 
-            VBox targetBox = new VBox()
-            try {
-                targetBox = facetBox.getChildren().get(c-1)
-            }
-            catch (Exception e){
-                VBox newVbox = new VBox()
-                facetBox.getChildren().add(c-1, newVbox)
-            }
-            targetBox = facetBox.getChildren().get(c-1)
-
-            targetBox.getChildren().add(pane)
-        }
-
-        if (oldValue >= 1){
-
-            paneContainer.getChildren().each {
-                int newHeight = (paneContainer.getHeight())/(paneContainer.getChildren().size())-10
-                it.setPrefHeight(newHeight)
-                it.getChildren().get(0).setPrefHeight(newHeight)
-            }
-
-        }
 //        if (clientDolphin[STATE][CHANGE_FROM].getValue()==-1)return;
 //        if(newValue == 1){
 //            clientDolphin[STATE][CHANGE_FROM].setValue(-1)

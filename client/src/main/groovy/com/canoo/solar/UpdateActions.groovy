@@ -139,12 +139,20 @@ class UpdateActions {
                 }
 
                 else {
+                    boolean emptyVbox = true
                     def orderValue = Application.clientDolphin.findPresentationModelById(propertyName)[ORDER].getValue()
-
+                    Application.clientDolphin.findAllPresentationModelsByType(FACET).each {
+                        if (it.getId().equals(propertyName))return;
+                        if (it[ORDER].getValue().equals(orderValue)){
+                            emptyVbox = false
+                        }
+                    }
                     Application.clientDolphin.findAllPresentationModelsByType(FACET).each {
                         def facetOrder = it.findAttributeByPropertyName(ORDER)
-                        if (facetOrder.getValue() > orderValue){
-                            facetOrder.setValue(facetOrder.getValue() - 1)
+                        if (emptyVbox){
+                            if (facetOrder.getValue() > orderValue){
+                                facetOrder.setValue(facetOrder.getValue() - 1)
+                            }
                         }
                     }
 
