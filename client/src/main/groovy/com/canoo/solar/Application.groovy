@@ -397,6 +397,7 @@ public class Application extends javafx.application.Application {
             clientDolphin.apply clientDolphin.findPresentationModelById(id) to clientDolphin[SELECTED_POWERPLANT]
         } as ChangeListener )
 
+
         TableColumn<PowerPlant, String> positionColumn = TableFactory.firstColumn()
         TableColumn<PowerPlant, String> zipColumn = TableFactory.secondColumn()
         TableColumn<PowerPlant, String> cityColumn = TableFactory.thirdColumn()
@@ -703,7 +704,6 @@ public class Application extends javafx.application.Application {
             updateFacets(tablePane, it.newValue, it.oldValue)
 
         })
-
         bindAttribute(clientDolphin[ORDER_CHANGE][VALUE], {
             if (it.newValue.equals(IGNORE) || it.oldValue.equals(IGNORE))return;
             int sceneX = clientDolphin[ORDER_CHANGE][SCENEX].getValue()
@@ -716,201 +716,52 @@ public class Application extends javafx.application.Application {
             int childSize = 0
             int originSize = facetBox.getChildren().get(it.oldValue.minus(1)).getChildren().size()
             if (it.oldValue > it.newValue){
-                value = it.oldValue
+                value = it.newValue
                 firstMoveThenClear = true
                 childSize = facetBox.getChildren().get(it.newValue.minus(1)).getChildren().size()
             }else{
-                value = it.newValue
+                value = it.oldValue
                 firstMoveThenClear = false
                 childSize = facetBox.getChildren().get(it.oldValue.minus(1)).getChildren().size()
             }
 
-            if (childSize == 1){
-                if (firstMoveThenClear){
-                    facetBox.getChildren().each {VBox vbox ->
-                        if (vbox.getParent().findIndexOf {vbox} > value){
-                            vbox.getChildren().each{Pane pane ->
-                                pane.getChildren().get(0).getSelectionModel().clearSelection()
-                            }
-                        }
-                    }
-                    if (sceneY > 250 ) {
-                        for (int i = 0; i < realBounds.size(); i++){
-                            if (realBounds.get(i).containsWithinBounds(sceneX)){
-                                def oldOrder = 0
-                                clientDolphin.findAllPresentationModelsByType(FACET).each {
-                                    if (it[PANE].getValue().equals(draggedPane)){
-                                        oldOrder = it[ORDER].getValue()
-                                    }
-                                }
-                                def newOrder = i+1
 
-                                if (originSize > 1){
-                                    clientDolphin.findAllPresentationModelsByType(FACET).each {
-                                        if (it[PANE].getValue().equals(draggedPane)){
-                                            it[ORDER].setValue(newOrder)
-                                        }
-                                    }
-                                }else{
-                                    clientDolphin.findAllPresentationModelsByType(FACET).each {
-                                        if (it[PANE].getValue().equals(draggedPane)){
-                                            it[ORDER].setValue(newOrder)
-                                        }
-                                    }
-                                    clientDolphin.findAllPresentationModelsByType(FACET).each {
-                                        int paneOrder = it[ORDER].getValue()
-                                        if (paneOrder > oldOrder){
-                                            it[ORDER].setValue(it[ORDER].getValue()-1)
-                                        }
-                                    }
-                                }
-
-                            }
-                        }
-                    }
-                    else{
-                        for (int i = 0; i < bounds.size(); i++){
-                            if (bounds.get(i).containsWithinBounds(sceneX)){
-                                def oldOrder = 0
-                                clientDolphin.findAllPresentationModelsByType(FACET).each {
-                                    if (it[PANE].getValue().equals(draggedPane)){
-                                        oldOrder = it[ORDER].getValue()
-                                    }
-                                }
-                                def newOrder = i+1
-                                if (originSize > 1){
-                                    clientDolphin.findAllPresentationModelsByType(FACET).each {
-                                        int paneOrder = it[ORDER].getValue()
-                                        if (it[PANE].getValue().equals(draggedPane)){
-                                            it[ORDER].setValue(i+1)
-                                        }else{
-                                            if (paneOrder >= newOrder){
-                                                it[ORDER].setValue(paneOrder+1)
-                                            }
-                                        }
-                                    }
-
-                                } else{
-
-                                    clientDolphin.findAllPresentationModelsByType(FACET).each {
-                                        int paneOrder = it[ORDER].getValue()
-
-                                        if (paneOrder >= newOrder && paneOrder <= oldOrder){
-                                            if (it[PANE].getValue().equals(draggedPane)){
-                                                it[ORDER].setValue(i+1)
-                                            }else{
-                                                it[ORDER].setValue(paneOrder+1)
-                                            }
-                                        }
-                                        else if (paneOrder >= oldOrder && paneOrder < newOrder){
-                                            if (it[PANE].getValue().equals(draggedPane)){
-                                                it[ORDER].setValue(i)
-                                            }else{
-                                                it[ORDER].setValue(paneOrder-1)
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                }
-                else{
-                    if (sceneY > 250 ) {
-                        for (int i = 0; i < realBounds.size(); i++){
-                            if (realBounds.get(i).containsWithinBounds(sceneX)){
-                                def oldOrder = 0
-                                clientDolphin.findAllPresentationModelsByType(FACET).each {
-                                    if (it[PANE].getValue().equals(draggedPane)){
-                                        oldOrder = it[ORDER].getValue()
-                                    }
-                                }
-                                def newOrder = i+1
-
-                                if (originSize > 1){
-                                    clientDolphin.findAllPresentationModelsByType(FACET).each {
-                                        if (it[PANE].getValue().equals(draggedPane)){
-                                            it[ORDER].setValue(newOrder)
-                                        }
-                                    }
-                                }else{
-                                    clientDolphin.findAllPresentationModelsByType(FACET).each {
-                                        if (it[PANE].getValue().equals(draggedPane)){
-                                            it[ORDER].setValue(newOrder)
-                                        }
-                                    }
-                                    clientDolphin.findAllPresentationModelsByType(FACET).each {
-                                        int paneOrder = it[ORDER].getValue()
-                                        if (paneOrder > oldOrder){
-                                            it[ORDER].setValue(it[ORDER].getValue()-1)
-                                        }
-                                    }
-                                }
-
-                            }
-                        }
-                    }
-                    else{
-                        for (int i = 0; i < bounds.size(); i++){
-                            if (bounds.get(i).containsWithinBounds(sceneX)){
-                                def oldOrder = 0
-                                clientDolphin.findAllPresentationModelsByType(FACET).each {
-                                    if (it[PANE].getValue().equals(draggedPane)){
-                                        oldOrder = it[ORDER].getValue()
-                                    }
-                                }
-                                def newOrder = i+1
-                                if (originSize > 1){
-                                    clientDolphin.findAllPresentationModelsByType(FACET).each {
-                                        int paneOrder = it[ORDER].getValue()
-                                        if (it[PANE].getValue().equals(draggedPane)){
-                                            it[ORDER].setValue(i+1)
-                                        }else{
-                                            if (paneOrder >= newOrder){
-                                                it[ORDER].setValue(paneOrder+1)
-                                            }
-                                        }
-                                    }
-
-                                } else{
-
-                                    clientDolphin.findAllPresentationModelsByType(FACET).each {
-                                        int paneOrder = it[ORDER].getValue()
-
-                                        if (paneOrder >= newOrder && paneOrder <= oldOrder){
-                                            if (it[PANE].getValue().equals(draggedPane)){
-                                                it[ORDER].setValue(i+1)
-                                            }else{
-                                                it[ORDER].setValue(paneOrder+1)
-                                            }
-                                        }
-                                        else if (paneOrder >= oldOrder && paneOrder < newOrder){
-                                            if (it[PANE].getValue().equals(draggedPane)){
-                                                it[ORDER].setValue(i)
-                                            }else{
-                                                it[ORDER].setValue(paneOrder-1)
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    facetBox.getChildren().each {VBox vbox ->
-                        if (vbox.getParent().findIndexOf {vbox} > value){
-                            vbox.getChildren().each{Pane pane ->
-                                pane.getChildren().get(0).getSelectionModel().clearSelection()
-                            }
-                        }
+            for (int i = 0; i < facetBox.getChildren().size(); i++){
+                if (i+1 >= value){
+                    facetBox.getChildren().get(i).getChildren().each{Pane pane ->
+                        pane.getChildren().get(0).getChildren().get(1).getSelectionModel().clearSelection()
                     }
                 }
-                def model = facetBox.getChildren().get(value-1).getChildren().get(0).getSelectionModel()
-                def selectedItem = model.getSelectedItem()
-                model.clearSelection()
-                model.setSelected(selectedItem)
             }
+
+            if (childSize == 1){
+
+                VBox reselectBox = facetBox.getChildren().get(value - 2)
+                Pane reselectPane = reselectBox.getChildren().get(0)
+                def model = reselectPane.getChildren().get(0).getChildren().get(1)
+
+                def item = model.getSelectionModel().getSelectedItem()
+
+                if(item.equals(null))item = model.getRoot()
+                model.getSelectionModel().clearSelection()
+                model.getSelectionModel().select(item)
+            }
+
+            else{
+
+                VBox reselectBox = facetBox.getChildren().get(value - 1)
+                Pane reselectPane = reselectBox.getChildren().get(0)
+                def model = reselectPane.getChildren().get(0).getChildren().get(1)
+                def item = model.getSelectionModel().getSelectedItem()
+                if(item.equals(null))item = model.getRoot()
+                model.getSelectionModel().clearSelection()
+                model.getSelectionModel().select(item)
+            }
+
+
         })
+
+
 
         bindAttribute(clientDolphin[STATE][TRIGGER], {
 
@@ -1026,86 +877,86 @@ public class Application extends javafx.application.Application {
                     clientDolphin.findPresentationModelById(ORDER_CHANGE)[VALUE].setValue(oldVal)
                     clientDolphin.findPresentationModelById(ORDER_CHANGE)[VALUE].setValue(newVal)
 
-//                    if (dragEvent.getSceneY().toInteger() > 250 ) {
-//                        for (int i = 0; i < realBounds.size(); i++){
-//                            if (realBounds.get(i).containsWithinBounds(dragEvent.getSceneX().toInteger())){
-//                                def oldOrder = 0
-//                                clientDolphin.findAllPresentationModelsByType(FACET).each {
-//                                    if (it[PANE].getValue().equals(draggedElement.toString())){
-//                                        oldOrder = it[ORDER].getValue()
-//                                    }
-//                                }
-//                                def newOrder = i+1
-//
-//                                if (draggedElement.getParent().getChildren().size() > 1){
-//                                    clientDolphin.findAllPresentationModelsByType(FACET).each {
-//                                        if (it[PANE].getValue().equals(draggedElement.toString())){
-//                                            it[ORDER].setValue(newOrder)
-//                                        }
-//                                    }
-//                                }else{
-//                                    clientDolphin.findAllPresentationModelsByType(FACET).each {
-//                                        if (it[PANE].getValue().equals(draggedElement.toString())){
-//                                            it[ORDER].setValue(newOrder)
-//                                        }
-//                                    }
-//                                    clientDolphin.findAllPresentationModelsByType(FACET).each {
-//                                        int paneOrder = it[ORDER].getValue()
-//                                        if (paneOrder > oldOrder){
-//                                            it[ORDER].setValue(it[ORDER].getValue()-1)
-//                                        }
-//                                    }
-//                                }
-//
-//                            }
-//                        }
-//                    }
-//                    else{
-//                        for (int i = 0; i < bounds.size(); i++){
-//                            if (bounds.get(i).containsWithinBounds(dragEvent.getSceneX().toInteger())){
-//                                def oldOrder = 0
-//                                clientDolphin.findAllPresentationModelsByType(FACET).each {
-//                                    if (it[PANE].getValue().equals(draggedElement.toString())){
-//                                        oldOrder = it[ORDER].getValue()
-//                                    }
-//                                }
-//                                def newOrder = i+1
-//                                if (draggedElement.getParent().getChildren().size() > 1){
-//                                    clientDolphin.findAllPresentationModelsByType(FACET).each {
-//                                        int paneOrder = it[ORDER].getValue()
-//                                        if (it[PANE].getValue().equals(draggedElement.toString())){
-//                                            it[ORDER].setValue(i+1)
-//                                        }else{
-//                                            if (paneOrder >= newOrder){
-//                                                it[ORDER].setValue(paneOrder+1)
-//                                            }
-//                                        }
-//                                    }
-//
-//                                } else{
-//
-//                                    clientDolphin.findAllPresentationModelsByType(FACET).each {
-//                                        int paneOrder = it[ORDER].getValue()
-//
-//                                        if (paneOrder >= newOrder && paneOrder <= oldOrder){
-//                                            if (it[PANE].getValue().equals(draggedElement.toString())){
-//                                                it[ORDER].setValue(i+1)
-//                                            }else{
-//                                                it[ORDER].setValue(paneOrder+1)
-//                                            }
-//                                        }
-//                                        else if (paneOrder >= oldOrder && paneOrder < newOrder){
-//                                            if (it[PANE].getValue().equals(draggedElement.toString())){
-//                                                it[ORDER].setValue(i)
-//                                            }else{
-//                                                it[ORDER].setValue(paneOrder-1)
-//                                            }
-//                                        }
-//                                    }
-//                                }
-//                            }
-//                        }
-//                    }
+                    if (dragEvent.getSceneY().toInteger() > 250 ) {
+                        for (int i = 0; i < realBounds.size(); i++){
+                            if (realBounds.get(i).containsWithinBounds(dragEvent.getSceneX().toInteger())){
+                                def oldOrder = 0
+                                clientDolphin.findAllPresentationModelsByType(FACET).each {
+                                    if (it[PANE].getValue().equals(draggedElement.toString())){
+                                        oldOrder = it[ORDER].getValue()
+                                    }
+                                }
+                                def newOrder = i+1
+
+                                if (draggedElement.getParent().getChildren().size() > 1){
+                                    clientDolphin.findAllPresentationModelsByType(FACET).each {
+                                        if (it[PANE].getValue().equals(draggedElement.toString())){
+                                            it[ORDER].setValue(newOrder)
+                                        }
+                                    }
+                                }else{
+                                    clientDolphin.findAllPresentationModelsByType(FACET).each {
+                                        if (it[PANE].getValue().equals(draggedElement.toString())){
+                                            it[ORDER].setValue(newOrder)
+                                        }
+                                    }
+                                    clientDolphin.findAllPresentationModelsByType(FACET).each {
+                                        int paneOrder = it[ORDER].getValue()
+                                        if (paneOrder > oldOrder){
+                                            it[ORDER].setValue(it[ORDER].getValue()-1)
+                                        }
+                                    }
+                                }
+
+                            }
+                        }
+                    }
+                    else{
+                        for (int i = 0; i < bounds.size(); i++){
+                            if (bounds.get(i).containsWithinBounds(dragEvent.getSceneX().toInteger())){
+                                def oldOrder = 0
+                                clientDolphin.findAllPresentationModelsByType(FACET).each {
+                                    if (it[PANE].getValue().equals(draggedElement.toString())){
+                                        oldOrder = it[ORDER].getValue()
+                                    }
+                                }
+                                def newOrder = i+1
+                                if (draggedElement.getParent().getChildren().size() > 1){
+                                    clientDolphin.findAllPresentationModelsByType(FACET).each {
+                                        int paneOrder = it[ORDER].getValue()
+                                        if (it[PANE].getValue().equals(draggedElement.toString())){
+                                            it[ORDER].setValue(i+1)
+                                        }else{
+                                            if (paneOrder >= newOrder){
+                                                it[ORDER].setValue(paneOrder+1)
+                                            }
+                                        }
+                                    }
+
+                                } else{
+
+                                    clientDolphin.findAllPresentationModelsByType(FACET).each {
+                                        int paneOrder = it[ORDER].getValue()
+
+                                        if (paneOrder >= newOrder && paneOrder <= oldOrder){
+                                            if (it[PANE].getValue().equals(draggedElement.toString())){
+                                                it[ORDER].setValue(i+1)
+                                            }else{
+                                                it[ORDER].setValue(paneOrder+1)
+                                            }
+                                        }
+                                        else if (paneOrder >= oldOrder && paneOrder < newOrder){
+                                            if (it[PANE].getValue().equals(draggedElement.toString())){
+                                                it[ORDER].setValue(i)
+                                            }else{
+                                                it[ORDER].setValue(paneOrder-1)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             })
         }
