@@ -131,6 +131,7 @@ public class ApplicationAction extends DolphinServerAction{
             solrQuery.addFacetField(PLANT_TYPE);
             solrQuery.addFacetField(ZIP)
             solrQuery.addFacetField(NOMINAL_POWER)
+            solrQuery.addFacetField(AVGKWH)
             solrQuery.setRows(10000)
             solrQuery.setFacetLimit(Integer.MAX_VALUE)
             def start = System.currentTimeMillis()
@@ -141,6 +142,7 @@ public class ApplicationAction extends DolphinServerAction{
             FacetField fieldtypes = queryResponse.getFacetField(PLANT_TYPE);
             FacetField fieldzip = queryResponse.getFacetField(ZIP);
             FacetField fieldNominal = queryResponse.getFacetField(NOMINAL_POWER);
+            FacetField fieldKWH = queryResponse.getFacetField(AVGKWH);
 
             response.add(new DataCommand(new HashMap(size: result.getNumFound() )))
             List<String> allCities = new ArrayList<>()
@@ -154,6 +156,7 @@ public class ApplicationAction extends DolphinServerAction{
             List<FacetField.Count> valuestype = fieldtypes.getValues();
             List<FacetField.Count> valueszip = fieldzip.getValues();
             List<FacetField.Count> valuesnominal = fieldNominal.getValues();
+            List<FacetField.Count> valuesKWH = fieldKWH.getValues();
 
             for(FacetField.Count count : values){
                 allCities << count.getName()
@@ -168,11 +171,19 @@ public class ApplicationAction extends DolphinServerAction{
                 allZipsCount << count.getCount()
             }
             Double totalNominal = new Double(0.0)
+            Double totalKWH = new Double(0.0)
+            int c = 0
             for(FacetField.Count count : valuesnominal){
                  totalNominal = totalNominal + (count.getName().toDouble() * count.getCount().toInteger())
             }
 
+            for(FacetField.Count count : valuesKWH){
+                totalKWH = totalKWH + (count.getName().toDouble() * count.getCount().toInteger())
+                c++
+            }
+            Double averageKWH = totalKWH.div(c)
             changeValue statePM[TOTAL_NOMINAL], totalNominal
+            changeValue statePM[AVERAGE_KWH], averageKWH
 
             response.add(new DataCommand(new HashMap(ids: allTypes, numCount: allTypesCount )))
             response.add(new DataCommand(new HashMap(ids: allCities, numCount: allCitiesCount )))

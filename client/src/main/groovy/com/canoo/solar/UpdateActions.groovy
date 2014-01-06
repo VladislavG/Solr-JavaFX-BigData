@@ -70,49 +70,6 @@ class UpdateActions {
             Application.table.setItems(newItems)
             Application.totalCount.setText(newItems.size() + "/1377475")
             Application.table.getSelectionModel().clearSelection()
-//            if (Application.clientDolphin[Constants.FilterConstants.STATE][Constants.FilterConstants.HOLD].getValue()==false){
-//
-//                def value = Application.clientDolphin[Constants.FilterConstants.STATE][Constants.FilterConstants.CHANGE_FROM].getValue()
-//                if (value==-1 || value==-2){
-//                    UpdateActions.updateTree(data,Application.treeTypes, Application.observableListTypes, Application.observableListTypesCount, 1, "Plant Types")
-//                    UpdateActions.updateTree(data, Application.treeZip, Application.observableListZips, Application.observableListZipsCount, 3, "Zip-Codes")
-//                    UpdateActions.updateTree(data,Application.treeCities,Application.observableListCities,Application.observableListCitiesCount,2,"Cities")
-//                }else if(value==0){
-//                    VBox originBox = Application.facetBox.getChildren().get(value)
-//                    originBox.getChildren().each {
-//
-//                        TreeView treeView = it.getChildren().get(0).getChildren().get(1)
-//                        Integer selectedIdx = treeView.getSelectionModel().getSelectedIndex()
-//                        if (selectedIdx == -1) {
-//                            treeView.getSelectionModel().select(treeView.getRoot());
-//                            treeView.getSelectionModel().clearSelection()
-//                        }else{
-//
-//                            treeView.getSelectionModel().clearSelection()
-//                            treeView.getSelectionModel().select(selectedIdx)
-//                        }
-//                    }
-//                }
-//                else {
-//
-//                    VBox originBox = Application.facetBox.getChildren().get(value-1)
-//                    originBox.getChildren().each {
-//
-//                        TreeView treeView = it.getChildren().get(0).getChildren().get(1)
-//                        Integer selectedIdx = treeView.getSelectionModel().getSelectedIndex()
-//                        if (selectedIdx == -1) {
-//                            treeView.getSelectionModel().select(treeView.getRoot());
-//                            treeView.getSelectionModel().clearSelection()
-//                        }else{
-//
-//                            treeView.getSelectionModel().clearSelection()
-//                            treeView.getSelectionModel().select(selectedIdx)
-//                        }
-//                    }
-//                }
-//                Application.clientDolphin[Constants.FilterConstants.STATE][Constants.FilterConstants.CHANGE_FROM].setValue(-2)
-//            }
-//            Application.clientDolphin[Constants.FilterConstants.STATE][Constants.FilterConstants.HOLD].setValue(false)
         }
 
 

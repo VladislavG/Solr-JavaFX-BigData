@@ -16,7 +16,7 @@ class TableFactory {
                 return param.getValue().avgkwhProperty();
             }
         });
-        result.setPrefWidth(120)
+        result.setPrefWidth(150)
         return result;
     }
 
@@ -64,7 +64,7 @@ class TableFactory {
                 return param.getValue().nominalProperty();
             }
         });
-        result.setPrefWidth(120)
+        result.setPrefWidth(150)
         return result;
     }
 
