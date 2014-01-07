@@ -157,15 +157,42 @@ public class ApplicationAction extends DolphinServerAction{
             List<FacetField.Count> valueszip = fieldzip.getValues();
             List<FacetField.Count> valuesnominal = fieldNominal.getValues();
             List<FacetField.Count> valuesKWH = fieldKWH.getValues();
+            int s = 0
+            String mostCity = ""
+            long mostCountCity = 0
 
             for(FacetField.Count count : values){
                 allCities << count.getName()
                 allCitiesCount << count.getCount()
+                if (count.getCount() > mostCountCity){
+                    mostCountCity = count.getCount()
+                    mostCity = count.getName()
+                }
+                if (count.getCount() > 0){
+                    s++
+                }
             }
+            changeValue statePM[CITY_DISTRIBUTION], s
+            changeValue statePM[CITY_MOST], mostCity
+
+            int t = 0
+            String mostType = ""
+            long mostCountType = 0
             for(FacetField.Count count : valuestype){
+
                 allTypes << count.getName()
                 allTypesCount << count.getCount()
+                if (count.getCount() > mostCountType){
+                    mostCountType = count.getCount()
+                    mostType = count.getName()
+                }
+                if (count.getCount() > 0){
+                    t++
+                }
             }
+            changeValue statePM[TYPE_DISTRIBUTION], t
+            changeValue statePM[TYPE_MOST], mostType
+
             for(FacetField.Count count : valueszip){
                 allZips << count.getName()
                 allZipsCount << count.getCount()
@@ -173,8 +200,11 @@ public class ApplicationAction extends DolphinServerAction{
             Double totalNominal = new Double(0.0)
             Double totalKWH = new Double(0.0)
             int c = 0
+            int c2 = 0
+
             for(FacetField.Count count : valuesnominal){
                  totalNominal = totalNominal + (count.getName().toDouble() * count.getCount().toInteger())
+                 c2++
             }
 
             for(FacetField.Count count : valuesKWH){
@@ -182,8 +212,11 @@ public class ApplicationAction extends DolphinServerAction{
                 c++
             }
             Double averageKWH = totalKWH.div(c)
+            Double averageNominal = totalNominal.div(c2)
             changeValue statePM[TOTAL_NOMINAL], totalNominal
             changeValue statePM[AVERAGE_KWH], averageKWH
+            changeValue statePM[AVERAGE_NOMINAL], averageNominal
+            changeValue statePM[TOTAL_KWH], totalKWH
 
             response.add(new DataCommand(new HashMap(ids: allTypes, numCount: allTypesCount )))
             response.add(new DataCommand(new HashMap(ids: allCities, numCount: allCitiesCount )))

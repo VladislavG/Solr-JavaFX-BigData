@@ -12,6 +12,7 @@ import javafx.event.ActionEvent
 import javafx.event.EventHandler
 import javafx.geometry.Insets
 import javafx.geometry.Orientation
+import javafx.geometry.Pos
 import javafx.geometry.VPos
 import javafx.scene.Group
 import javafx.scene.GroupBuilder
@@ -28,6 +29,7 @@ import javafx.scene.input.MouseEvent
 import javafx.scene.input.TransferMode
 import javafx.scene.layout.Border
 import javafx.scene.layout.GridPane
+import javafx.scene.layout.Priority
 import javafx.scene.layout.StackPane
 import javafx.scene.paint.CycleMethod
 import javafx.scene.paint.LinearGradient
@@ -40,6 +42,7 @@ import javafx.scene.paint.Color
 import javafx.scene.shape.RectangleBuilder
 import javafx.scene.text.Font
 import javafx.scene.text.Text
+import javafx.scene.text.TextAlignment
 import javafx.scene.text.TextBuilder
 import javafx.util.Duration
 
@@ -95,8 +98,10 @@ public class Application extends javafx.application.Application {
     TextField typeTextforSearch
     TextField cityTextforSearch
     TextField nominalTextforSearch
+    static TableColumn<PowerPlant, String> nominalColumn
 
     static Rectangle dragBorder
+    static Rectangle detailsBorder
 
     TreeItem<String> rootItemCities
     TreeItem<String> rootItemZip
@@ -142,6 +147,7 @@ public class Application extends javafx.application.Application {
     static VBox col9
     static VBox searchAndAll
     Group group
+    Group groupChoice
 
     public static Rectangle detailsContainer
 
@@ -152,6 +158,8 @@ public class Application extends javafx.application.Application {
     static TreeView treeCities
     static TreeView treeTypes
     static TreeView treeZip
+    static HBox detailsContainerHbox
+    static HBox choiceContainerHbox
 
     Label plantTypes
     Label city
@@ -161,6 +169,13 @@ public class Application extends javafx.application.Application {
     Label city_auto
     Label zip_auto
     String message
+    ChoiceBox nominalChoice
+    ChoiceBox averageChoice
+    ChoiceBox cityChoice
+    ChoiceBox typeChoice
+    ChoiceBox zipChoice
+    ChoiceBox latChoice
+    ChoiceBox lonChoice
 
     ProgressBar progressBar
     SimpleDoubleProperty progress
@@ -169,14 +184,22 @@ public class Application extends javafx.application.Application {
     public static Label totalCount
 
     Timeline progressLine
-    static Rectangle rectangleClip
+    static Rectangle rectangleClipBottom
+    static Rectangle rectangleClipTop
 
     static Separator separator
     static Separator facetTableSeparator
     TextField nominalText
     TextField searchField
     Label searchText
-    static Text tableDetails
+    static Text nominalTotalText
+    static Text nominalAverageText
+    static Text averageAVGKWH
+    static Text typeDistribution
+    static Text typeMost
+    static Text cityDistribution
+    static Text cityMost
+    static Text totalAVGKWH
 
     static Pane typePane
     static Button closeType
@@ -262,7 +285,7 @@ public class Application extends javafx.application.Application {
         clientDolphin.presentationModel(FILTER_AUTOFILL, [CITY_AUTOFILL, PLANT_TYPE_AUTOFILL, ZIP_AUTOFILL]);
         clientDolphin.presentationModel(SELECTED_POWERPLANT, [ID, CITY, PLANT_TYPE, ZIP, NOMINAL_POWER]);
         clientDolphin.presentationModel(ORDER_CHANGE, [VALUE, SCENEX, SCENEY, DRAGGEDPANE]);
-        clientDolphin.presentationModel(STATE, [TRIGGER, START_INDEX, SORT, REVERSER_ORDER, CHANGE_FROM, HOLD, TOTAL_NOMINAL, AVERAGE_KWH])[TRIGGER].value=0
+        clientDolphin.presentationModel(STATE, [TRIGGER, START_INDEX, SORT, REVERSER_ORDER, CHANGE_FROM, HOLD, TOTAL_NOMINAL, AVERAGE_KWH, AVERAGE_NOMINAL, TOTAL_KWH, TYPE_DISTRIBUTION, CITY_DISTRIBUTION, TYPE_MOST, CITY_MOST])[TRIGGER].value=0
 
 
         Map<String, Object> attributeMap = [:]
@@ -286,32 +309,199 @@ public class Application extends javafx.application.Application {
         clientDolphin.getClientModelStore().findPresentationModelById(STATE).findAttributeByPropertyName(HOLD).setValue(false)
         clientDolphin.getClientModelStore().findPresentationModelById(STATE).findAttributeByPropertyName(CHANGE_FROM).setValue(0)
         clientDolphin.getClientModelStore().findPresentationModelById(STATE).findAttributeByPropertyName(TOTAL_NOMINAL).setValue(0.0)
+        clientDolphin.getClientModelStore().findPresentationModelById(STATE).findAttributeByPropertyName(AVERAGE_NOMINAL).setValue(0.0)
         clientDolphin.getClientModelStore().findPresentationModelById(STATE).findAttributeByPropertyName(AVERAGE_KWH).setValue(0.0)
+        clientDolphin.getClientModelStore().findPresentationModelById(STATE).findAttributeByPropertyName(TOTAL_KWH).setValue(0.0)
+        clientDolphin.getClientModelStore().findPresentationModelById(STATE).findAttributeByPropertyName(TYPE_DISTRIBUTION).setValue(0)
+        clientDolphin.getClientModelStore().findPresentationModelById(STATE).findAttributeByPropertyName(CITY_DISTRIBUTION).setValue(0)
     }
 
     private Pane setupStage() {
 
         message = ""
 
-        tableDetails = TextBuilder.create()
+        nominalAverageText = TextBuilder.create()
                 .text(message)
-                .font(Font.font("SansSerif", 10))
+                .font(Font.font("SansSerif", 11))
                 .textOrigin(VPos.TOP)
                 .build();
 
-        rectangleClip = RectangleBuilder.create()
-                .width(510)
-                .layoutX(-40)
+        nominalTotalText = TextBuilder.create()
+                .text(message)
+                .font(Font.font("SansSerif", 11))
+                .textOrigin(VPos.TOP)
+                .build();
+
+        averageAVGKWH = TextBuilder.create()
+                .text(" ")
+                .font(Font.font("SansSerif", 11))
+                .textOrigin(VPos.TOP)
+                .build();
+
+        typeDistribution = TextBuilder.create()
+                .text(" ")
+                .font(Font.font("SansSerif", 11))
+                .textOrigin(VPos.TOP)
+                .build();
+
+        typeMost = TextBuilder.create()
+                .text(" ")
+                .font(Font.font("SansSerif", 11))
+                .textOrigin(VPos.TOP)
+                .build();
+
+        cityDistribution = TextBuilder.create()
+                .text(" ")
+                .font(Font.font("SansSerif", 11))
+                .textOrigin(VPos.TOP)
+                .build();
+
+        cityMost = TextBuilder.create()
+                .text(" ")
+                .font(Font.font("SansSerif", 11))
+                .textOrigin(VPos.TOP)
+                .build();
+
+        totalAVGKWH = TextBuilder.create()
+                .text(" ")
+                .font(Font.font("SansSerif", 11))
+                .textOrigin(VPos.TOP)
+                .build();
+
+        rectangleClipBottom = RectangleBuilder.create()
+                .width(500)
                 .height(80)
                 .build()
 
+        rectangleClipTop = RectangleBuilder.create()
+                .width(550)
+                .height(25)
+                .build()
+
+        detailsContainerHbox = new HBox()
+        HBox positionBox = new HBox()
+        HBox zipBox = new HBox()
+        HBox cityBox = new HBox()
+        HBox typeBox = new HBox()
+        HBox nominalBox = new HBox()
+        HBox averageKWHBox = new HBox()
+        HBox latitudeBox = new HBox()
+        HBox longitudeBox = new HBox()
+
+        HBox choicepositionBox = new HBox()
+        HBox choicezipBox = new HBox()
+        HBox choicecityBox = new HBox()
+        HBox choicetypeBox = new HBox()
+        HBox choicenominalBox = new HBox()
+        HBox choiceaverageKWHBox = new HBox()
+        HBox choicelatitudeBox = new HBox()
+        HBox choicelongitudeBox = new HBox()
+
+        detailsContainerHbox.getChildren().addAll(positionBox, zipBox, cityBox, typeBox, nominalBox, averageKWHBox, latitudeBox, longitudeBox)
+        choiceContainerHbox.getChildren().addAll(choicezipBox, choicecityBox, choicetypeBox, choicenominalBox, choiceaverageKWHBox, choicelatitudeBox, choicelongitudeBox)
+        nominalBox.getChildren().add(nominalTotalText)
+        typeBox.getChildren().add(typeDistribution)
+        averageKWHBox.getChildren().add(totalAVGKWH)
+        cityBox.getChildren().add(cityDistribution)
+
+
+
+        nominalBox.setAlignment(Pos.BOTTOM_CENTER)
+        averageKWHBox.setAlignment(Pos.BOTTOM_CENTER)
+        typeBox.setAlignment(Pos.BOTTOM_CENTER)
+        cityBox.setAlignment(Pos.BOTTOM_CENTER)
+        zipBox.setAlignment(Pos.BOTTOM_CENTER)
+
+
         Group myGroup = GroupBuilder.create()
-                .children(tableDetails)
-                .clip(rectangleClip)
+                .children(detailsContainerHbox)
+                .clip(rectangleClipBottom)
+                .build();
+
+        Group myChoiceGroup = GroupBuilder.create()
+                .children(choiceContainerHbox)
+                .clip(rectangleClipTop)
                 .build();
 
         group.getChildren().add(myGroup)
         group.setTranslateX(-35)
+        groupChoice.getChildren().add(myChoiceGroup)
+        myChoiceGroup.maxHeight(25)
+        choiceContainerHbox.setMaxHeight(25)
+        detailsContainerHbox.getChildren().each {
+            it.setTranslateX(-30)
+        }
+        groupChoice.maxHeight(25)
+        nominalChoice.setItems(FXCollections.observableArrayList("Total", "Average"))
+        nominalChoice.getSelectionModel().selectFirst()
+        nominalChoice.getSelectionModel().selectedIndexProperty().addListener(new ChangeListener<Number>() {
+            @Override
+            void changed(ObservableValue<? extends Number> observableValue, Number number, Number number2) {
+                if (number < number2){
+                    nominalBox.getChildren().clear()
+                    nominalBox.getChildren().add(nominalAverageText)
+                }else{
+                    nominalBox.getChildren().clear()
+                    nominalBox.getChildren().add(nominalTotalText)
+                }
+            }
+        })
+
+        averageChoice.setItems(FXCollections.observableArrayList("Total", "Average"))
+        averageChoice.getSelectionModel().selectFirst()
+        averageChoice.getSelectionModel().selectedIndexProperty().addListener(new ChangeListener<Number>() {
+            @Override
+            void changed(ObservableValue<? extends Number> observableValue, Number number, Number number2) {
+                if (number < number2){
+                    averageKWHBox.getChildren().clear()
+                    averageKWHBox.getChildren().add(averageAVGKWH)
+                }else{
+                    averageKWHBox.getChildren().clear()
+                    averageKWHBox.getChildren().add(totalAVGKWH)
+                }
+            }
+        })
+
+        typeChoice.setItems(FXCollections.observableArrayList("Distibution", "Most Common"))
+        typeChoice.getSelectionModel().selectFirst()
+        typeChoice.getSelectionModel().selectedIndexProperty().addListener(new ChangeListener<Number>() {
+            @Override
+            void changed(ObservableValue<? extends Number> observableValue, Number number, Number number2) {
+                if (number < number2){
+                    typeBox.getChildren().clear()
+                    typeBox.getChildren().add(typeMost)
+                }else{
+                    typeBox.getChildren().clear()
+                    typeBox.getChildren().add(typeDistribution)
+
+                }
+            }
+        })
+
+        cityChoice.setItems(FXCollections.observableArrayList("Distibution", "Most Common"))
+        cityChoice.getSelectionModel().selectFirst()
+        cityChoice.getSelectionModel().selectedIndexProperty().addListener(new ChangeListener<Number>() {
+            @Override
+            void changed(ObservableValue<? extends Number> observableValue, Number number, Number number2) {
+                if (number < number2){
+                    cityBox.getChildren().clear()
+                    cityBox.getChildren().add(cityMost)
+
+                }else{
+                    cityBox.getChildren().clear()
+                    cityBox.getChildren().add(cityDistribution)
+
+                }
+            }
+        })
+
+        choicenominalBox.getChildren().add(nominalChoice)
+        choiceaverageKWHBox.getChildren().add(averageChoice)
+        choicecityBox.getChildren().add(cityChoice)
+        choicetypeBox.getChildren().add(typeChoice)
+        choicezipBox.getChildren().add(zipChoice)
+        choicelatitudeBox.getChildren().add(latChoice)
+        choicelongitudeBox.getChildren().add(lonChoice)
 
         facetBox.getChildren().addAll(col5, col1, col2, col3, col4)
         facetBox.getChildren().each {
@@ -386,6 +576,8 @@ public class Application extends javafx.application.Application {
                 new Stop(1.0f, Color.rgb(179, 179, 179, 1)))
                 .build();
 
+
+
         dragBorder.setHeight(22)
         dragBorder.widthProperty().bind(table.widthProperty())
         dragBorder.setFill(linearGradDark)
@@ -394,8 +586,9 @@ public class Application extends javafx.application.Application {
         dragBorder.setArcWidth(3)
         dragBorder.setArcHeight(3)
 
+
         detailsContainer.setFill(linearGrad)
-        detailsContainer.setHeight(36)
+        detailsContainer.setHeight(31)
         detailsContainer.setStrokeWidth(0.5)
         detailsContainer.setStroke(Color.BLACK)
         detailsContainer.setArcWidth(3)
@@ -419,8 +612,6 @@ public class Application extends javafx.application.Application {
         })
 
         table.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        table.setMaxHeight(364)
-
         table.setMaxWidth(650)
         table.setItems(items)
         table.setPlaceholder(noData)
@@ -433,14 +624,51 @@ public class Application extends javafx.application.Application {
 
 
         TableColumn<PowerPlant, String> positionColumn = TableFactory.firstColumn()
-        TableColumn<PowerPlant, String> zipColumn = TableFactory.secondColumn()
-        TableColumn<PowerPlant, String> cityColumn = TableFactory.thirdColumn()
-        TableColumn<PowerPlant, String> typeColumn = TableFactory.fourthColumn()
-        TableColumn<PowerPlant, String> nominalColumn = TableFactory.fithColumn()
-        TableColumn<PowerPlant, String> subtypeColumn = TableFactory.sixthColumn()
-        TableColumn<PowerPlant, String> latitudeColumn = TableFactory.seventhColumn()
-        TableColumn<PowerPlant, String> longitudeColumn = TableFactory.eighthColumn()
+        positionBox.prefWidthProperty().bind(positionColumn.widthProperty())
+        choicepositionBox.prefWidthProperty().bind(positionColumn.widthProperty())
 
+        TableColumn<PowerPlant, String> zipColumn = TableFactory.secondColumn()
+        zipBox.prefWidthProperty().bind(zipColumn.widthProperty())
+        choicezipBox.prefWidthProperty().bind(zipColumn.widthProperty())
+        zipChoice.prefWidthProperty().bind(zipColumn.widthProperty())
+
+        TableColumn<PowerPlant, String> cityColumn = TableFactory.thirdColumn()
+        cityBox.prefWidthProperty().bind(cityColumn.widthProperty())
+        choicecityBox.prefWidthProperty().bind(cityColumn.widthProperty())
+        cityChoice.prefWidthProperty().bind(cityColumn.widthProperty())
+
+        TableColumn<PowerPlant, String> typeColumn = TableFactory.fourthColumn()
+        typeBox.prefWidthProperty().bind(typeColumn.widthProperty())
+        choicetypeBox.prefWidthProperty().bind(typeColumn.widthProperty())
+        typeChoice.prefWidthProperty().bind(typeColumn.widthProperty())
+
+        nominalColumn = TableFactory.fithColumn()
+        nominalBox.prefWidthProperty().bind(nominalColumn.widthProperty())
+        choicenominalBox.prefWidthProperty().bind(nominalColumn.widthProperty())
+        nominalChoice.prefWidthProperty().bind(nominalColumn.widthProperty())
+
+        TableColumn<PowerPlant, String> subtypeColumn = TableFactory.sixthColumn()
+        averageKWHBox.prefWidthProperty().bind(subtypeColumn.widthProperty())
+        choiceaverageKWHBox.prefWidthProperty().bind(subtypeColumn.widthProperty())
+        averageChoice.prefWidthProperty().bind(subtypeColumn.widthProperty())
+
+        TableColumn<PowerPlant, String> latitudeColumn = TableFactory.seventhColumn()
+        latitudeBox.prefWidthProperty().bind(latitudeColumn.widthProperty())
+        choicelatitudeBox.prefWidthProperty().bind(latitudeColumn.widthProperty())
+        latChoice.prefWidthProperty().bind(latitudeColumn.widthProperty())
+
+        TableColumn<PowerPlant, String> longitudeColumn = TableFactory.eighthColumn()
+        longitudeBox.prefWidthProperty().bind(longitudeColumn.widthProperty())
+        choicelongitudeBox.prefWidthProperty().bind(longitudeColumn.widthProperty())
+        lonChoice.prefWidthProperty().bind(longitudeColumn.widthProperty())
+
+        detailsBorder.setHeight(25)
+        detailsBorder.widthProperty().bind(positionColumn.widthProperty())
+        detailsBorder.setFill(linearGrad)
+        detailsBorder.setStroke(Color.BLACK)
+        detailsBorder.setStrokeWidth(0.5)
+        detailsBorder.setArcWidth(3)
+        detailsBorder.setArcHeight(3)
 
         AutoFillTextField.makeAutofillTextField(this, zipTextAutoForSearch, observableListZips, zip_auto, treeZip, ZIP)
         AutoFillTextField.makeAutofillTextField(this, typeTextAutoForSearch, observableListTypes, plantTypes_auto, treeTypes, PLANT_TYPE)
@@ -647,7 +875,10 @@ public class Application extends javafx.application.Application {
         totalCount.translateXProperty().bind(table.widthProperty().divide(2).subtract(55))
         total.translateXProperty().bind(table.widthProperty().divide(2).subtract(20).multiply(-1))
         progressBar.translateYProperty().bind(pane.heightProperty().subtract(6))
-        tableBox.getChildren().addAll(dragBorder, table, tableStack)
+        StackPane detailsStack = new StackPane(detailsBorder, new Label("Aggregate Details:"))
+        detailsStack.prefWidthProperty().bind(positionColumn.widthProperty())
+        HBox choiceBoxAll = new HBox(detailsStack, groupChoice)
+        tableBox.getChildren().addAll(dragBorder, table, choiceBoxAll, tableStack)
         tablePane.getChildren().add(tableBox)
         tablePane.setPadding(new Insets(0, 0, 0, 6))
         searchBox.getChildren().addAll(iv1, searchField)
@@ -977,15 +1208,45 @@ public class Application extends javafx.application.Application {
 
          bindAttribute(clientDolphin[STATE][TOTAL_NOMINAL],{
              Integer value = it.newValue.round(0)
-             Double value2 = Double.parseDouble(clientDolphin[STATE][AVERAGE_KWH].getValue().toString()).round(0)
-             tableDetails.setText("                                                                                                                                                                             Total nominal: $value " + "          Overall Average KW/H: $value2" + "                                                                                                                                                                                                                          ")
+             nominalTotalText.setText("Total nominal: $value")
          })
 
         bindAttribute(clientDolphin[STATE][AVERAGE_KWH],{
              Integer value = it.newValue.round(0)
-             Double value2 = Double.parseDouble(clientDolphin[STATE][TOTAL_NOMINAL].getValue().toString()).round(0)
-             tableDetails.setText("                                                                                                                                                                             Total nominal: $value2 " + "         Overall Average KW/H: $value" + "                                                                                                                                                                                                                          ")
-         })
+            averageAVGKWH.setText("Average kW/h: $value")
+        })
+
+        bindAttribute(clientDolphin[STATE][AVERAGE_NOMINAL],{
+             Integer value = it.newValue.round(0)
+             nominalAverageText.setText("Average nominal: $value")
+        })
+
+        bindAttribute(clientDolphin[STATE][TOTAL_KWH],{
+             Integer value = it.newValue.round(0)
+             totalAVGKWH.setText("Total kW/h: $value")
+        })
+
+        bindAttribute(clientDolphin[STATE][TYPE_DISTRIBUTION],{
+             Integer value = it.newValue
+             typeDistribution.setText("Different Types: $value")
+        })
+
+        bindAttribute(clientDolphin[STATE][CITY_DISTRIBUTION],{
+             Integer value = it.newValue
+             cityDistribution.setText("Different Cities: $value")
+        })
+
+        bindAttribute(clientDolphin[STATE][CITY_MOST],{
+             String value = it.newValue
+             String output = Character.toUpperCase(value.charAt(0)).toString() + value.substring(1);
+             cityMost.setText("Most Common: $output")
+        })
+
+        bindAttribute(clientDolphin[STATE][TYPE_MOST],{
+             String value = it.newValue
+             String output = Character.toUpperCase(value.charAt(0)).toString() + value.substring(1);
+             typeMost.setText("Most Common: $output")
+        })
 
 
     }
@@ -1345,10 +1606,11 @@ public class Application extends javafx.application.Application {
         PowerPlant initialPlant = getTable().getItems().get(rowIdx)
         if (initialPlant.getLoadState() == LoadState.LOADING) return;
         initialPlant.setLoadState(LoadState.LOADING);
-//        tableDetails.layoutXProperty().unbind()
+//        nominalTotalText.layoutXProperty().unbind()
         for (ScrollBar n : table.lookupAll(".scroll-bar")){
             if (n.getOrientation().equals(Orientation.HORIZONTAL)){
-                tableDetails.translateXProperty().bind(n.valueProperty().multiply(-1.0))
+                detailsContainerHbox.translateXProperty().bind(n.valueProperty().multiply(-1.0))
+                choiceContainerHbox.translateXProperty().bind(n.valueProperty().multiply(-1.0))
             }
         }
 
@@ -1452,14 +1714,24 @@ public class Application extends javafx.application.Application {
         col9 = new VBox()
         searchAndAll = new VBox()
         group = new Group();
+        groupChoice = new Group();
+        choiceContainerHbox = new HBox()
 
         detailsContainer = new Rectangle()
+        detailsBorder = new Rectangle()
 
         details = new VBox()
 
         treeCities = new TreeView();
         treeTypes = new TreeView();
         treeZip = new TreeView();
+        nominalChoice = new ChoiceBox()
+        averageChoice = new ChoiceBox()
+        cityChoice = new ChoiceBox()
+        typeChoice = new ChoiceBox()
+        zipChoice = new ChoiceBox()
+        lonChoice = new ChoiceBox()
+        latChoice = new ChoiceBox()
 
         plantTypes_auto = new Label();
         city_auto = new Label();
