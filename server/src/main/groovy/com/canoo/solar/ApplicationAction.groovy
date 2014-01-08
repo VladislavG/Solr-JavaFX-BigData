@@ -101,7 +101,6 @@ public class ApplicationAction extends DolphinServerAction{
                 }
                 solrQuery.addFilterQuery(query)
             }
-
             filterAutoPM.attributes.each {
 
                 def value = it.value
@@ -118,7 +117,9 @@ public class ApplicationAction extends DolphinServerAction{
                 if (it.propertyName == ALL || it.propertyName == NOMINAL_POWER)return
                 Object value = filterPM.findAttributeByPropertyName(ALL).getValue()
                 if (value == null || value == "") value = "*"
-                String query  = it.propertyName + ":" + value.toString()
+                String query = ""
+                if (it.propertyName.equals("id")){query  = "position:" + value.toString()}
+                else{query  = it.propertyName + ":" + value.toString()}
                 if (i < filterPM.attributes.size()){
                     query = query + " OR "
                 }
@@ -204,12 +205,16 @@ public class ApplicationAction extends DolphinServerAction{
 
             for(FacetField.Count count : valuesnominal){
                  totalNominal = totalNominal + (count.getName().toDouble() * count.getCount().toInteger())
-                 c2++
+                 if (count.getCount() > 0){
+                     c2++
+                 }
             }
 
             for(FacetField.Count count : valuesKWH){
                 totalKWH = totalKWH + (count.getName().toDouble() * count.getCount().toInteger())
-                c++
+                if (count.getCount() > 0){
+                    c++
+                }
             }
             Double averageKWH = totalKWH.div(c)
             Double averageNominal = totalNominal.div(c2)
@@ -217,6 +222,7 @@ public class ApplicationAction extends DolphinServerAction{
             changeValue statePM[AVERAGE_KWH], averageKWH
             changeValue statePM[AVERAGE_NOMINAL], averageNominal
             changeValue statePM[TOTAL_KWH], totalKWH
+            changeValue statePM[DISABLECONTROLS], (statePM[DISABLECONTROLS].value)+1
 
             response.add(new DataCommand(new HashMap(ids: allTypes, numCount: allTypesCount )))
             response.add(new DataCommand(new HashMap(ids: allCities, numCount: allCitiesCount )))
@@ -314,7 +320,9 @@ public class ApplicationAction extends DolphinServerAction{
                     if (it.propertyName == ALL || it.propertyName == NOMINAL_POWER)return
                     Object value = filterPM.findAttributeByPropertyName(ALL).getValue()
                     if (value == null || value == "") value = "*"
-                    String query  = it.propertyName + ":" + value.toString()
+                    String query = ""
+                    if (it.propertyName.equals("id")){query  = "position:" + value.toString()}
+                    else{query  = it.propertyName + ":" + value.toString()}
                     if (i < filterPM.attributes.size()){
                         query = query + " OR "
                     }

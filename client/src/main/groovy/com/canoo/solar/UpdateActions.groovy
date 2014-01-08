@@ -6,8 +6,10 @@ import javafx.scene.control.TreeView
 import javafx.scene.layout.VBox
 import org.opendolphin.core.PresentationModel
 
+import static com.canoo.solar.Constants.FilterConstants.DISABLECONTROLS
 import static com.canoo.solar.Constants.FilterConstants.FACET
 import static com.canoo.solar.Constants.FilterConstants.ORDER
+import static com.canoo.solar.Constants.FilterConstants.STATE
 
 /**
  * Created by vladislav on 16.12.13.
@@ -58,6 +60,7 @@ class UpdateActions {
     }
 
     public static void refreshTable(){
+        Application.disableControls.setValue(true)
         Application.clientDolphin.data Constants.CMD.GET, { data ->
             def size = data.get(0).get(Constants.FilterConstants.SIZE)
             PowerPlantList newFakeList = new PowerPlantList((Integer)size, new OurConsumer<Integer>(){
@@ -70,6 +73,8 @@ class UpdateActions {
             Application.table.setItems(newItems)
             Application.totalCount.setText(newItems.size() + "/1377475")
             Application.table.getSelectionModel().clearSelection()
+            Application.updateDetails()
+
         }
 
 

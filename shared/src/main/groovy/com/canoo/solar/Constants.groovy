@@ -50,6 +50,7 @@ public class Constants {
     public static final String AVERAGE_NOMINAL = 'avgNominal'
     public static final String SIZE = 'size'
     public static final String TRIGGER = 'TRIGGER'
+    public static final String DISABLECONTROLS = 'DISABLECONTROLS'
     public static final String START_INDEX = 'START_INDEX'
     public static final String STATE = 'STATE'
     public static final String ORDER_CHANGE = 'ORDER_CHANGE'

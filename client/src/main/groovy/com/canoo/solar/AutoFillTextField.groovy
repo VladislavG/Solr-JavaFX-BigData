@@ -62,12 +62,11 @@ class AutoFillTextField {
                   if (s2.equals("")){
                       label.setText("")
                       treeView.getSelectionModel().clearSelection()
-                      application.disableControls.setValue(true)
+//                      application.disableControls.setValue(true)
                       UpdateActions.clearPmsAndPowerPlants()
                       application.clientDolphin[Constants.FilterConstants.STATE][Constants.FilterConstants.HOLD].setValue(true)
                       UpdateActions.refreshTable()
 
-                      application.disableControls.setValue(false)
                   }
             }
         })
@@ -78,11 +77,10 @@ class AutoFillTextField {
                 if (KeyCode.ENTER == event.getCode()) {
                     label.setText(textField.getText())
                     treeView.getSelectionModel().clearSelection()
-                    application.disableControls.setValue(true)
+//                    application.disableControls.setValue(true)
                     UpdateActions.clearPmsAndPowerPlants()
                     application.clientDolphin[Constants.FilterConstants.STATE][Constants.FilterConstants.HOLD].setValue(true)
                     UpdateActions.refreshTable()
-                    application.disableControls.setValue(false)
                 }
             }
         });
