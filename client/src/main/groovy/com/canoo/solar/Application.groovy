@@ -682,7 +682,10 @@ public class Application extends javafx.application.Application {
                 def typeValue = clientDolphin.findPresentationModelById(PLANT_TYPE).findAttributeByPropertyName(ORDER).getValue()
                 def zipValue = clientDolphin.findPresentationModelById(ZIP).findAttributeByPropertyName(ORDER).getValue()
                 def tableValue = clientDolphin.findPresentationModelById(TABLE).findAttributeByPropertyName(ORDER).getValue()
-                if (treeTypes.getSelectionModel().getSelectedItems().size().equals(0))return;
+                if (treeTypes.getSelectionModel().getSelectedItems().size().equals(0)){
+                    plantTypes.setText("")
+                    return
+                };
                 disableControls.setValue(true)
                 String fullString = "";
                 int i = 0
@@ -744,7 +747,10 @@ public class Application extends javafx.application.Application {
                         def typeValue = clientDolphin.findPresentationModelById(PLANT_TYPE).findAttributeByPropertyName(ORDER).getValue()
                         def zipValue = clientDolphin.findPresentationModelById(ZIP).findAttributeByPropertyName(ORDER).getValue()
                         def tableValue = clientDolphin.findPresentationModelById(TABLE).findAttributeByPropertyName(ORDER).getValue()
-                        if (treeCities.getSelectionModel().getSelectedItems().size().equals(0))return;
+                        if (treeCities.getSelectionModel().getSelectedItems().size().equals(0)){
+                            city.setText("")
+                            return
+                        };
                         disableControls.setValue(true)
                         String fullString = "";
                         int i = 0
@@ -805,7 +811,10 @@ public class Application extends javafx.application.Application {
                         def typeValue = clientDolphin.findPresentationModelById(PLANT_TYPE).findAttributeByPropertyName(ORDER).getValue()
                         def zipValue = clientDolphin.findPresentationModelById(ZIP).findAttributeByPropertyName(ORDER).getValue()
                         def tableValue = clientDolphin.findPresentationModelById(TABLE).findAttributeByPropertyName(ORDER).getValue()
-                        if (treeZip.getSelectionModel().getSelectedItems().size().equals(0)) return;
+                        if (treeZip.getSelectionModel().getSelectedItems().size().equals(0)) {
+                            zip.setText("")
+                            return
+                        };
                         disableControls.setValue(true)
                         String fullString = "";
                         int i = 0
@@ -980,7 +989,7 @@ public class Application extends javafx.application.Application {
                         model = reselectPane2.getChildren().get(0).getChildren().get(1)
                     }
                     javafx.collections.ObservableList<TreeItem<String>> items = model.getSelectionModel().getSelectedItems()
-                    if(items.equals(null))items << model.getRoot()
+                    if(items.size().equals(0))items << model.getRoot()
                     if (items.size().equals(1)){
                         def item = items.get(0)
                         model.getSelectionModel().clearSelection()
@@ -1003,7 +1012,19 @@ public class Application extends javafx.application.Application {
                         UpdateActions.updateTree(data, treeTypes, observableListTypes, observableListTypesCount, 1, "Plant Types")
                         UpdateActions.updateTree(data, treeZip, observableListZips, observableListZipsCount, 3, "Zip-Codes")
                         UpdateActions.updateTree(data, treeCities,observableListCities,observableListCitiesCount,2,"Cities")
-                         
+                        def size = data.get(0).get(SIZE)
+                        PowerPlantList newFakeList = new PowerPlantList((Integer)size, new OurConsumer<Integer>(){
+                            @Override
+                            void accept(Integer rowIndex) {
+                                loadPresentationModel(rowIndex)
+                            }
+                        });
+                        javafx.collections.ObservableList<PowerPlant> newItems = FakeCollections.newObservableList(newFakeList);
+                        table.setItems(newItems)
+                        totalCount.setText(newItems.size() + "/1377475")
+                        table.getSelectionModel().clearSelection()
+                        updateDetails()
+
                     }
                 }
             }
@@ -1031,7 +1052,7 @@ public class Application extends javafx.application.Application {
                     }
                     javafx.collections.ObservableList<TreeItem<String>> items = model.getSelectionModel().getSelectedItems()
 
-                    if(items.equals(null))items << model.getRoot()
+                    if(items.size().equals(0))items << model.getRoot()
                     if (items.size().equals(1)){
                         def item = items.get(0)
                         model.getSelectionModel().clearSelection()
@@ -1053,7 +1074,18 @@ public class Application extends javafx.application.Application {
                         UpdateActions.updateTree(data, treeTypes, observableListTypes, observableListTypesCount, 1, "Plant Types")
                         UpdateActions.updateTree(data, treeZip, observableListZips, observableListZipsCount, 3, "Zip-Codes")
                         UpdateActions.updateTree(data, treeCities,observableListCities,observableListCitiesCount,2,"Cities")
-                         
+                        def size = data.get(0).get(SIZE)
+                        PowerPlantList newFakeList = new PowerPlantList((Integer)size, new OurConsumer<Integer>(){
+                            @Override
+                            void accept(Integer rowIndex) {
+                                loadPresentationModel(rowIndex)
+                            }
+                        });
+                        javafx.collections.ObservableList<PowerPlant> newItems = FakeCollections.newObservableList(newFakeList);
+                        table.setItems(newItems)
+                        totalCount.setText(newItems.size() + "/1377475")
+                        table.getSelectionModel().clearSelection()
+                        updateDetails()
                     }
                 }
             }
@@ -1082,7 +1114,7 @@ public class Application extends javafx.application.Application {
                     }
                     javafx.collections.ObservableList<TreeItem<String>> items = model.getSelectionModel().getSelectedItems()
 
-                    if(items.equals(null))items << model.getRoot()
+                    if(items.size().equals(0))items << model.getRoot()
                     if (items.size().equals(1)){
                         def item = items.get(0)
                         model.getSelectionModel().clearSelection()
@@ -1104,7 +1136,18 @@ public class Application extends javafx.application.Application {
                         UpdateActions.updateTree(data, treeTypes, observableListTypes, observableListTypesCount, 1, "Plant Types")
                         UpdateActions.updateTree(data, treeZip, observableListZips, observableListZipsCount, 3, "Zip-Codes")
                         UpdateActions.updateTree(data, treeCities,observableListCities,observableListCitiesCount,2,"Cities")
-                         
+                        def size = data.get(0).get(SIZE)
+                        PowerPlantList newFakeList = new PowerPlantList((Integer)size, new OurConsumer<Integer>(){
+                            @Override
+                            void accept(Integer rowIndex) {
+                                loadPresentationModel(rowIndex)
+                            }
+                        });
+                        javafx.collections.ObservableList<PowerPlant> newItems = FakeCollections.newObservableList(newFakeList);
+                        table.setItems(newItems)
+                        totalCount.setText(newItems.size() + "/1377475")
+                        table.getSelectionModel().clearSelection()
+                        updateDetails()
                     }
                 }
             }
@@ -1160,7 +1203,18 @@ public class Application extends javafx.application.Application {
                     UpdateActions.updateTree(data, treeTypes, observableListTypes, observableListTypesCount, 1, "Plant Types")
                     UpdateActions.updateTree(data, treeZip, observableListZips, observableListZipsCount, 3, "Zip-Codes")
                     UpdateActions.updateTree(data, treeCities,observableListCities,observableListCitiesCount,2,"Cities")
-                     
+                    def size = data.get(0).get(SIZE)
+                    PowerPlantList newFakeList = new PowerPlantList((Integer)size, new OurConsumer<Integer>(){
+                        @Override
+                        void accept(Integer rowIndex) {
+                            loadPresentationModel(rowIndex)
+                        }
+                    });
+                    javafx.collections.ObservableList<PowerPlant> newItems = FakeCollections.newObservableList(newFakeList);
+                    table.setItems(newItems)
+                    totalCount.setText(newItems.size() + "/1377475")
+                    table.getSelectionModel().clearSelection()
+                    updateDetails()
                 }
             }
             else if (childSize == 1){
@@ -1175,12 +1229,13 @@ public class Application extends javafx.application.Application {
                     }
                     javafx.collections.ObservableList<TreeItem<String>> items = model.getSelectionModel().getSelectedItems()
 
-                    if(items.equals(null))items << model.getRoot()
+                    if(items.size().equals(0))items << model.getRoot()
                     if (items.size().equals(1)){
                         def item = items.get(0)
                         model.getSelectionModel().clearSelection()
                         model.getSelectionModel().select(item)
                     }else{
+
                         model.getSelectionModel().select(items.get(0))
                     }
                     if (model.getRoot().equals(model.getSelectionModel().getSelectedItem())) model.getSelectionModel().clearSelection();
@@ -1195,24 +1250,35 @@ public class Application extends javafx.application.Application {
                         UpdateActions.updateTree(data, treeTypes, observableListTypes, observableListTypesCount, 1, "Plant Types")
                         UpdateActions.updateTree(data, treeZip, observableListZips, observableListZipsCount, 3, "Zip-Codes")
                         UpdateActions.updateTree(data, treeCities,observableListCities,observableListCitiesCount,2,"Cities")
-                         
+                        def size = data.get(0).get(SIZE)
+                        PowerPlantList newFakeList = new PowerPlantList((Integer)size, new OurConsumer<Integer>(){
+                            @Override
+                            void accept(Integer rowIndex) {
+                                loadPresentationModel(rowIndex)
+                            }
+                        });
+                        javafx.collections.ObservableList<PowerPlant> newItems = FakeCollections.newObservableList(newFakeList);
+                        table.setItems(newItems)
+                        totalCount.setText(newItems.size() + "/1377475")
+                        table.getSelectionModel().clearSelection()
+                        updateDetails()
                     }
                 }
             }
 
             else{
                 try{
-                    VBox reselectBox = facetBox.getChildren().get(value - 1)
+                    VBox reselectBox = facetBox.getChildren().get(value - 2)
                     Pane reselectPane = reselectBox.getChildren().get(0)
                     def model = reselectPane.getChildren().get(0).getChildren().get(1)
                     if (model instanceof TableView){
-                        VBox reselectBox2 = facetBox.getChildren().get(value - 2)
-                        Pane reselectPane2 = reselectBox.getChildren().get(0)
+                        VBox reselectBox2 = facetBox.getChildren().get(value - 3)
+                        Pane reselectPane2 = reselectBox2.getChildren().get(0)
                         model = reselectPane2.getChildren().get(0).getChildren().get(1)
                     }
                     javafx.collections.ObservableList<TreeItem<String>> items = model.getSelectionModel().getSelectedItems()
 
-                    if(items.equals(null))items << model.getRoot()
+                    if(items.size().equals(0))items << model.getRoot()
                     if (items.size().equals(1)){
                         def item = items.get(0)
                         model.getSelectionModel().clearSelection()
@@ -1231,7 +1297,18 @@ public class Application extends javafx.application.Application {
                         UpdateActions.updateTree(data, treeTypes, observableListTypes, observableListTypesCount, 1, "Plant Types")
                         UpdateActions.updateTree(data, treeZip, observableListZips, observableListZipsCount, 3, "Zip-Codes")
                         UpdateActions.updateTree(data, treeCities,observableListCities,observableListCitiesCount,2,"Cities")
-                         
+                        def size = data.get(0).get(SIZE)
+                        PowerPlantList newFakeList = new PowerPlantList((Integer)size, new OurConsumer<Integer>(){
+                            @Override
+                            void accept(Integer rowIndex) {
+                                loadPresentationModel(rowIndex)
+                            }
+                        });
+                        javafx.collections.ObservableList<PowerPlant> newItems = FakeCollections.newObservableList(newFakeList);
+                        table.setItems(newItems)
+                        totalCount.setText(newItems.size() + "/1377475")
+                        table.getSelectionModel().clearSelection()
+                        updateDetails()
                     }
                 }
             }
