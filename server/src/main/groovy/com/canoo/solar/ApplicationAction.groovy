@@ -62,6 +62,7 @@ public class ApplicationAction extends DolphinServerAction{
             def orderPM = getServerDolphin().findPresentationModelById(ORDER)
             def statePM = getServerDolphin().findPresentationModelById(STATE)
             def filterPM = getServerDolphin().findPresentationModelById(FILTER)
+            def tablePM = getServerDolphin().findPresentationModelById(TABLE_FILTER)
             def filterAutoPM = getServerDolphin().findPresentationModelById(FILTER_AUTOFILL)
             SolrQuery solrQuery = new SolrQuery("*:*")
             solrQuery.addField(POSITION)
@@ -127,6 +128,10 @@ public class ApplicationAction extends DolphinServerAction{
             }
             solrQuery.addFilterQuery(freeSearchString)
 
+            def value = tablePM[POSITION_FILTER].getValue()
+            if (value == null || value == "") value = "*"
+            String tableString = "position:" + value
+            solrQuery.addFilterQuery(tableString)
 
             solrQuery.setParam("facet.field", CITY);
             solrQuery.addFacetField(PLANT_TYPE);
@@ -222,7 +227,7 @@ public class ApplicationAction extends DolphinServerAction{
             changeValue statePM[AVERAGE_KWH], averageKWH
             changeValue statePM[AVERAGE_NOMINAL], averageNominal
             changeValue statePM[TOTAL_KWH], totalKWH
-            changeValue statePM[DISABLECONTROLS], (statePM[DISABLECONTROLS].value)+1
+//            changeValue statePM[DISABLECONTROLS], (statePM[DISABLECONTROLS].value)+2
 
             response.add(new DataCommand(new HashMap(ids: allTypes, numCount: allTypesCount )))
             response.add(new DataCommand(new HashMap(ids: allCities, numCount: allCitiesCount )))
@@ -258,6 +263,7 @@ public class ApplicationAction extends DolphinServerAction{
 
                 SolrQuery solrQuery = new SolrQuery("*:*")
                 def filterPM = getServerDolphin().findPresentationModelById(FILTER)
+                def tablePM = getServerDolphin().findPresentationModelById(TABLE_FILTER)
                 def filterAutoPM = getServerDolphin().findPresentationModelById(FILTER_AUTOFILL)
                 def orderPM = getServerDolphin().findPresentationModelById(ORDER)
                 def sortString = getServerDolphin().findPresentationModelById(STATE).findAttributeByPropertyName(SORT).getValue().toString()
@@ -330,7 +336,13 @@ public class ApplicationAction extends DolphinServerAction{
                 }
                 solrQuery.addFilterQuery(freeSearchString)
 
-                    solrQuery.setStart(rowIdx)
+//
+//                def value = tablePM[POSITION_FILTER].getValue()
+//                if (value == null || value == "") value = "*"
+//                String tableString = "position:" + value
+//                solrQuery.addFilterQuery(tableString)
+
+                solrQuery.setStart(rowIdx)
                     solrQuery.setRows(1);
                     def start = System.currentTimeMillis()
 

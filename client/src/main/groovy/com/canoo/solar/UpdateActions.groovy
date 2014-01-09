@@ -74,7 +74,7 @@ class UpdateActions {
             Application.totalCount.setText(newItems.size() + "/1377475")
             Application.table.getSelectionModel().clearSelection()
             Application.updateDetails()
-
+            Application.disableControls.setValue(false)
         }
 
 
