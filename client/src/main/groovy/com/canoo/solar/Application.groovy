@@ -150,6 +150,24 @@ public class Application extends javafx.application.Application {
     Group group
     Group groupChoice
 
+    HBox positionBox
+    HBox zipBox
+    HBox cityBox
+    HBox typeBox
+    HBox nominalBox
+    HBox averageKWHBox
+    HBox latitudeBox
+    HBox longitudeBox
+
+    HBox choicepositionBox = new HBox()
+    HBox choicezipBox = new HBox()
+    HBox choicecityBox = new HBox()
+    HBox choicetypeBox = new HBox()
+    HBox choicenominalBox = new HBox()
+    HBox choiceaverageKWHBox = new HBox()
+    HBox choicelatitudeBox = new HBox()
+    HBox choicelongitudeBox = new HBox()
+
     public static Rectangle detailsContainer
 
     VBox details
@@ -299,7 +317,7 @@ public class Application extends javafx.application.Application {
         clientDolphin.presentationModel(SELECTED_POWERPLANT, [ID, CITY, PLANT_TYPE, ZIP, NOMINAL_POWER]);
         clientDolphin.presentationModel(ORDER_CHANGE, [VALUE, SCENEX, SCENEY, DRAGGEDPANE]);
         clientDolphin.presentationModel(TABLE_FILTER, [POSITION_FILTER]);
-        clientDolphin.presentationModel(STATE, [HOLD_UPDATES, DISABLECONTROLS, TRIGGER, START_INDEX, SORT, REVERSER_ORDER, CHANGE_FROM, HOLD, TOTAL_NOMINAL, AVERAGE_KWH, AVERAGE_NOMINAL, TOTAL_KWH, TYPE_DISTRIBUTION, CITY_DISTRIBUTION, TYPE_MOST, CITY_MOST])[TRIGGER].value=0
+        clientDolphin.presentationModel(STATE, [DISABLECONTROLS, TRIGGER, START_INDEX, SORT, REVERSER_ORDER, CHANGE_FROM, HOLD, TOTAL_NOMINAL, AVERAGE_KWH, AVERAGE_NOMINAL, TOTAL_KWH, TYPE_DISTRIBUTION, CITY_DISTRIBUTION, TYPE_MOST, CITY_MOST])[TRIGGER].value=0
 
 
         Map<String, Object> attributeMap = [:]
@@ -321,7 +339,6 @@ public class Application extends javafx.application.Application {
         clientDolphin.getClientModelStore().findPresentationModelById(STATE).findAttributeByPropertyName(SORT).setValue("Position - DESCENDING")
         clientDolphin.getClientModelStore().findPresentationModelById(STATE).findAttributeByPropertyName(REVERSER_ORDER).setValue(false)
         clientDolphin.getClientModelStore().findPresentationModelById(STATE).findAttributeByPropertyName(HOLD).setValue(false)
-        clientDolphin.getClientModelStore().findPresentationModelById(STATE).findAttributeByPropertyName(HOLD_UPDATES).setValue(false)
         clientDolphin.getClientModelStore().findPresentationModelById(STATE).findAttributeByPropertyName(CHANGE_FROM).setValue(0)
         clientDolphin.getClientModelStore().findPresentationModelById(STATE).findAttributeByPropertyName(TOTAL_NOMINAL).setValue(0.0)
         clientDolphin.getClientModelStore().findPresentationModelById(STATE).findAttributeByPropertyName(AVERAGE_NOMINAL).setValue(0.0)
@@ -330,31 +347,12 @@ public class Application extends javafx.application.Application {
         clientDolphin.getClientModelStore().findPresentationModelById(STATE).findAttributeByPropertyName(TYPE_DISTRIBUTION).setValue(0)
         clientDolphin.getClientModelStore().findPresentationModelById(STATE).findAttributeByPropertyName(CITY_DISTRIBUTION).setValue(0)
         clientDolphin.getClientModelStore().findPresentationModelById(STATE).findAttributeByPropertyName(DISABLECONTROLS).setValue(0)
-        
-        
+
     }
 
     private Pane setupStage() {
 
         message = ""
-
-        HBox positionBox = new HBox()
-        HBox zipBox = new HBox()
-        HBox cityBox = new HBox()
-        HBox typeBox = new HBox()
-        HBox nominalBox = new HBox()
-        HBox averageKWHBox = new HBox()
-        HBox latitudeBox = new HBox()
-        HBox longitudeBox = new HBox()
-
-        HBox choicepositionBox = new HBox()
-        HBox choicezipBox = new HBox()
-        HBox choicecityBox = new HBox()
-        HBox choicetypeBox = new HBox()
-        HBox choicenominalBox = new HBox()
-        HBox choiceaverageKWHBox = new HBox()
-        HBox choicelatitudeBox = new HBox()
-        HBox choicelongitudeBox = new HBox()
 
         detailsContainerHbox.getChildren().addAll(positionBox, zipBox, cityBox, typeBox, nominalBox, averageKWHBox, latitudeBox, longitudeBox)
         choiceContainerHbox.getChildren().addAll(choicezipBox, choicecityBox, choicetypeBox, choicenominalBox, choiceaverageKWHBox, choicelatitudeBox, choicelongitudeBox)
@@ -363,19 +361,11 @@ public class Application extends javafx.application.Application {
         averageKWHBox.getChildren().add(totalAVGKWH)
         cityBox.getChildren().add(cityDistribution)
 
-        typeDistribution.setOnMouseEntered(new EventHandler<MouseEvent>() {
-            @Override
-            void handle(MouseEvent mouseEvent) {
-
-            }
-        })
-
         nominalBox.setAlignment(Pos.BOTTOM_CENTER)
         averageKWHBox.setAlignment(Pos.BOTTOM_CENTER)
         typeBox.setAlignment(Pos.BOTTOM_CENTER)
         cityBox.setAlignment(Pos.BOTTOM_CENTER)
         zipBox.setAlignment(Pos.BOTTOM_CENTER)
-
 
         Group myGroup = GroupBuilder.create()
                 .children(detailsContainerHbox)
@@ -437,7 +427,6 @@ public class Application extends javafx.application.Application {
                 }else{
                     typeBox.getChildren().clear()
                     typeBox.getChildren().add(typeDistribution)
-
                 }
             }
         })
@@ -450,11 +439,9 @@ public class Application extends javafx.application.Application {
                 if (number < number2){
                     cityBox.getChildren().clear()
                     cityBox.getChildren().add(cityMost)
-
                 }else{
                     cityBox.getChildren().clear()
                     cityBox.getChildren().add(cityDistribution)
-
                 }
             }
         })
@@ -490,15 +477,14 @@ public class Application extends javafx.application.Application {
                     progress.set(0.0)
                     progressLine.setRate(1)
                     progressLine.playFromStart()
-
                 }else{
-                    progressLine.setRate(8)
+                    progressLine.setRate(9)
                 }
             }
         })
         progressBar.setVisible(false)
-        progressBar.setMinHeight(10)
-        progressBar.setMaxHeight(10)
+        progressBar.setMinHeight(600)
+        progressBar.setMaxHeight(600)
         progressBar.setOpacity(0.6)
         progressBar.setBorder(Border.EMPTY)
         progressBar.minWidthProperty().bind(searchAndAll.widthProperty().add(5))
@@ -506,7 +492,7 @@ public class Application extends javafx.application.Application {
         final KeyValue kv1 = new KeyValue(progress, 0.0);
         final KeyValue kv2 = new KeyValue(progress, 0.5);
         final KeyValue kv3 = new KeyValue(progress, 1.0);
-        final KeyFrame kf1 = new KeyFrame(Duration.millis(6000), kv1, kv2, kv3);
+        final KeyFrame kf1 = new KeyFrame(Duration.millis(7000), kv1, kv2, kv3);
         progressLine.getKeyFrames().add(kf1);
         progressLine.setCycleCount(1)
 
@@ -1098,11 +1084,10 @@ public class Application extends javafx.application.Application {
                         table.setItems(newItems)
                         totalCount.setText(newItems.size() + "/1377475")
                         table.getSelectionModel().clearSelection()
-
+                        updateDetails()
+                        disableControls.setValue(false)
                     }
                 }
-                updateDetails()
-                disableControls.setValue(false)
             }
 
         })
@@ -1163,12 +1148,13 @@ public class Application extends javafx.application.Application {
                         table.setItems(newItems)
                         totalCount.setText(newItems.size() + "/1377475")
                         table.getSelectionModel().clearSelection()
+                        disableControls.setValue(false)
+                        updateDetails()
 
                     }
 
                 }
-                updateDetails()
-                disableControls.setValue(false)
+
             }
 
 
@@ -1230,11 +1216,11 @@ public class Application extends javafx.application.Application {
                         table.setItems(newItems)
                         totalCount.setText(newItems.size() + "/1377475")
                         table.getSelectionModel().clearSelection()
+                        disableControls.setValue(false)
+                        updateDetails()
 
                     }
                 }
-                updateDetails()
-                disableControls.setValue(false)
             }
 
         })
@@ -1349,11 +1335,11 @@ public class Application extends javafx.application.Application {
                         table.setItems(newItems)
                         totalCount.setText(newItems.size() + "/1377475")
                         table.getSelectionModel().clearSelection()
-
+                        disableControls.setValue(false)
                     }
                 }
                 updateDetails()
-                disableControls.setValue(false)
+
             }
 
             else{
@@ -1401,11 +1387,11 @@ public class Application extends javafx.application.Application {
                         table.setItems(newItems)
                         totalCount.setText(newItems.size() + "/1377475")
                         table.getSelectionModel().clearSelection()
-
+                        updateDetails()
+                        disableControls.setValue(false)
                     }
                 }
-                updateDetails()
-                disableControls.setValue(false)
+
             }
         })
 
@@ -1949,6 +1935,25 @@ public class Application extends javafx.application.Application {
         group = new Group();
         groupChoice = new Group();
         choiceContainerHbox = new HBox()
+
+
+        positionBox = new HBox()
+        zipBox = new HBox()
+        cityBox = new HBox()
+        typeBox = new HBox()
+        nominalBox = new HBox()
+        averageKWHBox = new HBox()
+        latitudeBox = new HBox()
+        longitudeBox = new HBox()
+
+        choicepositionBox = new HBox()
+        choicezipBox = new HBox()
+        choicecityBox = new HBox()
+        choicetypeBox = new HBox()
+        choicenominalBox = new HBox()
+        choiceaverageKWHBox = new HBox()
+        choicelatitudeBox = new HBox()
+        choicelongitudeBox = new HBox()
 
         detailsContainer = new Rectangle()
         detailsBorder = new Rectangle()
