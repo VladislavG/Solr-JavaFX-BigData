@@ -2,9 +2,14 @@ package com.canoo.solar
 
 import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleDoubleProperty
+import javafx.beans.value.ChangeListener
+import javafx.beans.value.ObservableValue
+import javafx.collections.FXCollections
 import javafx.event.EventHandler
 import javafx.geometry.Insets
+import javafx.geometry.Pos
 import javafx.scene.control.Button
+import javafx.scene.control.ChoiceBox
 import javafx.scene.control.Label
 import javafx.scene.control.SelectionMode
 import javafx.scene.control.TextField
@@ -24,6 +29,7 @@ import javafx.scene.paint.LinearGradient
 import javafx.scene.paint.LinearGradientBuilder
 import javafx.scene.paint.Stop
 import javafx.scene.shape.Rectangle
+import javafx.scene.text.Text
 import org.opendolphin.core.Attribute
 import org.opendolphin.core.PresentationModel
 import org.opendolphin.core.client.ClientDolphin
@@ -179,4 +185,37 @@ public class Layout {
         return pane;
     }
 
+    public static HBox createChoiceBoxBox(ChoiceBox choiceBox, HBox choiceHbox, HBox hBox, String option1, String option2, Text data1, Text data2) {
+        hBox.getChildren().add(data1)
+        choiceHbox.getChildren().add(choiceBox)
+        choiceBox.setItems(FXCollections.observableArrayList(option1, option2))
+        choiceBox.getSelectionModel().selectFirst()
+        choiceBox.getSelectionModel().selectedIndexProperty().addListener(new ChangeListener<Number>() {
+            @Override
+            void changed(ObservableValue<? extends Number> observableValue, Number number, Number number2) {
+                if (number < number2){
+                    hBox.getChildren().clear()
+                    hBox.getChildren().add(data2)
+                }else{
+                    hBox.getChildren().clear()
+                    hBox.getChildren().add(data1)
+                }
+            }
+        })
+
+        hBox.setAlignment(Pos.BOTTOM_CENTER)
+
+        return hBox
+    }
+
+    public static Rectangle createRectangle(BigDecimal height, LinearGradient linearGradient, Color color, BigDecimal strokeWidth, BigDecimal arc) {
+        Rectangle r = new Rectangle()
+        r.setHeight(height)
+        r.setFill(linearGradient)
+        r.setStroke(color)
+        r.setStrokeWidth(strokeWidth)
+        r.setArcWidth(arc)
+        r.setArcHeight(arc)
+        return r
+    }
 }

@@ -13,7 +13,6 @@ import javafx.event.ActionEvent
 import javafx.event.EventHandler
 import javafx.geometry.Insets
 import javafx.geometry.Orientation
-import javafx.geometry.Pos
 import javafx.geometry.VPos
 import javafx.scene.Group
 import javafx.scene.GroupBuilder
@@ -30,7 +29,6 @@ import javafx.scene.input.MouseEvent
 import javafx.scene.input.TransferMode
 import javafx.scene.layout.Border
 import javafx.scene.layout.GridPane
-import javafx.scene.layout.Priority
 import javafx.scene.layout.StackPane
 import javafx.scene.paint.CycleMethod
 import javafx.scene.paint.LinearGradient
@@ -43,7 +41,6 @@ import javafx.scene.paint.Color
 import javafx.scene.shape.RectangleBuilder
 import javafx.scene.text.Font
 import javafx.scene.text.Text
-import javafx.scene.text.TextAlignment
 import javafx.scene.text.TextBuilder
 import javafx.util.Duration
 
@@ -159,14 +156,14 @@ public class Application extends javafx.application.Application {
     HBox latitudeBox
     HBox longitudeBox
 
-    HBox choicepositionBox = new HBox()
-    HBox choicezipBox = new HBox()
-    HBox choicecityBox = new HBox()
-    HBox choicetypeBox = new HBox()
-    HBox choicenominalBox = new HBox()
-    HBox choiceaverageKWHBox = new HBox()
-    HBox choicelatitudeBox = new HBox()
-    HBox choicelongitudeBox = new HBox()
+    HBox choicepositionBox
+    HBox choicezipBox
+    HBox choicecityBox
+    HBox choicetypeBox
+    HBox choicenominalBox
+    HBox choiceaverageKWHBox
+    HBox choicelatitudeBox
+    HBox choicelongitudeBox
 
     public static Rectangle detailsContainer
 
@@ -237,6 +234,9 @@ public class Application extends javafx.application.Application {
     static Pane cityPane
     static Button closeCity
     static Button clearTableSelectButton
+
+    LinearGradient linearGradDark
+    LinearGradient linearGrad
 
     public static PowerPlantList fakedPlantList
     javafx.collections.ObservableList<PowerPlant> items
@@ -356,16 +356,11 @@ public class Application extends javafx.application.Application {
 
         detailsContainerHbox.getChildren().addAll(positionBox, zipBox, cityBox, typeBox, nominalBox, averageKWHBox, latitudeBox, longitudeBox)
         choiceContainerHbox.getChildren().addAll(choicezipBox, choicecityBox, choicetypeBox, choicenominalBox, choiceaverageKWHBox, choicelatitudeBox, choicelongitudeBox)
-        nominalBox.getChildren().add(nominalTotalText)
-        typeBox.getChildren().add(typeDistribution)
-        averageKWHBox.getChildren().add(totalAVGKWH)
-        cityBox.getChildren().add(cityDistribution)
 
-        nominalBox.setAlignment(Pos.BOTTOM_CENTER)
-        averageKWHBox.setAlignment(Pos.BOTTOM_CENTER)
-        typeBox.setAlignment(Pos.BOTTOM_CENTER)
-        cityBox.setAlignment(Pos.BOTTOM_CENTER)
-        zipBox.setAlignment(Pos.BOTTOM_CENTER)
+        nominalBox = Layout.createChoiceBoxBox(nominalChoice, choicenominalBox, nominalBox, "Total", "Average", nominalTotalText, nominalAverageText)
+        cityBox = Layout.createChoiceBoxBox(cityChoice, choicecityBox, cityBox, "Distribution", "Most Common", cityDistribution, cityMost)
+        typeBox = Layout.createChoiceBoxBox(typeChoice, choicetypeBox, typeBox, "Distribution", "Most Common", typeDistribution, typeMost)
+        averageKWHBox = Layout.createChoiceBoxBox(averageChoice, choiceaverageKWHBox, averageKWHBox, "Total", "Average", totalAVGKWH, averageAVGKWH)
 
         Group myGroup = GroupBuilder.create()
                 .children(detailsContainerHbox)
@@ -386,70 +381,7 @@ public class Application extends javafx.application.Application {
             it.setTranslateX(-30)
         }
         groupChoice.maxHeight(25)
-        nominalChoice.setItems(FXCollections.observableArrayList("Total", "Average"))
-        nominalChoice.getSelectionModel().selectFirst()
-        nominalChoice.getSelectionModel().selectedIndexProperty().addListener(new ChangeListener<Number>() {
-            @Override
-            void changed(ObservableValue<? extends Number> observableValue, Number number, Number number2) {
-                if (number < number2){
-                    nominalBox.getChildren().clear()
-                    nominalBox.getChildren().add(nominalAverageText)
-                }else{
-                    nominalBox.getChildren().clear()
-                    nominalBox.getChildren().add(nominalTotalText)
-                }
-            }
-        })
 
-        averageChoice.setItems(FXCollections.observableArrayList("Total", "Average"))
-        averageChoice.getSelectionModel().selectFirst()
-        averageChoice.getSelectionModel().selectedIndexProperty().addListener(new ChangeListener<Number>() {
-            @Override
-            void changed(ObservableValue<? extends Number> observableValue, Number number, Number number2) {
-                if (number < number2){
-                    averageKWHBox.getChildren().clear()
-                    averageKWHBox.getChildren().add(averageAVGKWH)
-                }else{
-                    averageKWHBox.getChildren().clear()
-                    averageKWHBox.getChildren().add(totalAVGKWH)
-                }
-            }
-        })
-
-        typeChoice.setItems(FXCollections.observableArrayList("Distibution", "Most Common"))
-        typeChoice.getSelectionModel().selectFirst()
-        typeChoice.getSelectionModel().selectedIndexProperty().addListener(new ChangeListener<Number>() {
-            @Override
-            void changed(ObservableValue<? extends Number> observableValue, Number number, Number number2) {
-                if (number < number2){
-                    typeBox.getChildren().clear()
-                    typeBox.getChildren().add(typeMost)
-                }else{
-                    typeBox.getChildren().clear()
-                    typeBox.getChildren().add(typeDistribution)
-                }
-            }
-        })
-
-        cityChoice.setItems(FXCollections.observableArrayList("Distibution", "Most Common"))
-        cityChoice.getSelectionModel().selectFirst()
-        cityChoice.getSelectionModel().selectedIndexProperty().addListener(new ChangeListener<Number>() {
-            @Override
-            void changed(ObservableValue<? extends Number> observableValue, Number number, Number number2) {
-                if (number < number2){
-                    cityBox.getChildren().clear()
-                    cityBox.getChildren().add(cityMost)
-                }else{
-                    cityBox.getChildren().clear()
-                    cityBox.getChildren().add(cityDistribution)
-                }
-            }
-        })
-
-        choicenominalBox.getChildren().add(nominalChoice)
-        choiceaverageKWHBox.getChildren().add(averageChoice)
-        choicecityBox.getChildren().add(cityChoice)
-        choicetypeBox.getChildren().add(typeChoice)
         choicezipBox.getChildren().add(zipChoice)
         choicelatitudeBox.getChildren().add(latChoice)
         choicelongitudeBox.getChildren().add(lonChoice)
@@ -482,6 +414,7 @@ public class Application extends javafx.application.Application {
                 }
             }
         })
+
         progressBar.setVisible(false)
         progressBar.setMinHeight(600)
         progressBar.setMaxHeight(600)
@@ -502,47 +435,6 @@ public class Application extends javafx.application.Application {
                 progressBar.setVisible(false)
             }
         })
-
-        detailsContainer.widthProperty().bind(table.widthProperty())
-        LinearGradient linearGradDark = LinearGradientBuilder.create()
-                .startX(0)
-                .startY(0)
-                .endX(0)
-                .endY(22)
-                .proportional(false)
-                .cycleMethod(CycleMethod.NO_CYCLE)
-                .stops( new Stop(0.1f, Color.rgb(245, 245, 245, 1)),
-                new Stop(1.0f, Color.rgb(179, 179, 179, 1)))
-                .build();
-
-        LinearGradient linearGrad = LinearGradientBuilder.create()
-                .startX(0)
-                .startY(0)
-                .endX(0)
-                .endY(50)
-                .proportional(false)
-                .cycleMethod(CycleMethod.NO_CYCLE)
-                .stops( new Stop(0.1f, Color.rgb(245, 245, 245, 1)),
-                new Stop(1.0f, Color.rgb(179, 179, 179, 1)))
-                .build();
-
-
-
-        dragBorder.setHeight(22)
-        dragBorder.widthProperty().bind(table.widthProperty())
-        dragBorder.setFill(linearGradDark)
-        dragBorder.setStroke(Color.BLACK)
-        dragBorder.setStrokeWidth(0.5)
-        dragBorder.setArcWidth(3)
-        dragBorder.setArcHeight(3)
-
-        detailsContainer.setFill(linearGrad)
-        detailsContainer.setHeight(31)
-        detailsContainer.setStrokeWidth(0.5)
-        detailsContainer.setStroke(Color.BLACK)
-        detailsContainer.setArcWidth(3)
-        detailsContainer.setArcHeight(3)
-
 
         table.setSortPolicy(new Callback<TableView<PowerPlant>, Boolean>() {
             @Override
@@ -606,13 +498,13 @@ public class Application extends javafx.application.Application {
         choicelongitudeBox.prefWidthProperty().bind(longitudeColumn.widthProperty())
         lonChoice.prefWidthProperty().bind(longitudeColumn.widthProperty())
 
-        detailsBorder.setHeight(24)
+        dragBorder = Layout.createRectangle(22.0, linearGradDark, Color.BLACK, 0.5, 3.0)
+        detailsContainer = Layout.createRectangle(31.0, linearGrad, Color.BLACK, 0.5, 3.0)
+        detailsBorder = Layout.createRectangle(24.0, linearGrad, Color.BLACK, 0.5, 3.0)
+
         detailsBorder.widthProperty().bind(positionColumn.widthProperty())
-        detailsBorder.setFill(linearGrad)
-        detailsBorder.setStroke(Color.BLACK)
-        detailsBorder.setStrokeWidth(0.5)
-        detailsBorder.setArcWidth(3)
-        detailsBorder.setArcHeight(3)
+        dragBorder.widthProperty().bind(table.widthProperty())
+        detailsContainer.widthProperty().bind(table.widthProperty())
 
         AutoFillTextField.makeAutofillTextField(this, zipTextAutoForSearch, observableListZips, zip_auto, treeZip, ZIP)
         AutoFillTextField.makeAutofillTextField(this, typeTextAutoForSearch, observableListTypes, plantTypes_auto, treeTypes, PLANT_TYPE)
@@ -645,7 +537,6 @@ public class Application extends javafx.application.Application {
                     clientDolphin[STATE][HOLD].setValue(true)
                     UpdateActions.refreshTable()
 
-                     
                 }
             }
         })
@@ -656,7 +547,6 @@ public class Application extends javafx.application.Application {
                 if (KeyCode.ENTER == event.getCode()) {
                     searchText.setText(searchField.getText())
                     disableControls.setValue(true)
-//                  disableQuery()
                     UpdateActions.clearPmsAndPowerPlants()
                     clientDolphin[STATE][HOLD].setValue(true)
                     UpdateActions.refreshTable()
@@ -787,7 +677,7 @@ public class Application extends javafx.application.Application {
                 }
                 }
             }
-        })
+        });
 
         treeCities.getSelectionModel().getSelectedItems().addListener(new ListChangeListener<TreeItem>() {
             @Override
@@ -855,8 +745,7 @@ public class Application extends javafx.application.Application {
                 }
                 }
                     }
-                }
-        );
+                });
 
         treeZip.getSelectionModel().getSelectedItems().addListener(new ListChangeListener<TreeItem>() {
             @Override
@@ -975,6 +864,7 @@ public class Application extends javafx.application.Application {
         return fakedPlantList;
     }
 
+
     private void setupBinding() {
 
         bind 'text' of zip to ZIP of clientDolphin[FILTER]
@@ -1012,8 +902,6 @@ public class Application extends javafx.application.Application {
             if (clientDolphin[STATE][SORT].getValue().toString()==IGNORE)return;
             UpdateActions.clearPmsAndPowerPlants()
             clientDolphin[STATE][HOLD].setValue(true)
-//            UpdateActions.refreshTable()
-
         })
 
         bindAttribute(clientDolphin[FILTER][PLANT_TYPE], {
@@ -1039,57 +927,11 @@ public class Application extends javafx.application.Application {
                 }
             }else if(it.newValue.equals(0)){
                 try{
-                    VBox reselectBox = facetBox.getChildren().get(it.oldValue - 2)
-                    Pane reselectPane = reselectBox.getChildren().get(0)
-                    def model = reselectPane.getChildren().get(0).getChildren().get(1)
-                    if (model instanceof TableView && model.getSelectionModel().getSelectedItems().size().equals(0)){
-                        VBox reselectBox2 = facetBox.getChildren().get(it.oldValue - 3)
-                        Pane reselectPane2 = reselectBox2.getChildren().get(0)
-                        model = reselectPane2.getChildren().get(0).getChildren().get(1)
-                    }
-                    javafx.collections.ObservableList<TreeItem<String>> items = model.getSelectionModel().getSelectedItems()
-                    if(items.size().equals(0))items << model.getRoot()
-                    if (items.size().equals(1)){
-                        def item = items.get(0)
-                        model.getSelectionModel().clearSelection()
-                        model.getSelectionModel().select(item)
-                    }else{
-                        items.each{TreeItem<String> treeItem ->
-                            model.getSelectionModel().select(treeItem)
-                        }
-                    }
-
-                    try{
-                        if (model.getRoot().equals(model.getSelectionModel().getSelectedItem())) model.getSelectionModel().clearSelection();
-                    }catch (Exception e){}
+                   UpdateActions.reselect(it.oldValue)
                 }catch (Exception e){
-                    facetBox.getChildren().each {
-                        it.getChildren().each{Pane pane ->
-                            pane.getChildren().get(0).getChildren().get(1).getSelectionModel().clearSelection()
-                        }
-                    }
-                    disableControls.setValue(true)
-                    clientDolphin.data GET, { data ->
-                        UpdateActions.updateTree(data, treeTypes, observableListTypes, observableListTypesCount, 1, "Plant Types")
-                        UpdateActions.updateTree(data, treeZip, observableListZips, observableListZipsCount, 3, "Zip-Codes")
-                        UpdateActions.updateTree(data, treeCities,observableListCities,observableListCitiesCount,2,"Cities")
-                        def size = data.get(0).get(SIZE)
-                        PowerPlantList newFakeList = new PowerPlantList((Integer)size, new OurConsumer<Integer>(){
-                            @Override
-                            void accept(Integer rowIndex) {
-                                loadPresentationModel(rowIndex)
-                            }
-                        });
-                        javafx.collections.ObservableList<PowerPlant> newItems = FakeCollections.newObservableList(newFakeList);
-                        table.setItems(newItems)
-                        totalCount.setText(newItems.size() + "/1377475")
-                        table.getSelectionModel().clearSelection()
-                        updateDetails()
-                        disableControls.setValue(false)
-                    }
+                    UpdateActions.resetEverything()
                 }
             }
-
         })
 
         bindAttribute(clientDolphin[CITY][ORDER],{
@@ -1103,61 +945,12 @@ public class Application extends javafx.application.Application {
                 }
             }else if(it.newValue.equals(0)){
                 try{
-                    VBox reselectBox = facetBox.getChildren().get(it.oldValue - 2)
-                    Pane reselectPane = reselectBox.getChildren().get(0)
-                    def model = reselectPane.getChildren().get(0).getChildren().get(1)
-                    if (model instanceof TableView && model.getSelectionModel().getSelectedItems().size().equals(0)){
-                        VBox reselectBox2 = facetBox.getChildren().get(it.oldValue - 3)
-                        Pane reselectPane2 = reselectBox2.getChildren().get(0)
-                        model = reselectPane2.getChildren().get(0).getChildren().get(1)
-                    }
-                    javafx.collections.ObservableList<TreeItem<String>> items = model.getSelectionModel().getSelectedItems()
-
-                    if(items.size().equals(0))items << model.getRoot()
-                    if (items.size().equals(1)){
-                        def item = items.get(0)
-                        model.getSelectionModel().clearSelection()
-                        model.getSelectionModel().select(item)
-                    }else{
-                        items.each{TreeItem<String> treeItem ->
-                            model.getSelectionModel().select(treeItem)
-                        }
-                    }
-                    try{
-                        if (model.getRoot().equals(model.getSelectionModel().getSelectedItem())) model.getSelectionModel().clearSelection();
-                    }catch (Exception e){}
+                   UpdateActions.reselect(it.oldValue)
                 }catch (Exception e){
-                    facetBox.getChildren().each {
-                        it.getChildren().each{Pane pane ->
-                            pane.getChildren().get(0).getChildren().get(1).getSelectionModel().clearSelection()
-                        }
-                    }
-                    disableControls.setValue(true)
-                    clientDolphin.data GET, { data ->
-                        UpdateActions.updateTree(data, treeTypes, observableListTypes, observableListTypesCount, 1, "Plant Types")
-                        UpdateActions.updateTree(data, treeZip, observableListZips, observableListZipsCount, 3, "Zip-Codes")
-                        UpdateActions.updateTree(data, treeCities,observableListCities,observableListCitiesCount,2,"Cities")
-                        def size = data.get(0).get(SIZE)
-                        PowerPlantList newFakeList = new PowerPlantList((Integer)size, new OurConsumer<Integer>(){
-                            @Override
-                            void accept(Integer rowIndex) {
-                                loadPresentationModel(rowIndex)
-                            }
-                        });
-                        javafx.collections.ObservableList<PowerPlant> newItems = FakeCollections.newObservableList(newFakeList);
-                        table.setItems(newItems)
-                        totalCount.setText(newItems.size() + "/1377475")
-                        table.getSelectionModel().clearSelection()
-                        disableControls.setValue(false)
-                        updateDetails()
-
-                    }
-
+                   UpdateActions.resetEverything()
                 }
 
             }
-
-
         })
 
         bindAttribute(clientDolphin[ZIP][ORDER],{
@@ -1171,58 +964,11 @@ public class Application extends javafx.application.Application {
                 }
             }else if(it.newValue.equals(0)){
                 try{
-                    VBox reselectBox = facetBox.getChildren().get(it.oldValue - 2)
-                    Pane reselectPane = reselectBox.getChildren().get(0)
-                    def model = reselectPane.getChildren().get(0).getChildren().get(1)
-                    if (model instanceof TableView && model.getSelectionModel().getSelectedItems().size().equals(0)){
-                        VBox reselectBox2 = facetBox.getChildren().get(it.oldValue - 3)
-                        Pane reselectPane2 = reselectBox2.getChildren().get(0)
-                        model = reselectPane2.getChildren().get(0).getChildren().get(1)
-                    }
-                    javafx.collections.ObservableList<TreeItem<String>> items = model.getSelectionModel().getSelectedItems()
-
-                    if(items.size().equals(0))items << model.getRoot()
-                    if (items.size().equals(1)){
-                        def item = items.get(0)
-                        model.getSelectionModel().clearSelection()
-                        model.getSelectionModel().select(item)
-                    }else{
-                        items.each{TreeItem<String> treeItem ->
-                            model.getSelectionModel().select(treeItem)
-                        }
-                    }
-                    try{
-                        if (model.getRoot().equals(model.getSelectionModel().getSelectedItem())) model.getSelectionModel().clearSelection();
-                    }catch (Exception e){}
+                    UpdateActions.reselect(it.oldValue)
                 }catch (Exception e){
-                    facetBox.getChildren().each {
-                        it.getChildren().each{Pane pane ->
-                            pane.getChildren().get(0).getChildren().get(1).getSelectionModel().clearSelection()
-                        }
-                    }
-                    disableControls.setValue(true)
-                    clientDolphin.data GET, { data ->
-                        UpdateActions.updateTree(data, treeTypes, observableListTypes, observableListTypesCount, 1, "Plant Types")
-                        UpdateActions.updateTree(data, treeZip, observableListZips, observableListZipsCount, 3, "Zip-Codes")
-                        UpdateActions.updateTree(data, treeCities,observableListCities,observableListCitiesCount,2,"Cities")
-                        def size = data.get(0).get(SIZE)
-                        PowerPlantList newFakeList = new PowerPlantList((Integer)size, new OurConsumer<Integer>(){
-                            @Override
-                            void accept(Integer rowIndex) {
-                                loadPresentationModel(rowIndex)
-                            }
-                        });
-                        javafx.collections.ObservableList<PowerPlant> newItems = FakeCollections.newObservableList(newFakeList);
-                        table.setItems(newItems)
-                        totalCount.setText(newItems.size() + "/1377475")
-                        table.getSelectionModel().clearSelection()
-                        disableControls.setValue(false)
-                        updateDetails()
-
-                    }
+                    UpdateActions.resetEverything()
                 }
             }
-
         })
 
         bindAttribute(clientDolphin[TABLE][ORDER],{
@@ -1261,145 +1007,18 @@ public class Application extends javafx.application.Application {
                 }
             }
             if (it.newValue.equals(1) || it.oldValue.equals(1)){
-                facetBox.getChildren().each {
-                    it.getChildren().each{Pane pane ->
-                        pane.getChildren().get(0).getChildren().get(1).getSelectionModel().clearSelection()
-                    }
-                }
-                clientDolphin[FILTER].getAttributes().each {
-                    it.setValue("")
-                }
-                disableControls.setValue(true)
-                clientDolphin.data GET, { data ->
-                    UpdateActions.updateTree(data, treeTypes, observableListTypes, observableListTypesCount, 1, "Plant Types")
-                    UpdateActions.updateTree(data, treeZip, observableListZips, observableListZipsCount, 3, "Zip-Codes")
-                    UpdateActions.updateTree(data, treeCities,observableListCities,observableListCitiesCount,2,"Cities")
-                    def size = data.get(0).get(SIZE)
-                    PowerPlantList newFakeList = new PowerPlantList((Integer)size, new OurConsumer<Integer>(){
-                        @Override
-                        void accept(Integer rowIndex) {
-                            loadPresentationModel(rowIndex)
-                        }
-                    });
-                    javafx.collections.ObservableList<PowerPlant> newItems = FakeCollections.newObservableList(newFakeList);
-                    table.setItems(newItems)
-                    totalCount.setText(newItems.size() + "/1377475")
-                    table.getSelectionModel().clearSelection()
-                    updateDetails()
-                    disableControls.setValue(false)
-                }
-            }
-            else if (childSize == 1){
+               UpdateActions.resetEverything()
+            }else{
                 try{
-                    VBox reselectBox = facetBox.getChildren().get(value - 2)
-                    Pane reselectPane = reselectBox.getChildren().get(0)
-                    def model = reselectPane.getChildren().get(0).getChildren().get(1)
-                    if (model instanceof TableView && model.getSelectionModel().getSelectedItems().size().equals(0)){
-                        VBox reselectBox2 = facetBox.getChildren().get(value - 3)
-                        Pane reselectPane2 = reselectBox2.getChildren().get(0)
-                        model = reselectPane2.getChildren().get(0).getChildren().get(1)
-                    }
-                    javafx.collections.ObservableList<TreeItem<String>> items = model.getSelectionModel().getSelectedItems()
-
-                    if(items.size().equals(0))items << model.getRoot()
-                    if (items.size().equals(1)){
-                        def item = items.get(0)
-                        model.getSelectionModel().clearSelection()
-                        model.getSelectionModel().select(item)
-                    }else{
-
-                        model.getSelectionModel().select(items.get(0))
-                    }
-                    try{
-                        if (model.getRoot().equals(model.getSelectionModel().getSelectedItem())) model.getSelectionModel().clearSelection();
-                    }catch (Exception e){}
-                } catch (Exception e){
-                    facetBox.getChildren().each {
-                        it.getChildren().each{Pane pane ->
-                                pane.getChildren().get(0).getChildren().get(1).getSelectionModel().clearSelection()
-                        }
-                    }
-                    disableControls.setValue(true)
-                    clientDolphin.data GET, { data ->
-                        UpdateActions.updateTree(data, treeTypes, observableListTypes, observableListTypesCount, 1, "Plant Types")
-                        UpdateActions.updateTree(data, treeZip, observableListZips, observableListZipsCount, 3, "Zip-Codes")
-                        UpdateActions.updateTree(data, treeCities,observableListCities,observableListCitiesCount,2,"Cities")
-                        def size = data.get(0).get(SIZE)
-                        PowerPlantList newFakeList = new PowerPlantList((Integer)size, new OurConsumer<Integer>(){
-                            @Override
-                            void accept(Integer rowIndex) {
-                                loadPresentationModel(rowIndex)
-                            }
-                        });
-                        javafx.collections.ObservableList<PowerPlant> newItems = FakeCollections.newObservableList(newFakeList);
-                        table.setItems(newItems)
-                        totalCount.setText(newItems.size() + "/1377475")
-                        table.getSelectionModel().clearSelection()
-                        disableControls.setValue(false)
-                    }
-                }
-                updateDetails()
-
-            }
-
-            else{
-                try{
-                    VBox reselectBox = facetBox.getChildren().get(value - 2)
-                    Pane reselectPane = reselectBox.getChildren().get(0)
-                    def model = reselectPane.getChildren().get(0).getChildren().get(1)
-                    if (model instanceof TableView && model.getSelectionModel().getSelectedItems().size().equals(0)){
-                        VBox reselectBox2 = facetBox.getChildren().get(value - 3)
-                        Pane reselectPane2 = reselectBox2.getChildren().get(0)
-                        model = reselectPane2.getChildren().get(0).getChildren().get(1)
-                    }
-                    javafx.collections.ObservableList<TreeItem<String>> items = model.getSelectionModel().getSelectedItems()
-
-                    if(items.size().equals(0))items << model.getRoot()
-                    if (items.size().equals(1)){
-                        def item = items.get(0)
-                        model.getSelectionModel().clearSelection()
-                        model.getSelectionModel().select(item)
-                    }else{
-                        model.getSelectionModel().select(items.get(0))
-                    }
-                    try{
-                        if (model.getRoot().equals(model.getSelectionModel().getSelectedItem())) model.getSelectionModel().clearSelection();
-                    }catch (Exception e){}
+                    UpdateActions.reselect(value)
                 }catch (Exception e){
-                    facetBox.getChildren().each {
-                        it.getChildren().each{Pane pane ->
-                            pane.getChildren().get(0).getChildren().get(1).getSelectionModel().clearSelection()
-                        }
-                    }
-                    disableControls.setValue(true)
-                    clientDolphin.data GET, { data ->
-                        UpdateActions.updateTree(data, treeTypes, observableListTypes, observableListTypesCount, 1, "Plant Types")
-                        UpdateActions.updateTree(data, treeZip, observableListZips, observableListZipsCount, 3, "Zip-Codes")
-                        UpdateActions.updateTree(data, treeCities,observableListCities,observableListCitiesCount,2,"Cities")
-                        def size = data.get(0).get(SIZE)
-                        PowerPlantList newFakeList = new PowerPlantList((Integer)size, new OurConsumer<Integer>(){
-                            @Override
-                            void accept(Integer rowIndex) {
-                                loadPresentationModel(rowIndex)
-                            }
-                        });
-                        javafx.collections.ObservableList<PowerPlant> newItems = FakeCollections.newObservableList(newFakeList);
-                        table.setItems(newItems)
-                        totalCount.setText(newItems.size() + "/1377475")
-                        table.getSelectionModel().clearSelection()
-                        updateDetails()
-                        disableControls.setValue(false)
-                    }
+                    UpdateActions.resetEverything()
                 }
-
             }
         })
 
         bindAttribute(clientDolphin[STATE][TRIGGER], {
-
-//            disableControls.setValue(true)
             UpdateActions.clearPmsAndPowerPlants()
-//            UpdateActions.refreshTable()
             facetBox.getChildren().each {VBox vBox ->
                 if (vBox.getChildren().size().equals(0))return;
                 int newHeight = 445.div(vBox.getChildren().size())-15
@@ -1409,7 +1028,6 @@ public class Application extends javafx.application.Application {
                      it.getChildren().get(0).setPrefHeight(newHeight)
                 }
             }
-             
         })
 
         bindAttribute(clientDolphin[STATE][DISABLECONTROLS],{
@@ -1466,8 +1084,6 @@ public class Application extends javafx.application.Application {
                 typeMostString = "Most Common: $output"
             }
         })
-
-
     }
 
     public static void bindAttribute(Attribute attribute, Closure closure) {
@@ -1789,7 +1405,6 @@ public class Application extends javafx.application.Application {
                             pane.getChildren().add(r2)
                             r2.setMouseTransparent(true)
                             r2.setFocusTraversable(true)
-
                         }
                     }
 
@@ -1809,10 +1424,7 @@ public class Application extends javafx.application.Application {
                                 r2.relocate(bounds.get(i).getTo().minus(3*i).minus(7),40)
                                 pane.getChildren().add(r2)
                             }
-
-
                         }
-
                     }
                 }
             }
@@ -1849,9 +1461,7 @@ public class Application extends javafx.application.Application {
             }
             disableControls.setValue(false)
         }
-
     }
-
 
     private void initializeComponents() {
 
@@ -1861,7 +1471,6 @@ public class Application extends javafx.application.Application {
         observableListTypesCount = FXCollections.observableArrayList()
         observableListZips = FXCollections.observableArrayList()
         observableListZipsCount = FXCollections.observableArrayList()
-
 
         table = new TableView();
         cityLabelforDetail = new Label("City:       ")
@@ -1936,7 +1545,6 @@ public class Application extends javafx.application.Application {
         groupChoice = new Group();
         choiceContainerHbox = new HBox()
 
-
         positionBox = new HBox()
         zipBox = new HBox()
         cityBox = new HBox()
@@ -2001,7 +1609,6 @@ public class Application extends javafx.application.Application {
         clearTableSelectButton = new Button("Clear Selection")
 
         panesToAttributes = new HashMap()
-
 
         nominalAverageText = TextBuilder.create()
                 .text(message)
@@ -2074,6 +1681,27 @@ public class Application extends javafx.application.Application {
 
         disableControls = new SimpleBooleanProperty(false)
 
+        linearGradDark = LinearGradientBuilder.create()
+                .startX(0)
+                .startY(0)
+                .endX(0)
+                .endY(22)
+                .proportional(false)
+                .cycleMethod(CycleMethod.NO_CYCLE)
+                .stops( new Stop(0.1f, Color.rgb(245, 245, 245, 1)),
+                new Stop(1.0f, Color.rgb(179, 179, 179, 1)))
+                .build();
+
+        linearGrad = LinearGradientBuilder.create()
+                .startX(0)
+                .startY(0)
+                .endX(0)
+                .endY(50)
+                .proportional(false)
+                .cycleMethod(CycleMethod.NO_CYCLE)
+                .stops( new Stop(0.1f, Color.rgb(245, 245, 245, 1)),
+                new Stop(1.0f, Color.rgb(179, 179, 179, 1)))
+                .build();
 
         fakedPlantList = new PowerPlantList(1377475, new OurConsumer<Integer>(){
             @Override
@@ -2082,11 +1710,9 @@ public class Application extends javafx.application.Application {
             }
         });
         items = FakeCollections.newObservableList(fakedPlantList);
-
     }
 
     private void updateFacets(Pane pane, Integer newValue, Integer oldValue) {
-
 
         if (newValue.equals(0)){
             facetBox.getChildren().get(oldValue.minus(1)).getChildren().remove(pane)
@@ -2096,122 +1722,8 @@ public class Application extends javafx.application.Application {
             facetBox.getChildren().get(newValue.minus(1)).getChildren().add(pane)
             facetBox.getChildren().get(oldValue.minus(1)).getChildren().remove(pane)
         }
-//
-//        VBox paneContainer = pane.getParent()
-//        if (newValue > 0 && oldValue > 0){
-//
-//            paneContainer.getChildren().remove(pane)
-//
-//            VBox targetBox = facetBox.getChildren().get(newValue-1)
-//
-//            targetBox.getChildren().add(pane)
-//        }
-//        List values = new ArrayList()
-//        List valuesList = new ArrayList()
-//        if(newValue==0){
-//            paneContainer.getChildren().remove(pane)
-//            pane.setPrefHeight(paneContainer.getHeight())
-//            pane.getChildren().get(0).setPrefHeight(paneContainer.getHeight())
-//        }
-//
-//        else if(oldValue==0) {
-//            int c = 0
-//
-//            clientDolphin.findAllPresentationModelsByType(FACET).each {
-//                def orderValue = it.findAttributeByPropertyName(ORDER).getValue()
-//                if (orderValue > 0 && !valuesList.contains(orderValue)){
-//                    valuesList.add(orderValue)
-//                    c++
-//                }
-//            }
-//
-//            VBox targetBox = new VBox()
-//            try {
-//                targetBox = facetBox.getChildren().get(c-1)
-//            }
-//            catch (Exception e){
-//                VBox newVbox = new VBox()
-//                facetBox.getChildren().add(c-1, newVbox)
-//            }
-//            targetBox = facetBox.getChildren().get(c-1)
-//
-//            targetBox.getChildren().add(pane)
-//        }
-
-
-
-//        if (clientDolphin[STATE][CHANGE_FROM].getValue()==-1)return;
-//        if(newValue == 1){
-//            clientDolphin[STATE][CHANGE_FROM].setValue(-1)
-//            facetBox.getChildren().each {vBox ->
-//                vBox.getChildren().each{
-//                    TreeView treeView = it.getChildren().get(0).getChildren().get(1)
-//                    treeView.getSelectionModel().clearSelection()
-//                }
-//            }
-//            clientDolphin[FILTER].getAttributes().each {
-//                it.setValue("")
-//            }
-//            return;
-//        }
-//        if (oldValue == 1 && facetBox.getChildren().get(oldValue-1).getChildren().size()==0){
-//            clientDolphin[STATE][CHANGE_FROM].setValue(-1)
-//            facetBox.getChildren().each {vBox ->
-//                vBox.getChildren().each{
-//                    TreeView treeView = it.getChildren().get(0).getChildren().get(1)
-//                    treeView.getSelectionModel().clearSelection()
-//                }
-//            }
-//            clientDolphin[FILTER].getAttributes().each {
-//                it.setValue("")
-//            }
-//            return;
-//        }
-//        if (oldValue > 0 && newValue > 0){
-//            if(oldValue==1){
-//                clientDolphin[STATE][CHANGE_FROM].setValue(oldValue-1)
-//                (oldValue..(newValue-1)).each {
-//                    VBox betweenBox = facetBox.getChildren().get(it)
-//                    betweenBox.getChildren().each {
-//                        TreeView treeView = it.getChildren().get(0).getChildren().get(1)
-//                        treeView.getSelectionModel().clearSelection()
-//                    }
-//                }
-//            }
-//            else if (oldValue > newValue){
-//                clientDolphin[STATE][CHANGE_FROM].setValue(newValue-1)
-//
-//                (newValue-1..(oldValue-1)).each {
-//                    VBox betweenBox = facetBox.getChildren().get(it)
-//                    betweenBox.getChildren().each {
-//                        TreeView treeView = it.getChildren().get(0).getChildren().get(1)
-//                        treeView.getSelectionModel().clearSelection()
-//                    }
-//                }
-//
-//            }else{
-//                clientDolphin[STATE][CHANGE_FROM].setValue(oldValue-1)
-//                (oldValue..(newValue-1)).each {
-//                    VBox betweenBox = facetBox.getChildren().get(it)
-//                    betweenBox.getChildren().each {
-//                        TreeView treeView = it.getChildren().get(0).getChildren().get(1)
-//                        treeView.getSelectionModel().clearSelection()
-//                    }
-//                }
-//            }
-//
-//        }else if (newValue == 0){
-//            clientDolphin[STATE][CHANGE_FROM].setValue(oldValue-1)
-//        }else if (oldValue == 0){
-//            clientDolphin[STATE][CHANGE_FROM].setValue(newValue-1)
-//        }
-
         addDragging()
-
     }
-
-
-
 }
 
 

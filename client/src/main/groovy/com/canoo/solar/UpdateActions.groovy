@@ -1,8 +1,10 @@
 package com.canoo.solar
 
+import javafx.scene.control.TableView
 import javafx.scene.control.TextField
 import javafx.scene.control.TreeItem
 import javafx.scene.control.TreeView
+import javafx.scene.layout.Pane
 import javafx.scene.layout.VBox
 import org.opendolphin.core.PresentationModel
 
@@ -120,5 +122,58 @@ class UpdateActions {
                     Application.clientDolphin.findPresentationModelById(propertyName)[ORDER].setValue(0)
                     autoFillTextBox.setVisible(true)
                 }
+    }
+
+    public static void reselect(Integer value) {
+        VBox reselectBox = Application.facetBox.getChildren().get(value - 2)
+        Pane reselectPane = reselectBox.getChildren().get(0)
+        def model = reselectPane.getChildren().get(0).getChildren().get(1)
+        if (model instanceof TableView && model.getSelectionModel().getSelectedItems().size().equals(0)){
+            VBox reselectBox2 = Application.facetBox.getChildren().get(value - 3)
+            Pane reselectPane2 = reselectBox2.getChildren().get(0)
+            model = reselectPane2.getChildren().get(0).getChildren().get(1)
+        }
+        javafx.collections.ObservableList<TreeItem<String>> items = model.getSelectionModel().getSelectedItems()
+        if(items.size().equals(0))items << model.getRoot()
+        if (items.size().equals(1)){
+            def item = items.get(0)
+            model.getSelectionModel().clearSelection()
+            model.getSelectionModel().select(item)
+        }else{
+            items.each{TreeItem<String> treeItem ->
+                model.getSelectionModel().select(treeItem)
+            }
+        }
+
+        try{
+            if (model.getRoot().equals(model.getSelectionModel().getSelectedItem())) model.getSelectionModel().clearSelection();
+        }catch (Exception e){}
+    }
+
+    public static void resetEverything() {
+        Application.facetBox.getChildren().each {
+            it.getChildren().each{Pane pane ->
+                pane.getChildren().get(0).getChildren().get(1).getSelectionModel().clearSelection()
+            }
+        }
+        Application.disableControls.setValue(true)
+        Application.clientDolphin.data Constants.CMD.GET, { data ->
+            UpdateActions.updateTree(data, Application.treeTypes, Application.observableListTypes, Application.observableListTypesCount, 1, "Plant Types")
+            UpdateActions.updateTree(data, Application.treeZip, Application.observableListZips, Application.observableListZipsCount, 3, "Zip-Codes")
+            UpdateActions.updateTree(data, Application.treeCities,Application.observableListCities,Application.observableListCitiesCount,2,"Cities")
+            def size = data.get(0).get(Constants.FilterConstants.SIZE)
+            PowerPlantList newFakeList = new PowerPlantList((Integer)size, new OurConsumer<Integer>(){
+                @Override
+                void accept(Integer rowIndex) {
+                    Application.loadPresentationModel(rowIndex)
+                }
+            });
+            javafx.collections.ObservableList<PowerPlant> newItems = FakeCollections.newObservableList(newFakeList);
+            Application.table.setItems(newItems)
+            Application.totalCount.setText(newItems.size() + "/1377475")
+            Application.table.getSelectionModel().clearSelection()
+            Application.updateDetails()
+            Application.disableControls.setValue(false)
+        }
     }
 }
