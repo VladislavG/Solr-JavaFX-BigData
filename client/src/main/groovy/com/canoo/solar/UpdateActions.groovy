@@ -8,8 +8,10 @@ import javafx.scene.layout.Pane
 import javafx.scene.layout.VBox
 import org.opendolphin.core.PresentationModel
 
+import static com.canoo.solar.Constants.FilterConstants.ALL
 import static com.canoo.solar.Constants.FilterConstants.DISABLECONTROLS
 import static com.canoo.solar.Constants.FilterConstants.FACET
+import static com.canoo.solar.Constants.FilterConstants.FILTER
 import static com.canoo.solar.Constants.FilterConstants.ORDER
 import static com.canoo.solar.Constants.FilterConstants.STATE
 
@@ -78,8 +80,6 @@ class UpdateActions {
             Application.updateDetails()
             Application.disableControls.setValue(false)
         }
-
-
     }
 
     public static void facetAddRemove(String propertyName, TextField autoFillTextBox, String addRemove){

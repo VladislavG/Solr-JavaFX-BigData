@@ -27,6 +27,8 @@ public class Constants {
     public static final String GPS_LON = "longitude";
     public static final String NOMINAL_POWER = "nominalPower"
     public static final String FILTER = 'FILTER'
+    public static final String SEARCH = 'SEARCH'
+    public static final String SEARCH_ATT = 'SEARCH_ATT'
     public static final String CITY_AUTOFILL = "city_a"
     public static final String PLANT_TYPE_AUTOFILL = "plantType_a"
     public static final String ZIP_AUTOFILL = "zipCode_a"

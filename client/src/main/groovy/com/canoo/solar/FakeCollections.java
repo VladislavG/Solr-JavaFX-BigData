@@ -8,7 +8,7 @@ import java.util.Collection;
 import java.util.List;
 
 public class FakeCollections {
-    public static <S> Collection<S> items(int howMany) {
+    public static <S> Collection<S> items(final int howMany) {
         return new AbstractList<S>() {
 
             @Override
@@ -22,7 +22,7 @@ public class FakeCollections {
             }
         };
     }
-    public static List<Integer> integerItems(int howMany) {
+    public static List<Integer> integerItems(final int howMany) {
         return new AbstractList<Integer>() {
 
             @Override

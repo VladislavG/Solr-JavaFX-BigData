@@ -15,7 +15,7 @@ public class PowerPlantList extends AbstractList<PowerPlant> {
 
     private final IntegerProperty fillSize = new SimpleIntegerProperty(0);
 
-    private final Map<Integer, PowerPlant> powerPlantMap = new HashMap<>();
+    private final Map<Integer, PowerPlant> powerPlantMap = new HashMap();
 
     private PowerPlantList(final int size, OurConsumer<Integer> getAtConsumer) {
         this.size = size;

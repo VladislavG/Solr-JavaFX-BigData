@@ -77,7 +77,6 @@ public class Application extends javafx.application.Application {
     Label nominalLabelforDetail
     Label idLabelforDetail
     Label noData
-    static long start
     static List<Range<Integer>> bounds = new ArrayList<Range<Integer>>()
     static List<Range<Integer>> realBounds = new ArrayList<Range<Integer>>()
     static List<Double> widths
@@ -313,6 +312,7 @@ public class Application extends javafx.application.Application {
 
     private static void initializePresentationModels () {
         clientDolphin.presentationModel(FILTER, [ID, CITY, PLANT_TYPE, ZIP, NOMINAL_POWER, ALL]);
+        clientDolphin.presentationModel(SEARCH, [SEARCH_ATT]);
         clientDolphin.presentationModel(FILTER_AUTOFILL, [CITY_AUTOFILL, PLANT_TYPE_AUTOFILL, ZIP_AUTOFILL]);
         clientDolphin.presentationModel(SELECTED_POWERPLANT, [ID, CITY, PLANT_TYPE, ZIP, NOMINAL_POWER]);
         clientDolphin.presentationModel(ORDER_CHANGE, [VALUE, SCENEX, SCENEY, DRAGGEDPANE]);
@@ -335,6 +335,7 @@ public class Application extends javafx.application.Application {
         clientDolphin[ZIP][PANE].setValue(zipPane.toString())
         clientDolphin[TABLE][PANE].setValue(tablePane.toString())
 
+
         clientDolphin.getClientModelStore().findPresentationModelById(STATE).findAttributeByPropertyName(START_INDEX).setValue(0)
         clientDolphin.getClientModelStore().findPresentationModelById(STATE).findAttributeByPropertyName(SORT).setValue("Position - DESCENDING")
         clientDolphin.getClientModelStore().findPresentationModelById(STATE).findAttributeByPropertyName(REVERSER_ORDER).setValue(false)
@@ -347,6 +348,7 @@ public class Application extends javafx.application.Application {
         clientDolphin.getClientModelStore().findPresentationModelById(STATE).findAttributeByPropertyName(TYPE_DISTRIBUTION).setValue(0)
         clientDolphin.getClientModelStore().findPresentationModelById(STATE).findAttributeByPropertyName(CITY_DISTRIBUTION).setValue(0)
         clientDolphin.getClientModelStore().findPresentationModelById(STATE).findAttributeByPropertyName(DISABLECONTROLS).setValue(0)
+        clientDolphin.getClientModelStore().findPresentationModelById(SEARCH).findAttributeByPropertyName(SEARCH_ATT).setValue("")
 
     }
 
@@ -449,6 +451,7 @@ public class Application extends javafx.application.Application {
                 }else{
                     clientDolphin.getClientModelStore().findPresentationModelById(STATE).findAttributeByPropertyName(SORT).setValue("Position - DESCENDING")
                 }
+                UpdateActions.refreshTable()
                 return true;
             }
         })
@@ -536,7 +539,6 @@ public class Application extends javafx.application.Application {
                     UpdateActions.clearPmsAndPowerPlants()
                     clientDolphin[STATE][HOLD].setValue(true)
                     UpdateActions.refreshTable()
-
                 }
             }
         })
@@ -550,7 +552,6 @@ public class Application extends javafx.application.Application {
                     UpdateActions.clearPmsAndPowerPlants()
                     clientDolphin[STATE][HOLD].setValue(true)
                     UpdateActions.refreshTable()
-                     
                 }
             }
         });
@@ -881,12 +882,16 @@ public class Application extends javafx.application.Application {
         bind CITY of clientDolphin[FILTER] to 'text' of city
         bind PLANT_TYPE of clientDolphin[FILTER] to 'text' of plantTypes
         bind NOMINAL_POWER of clientDolphin[FILTER] to 'text' of nominalText
+        bind ALL of clientDolphin[FILTER] to 'text' of searchText
 
         bind ZIP of clientDolphin[SELECTED_POWERPLANT] to 'text' of zipLabelDetail
         bind CITY of clientDolphin[SELECTED_POWERPLANT] to 'text' of cityLabelDetail
         bind ID of clientDolphin[SELECTED_POWERPLANT] to 'text' of idLabelDetail
         bind NOMINAL_POWER of clientDolphin[SELECTED_POWERPLANT] to 'text' of nominalLabelDetail
         bind PLANT_TYPE of clientDolphin[SELECTED_POWERPLANT] to 'text' of typeLabelDetail
+
+//        bind ORDER of clientDolphin[TABLE] to ORDER of clientDolphin[ALL]
+//        bind ORDER of clientDolphin[ALL] to ORDER of clientDolphin[TABLE]
 
         progressBar.progressProperty().bind(progress)
         closeType.disableProperty().bind(disableControls)
@@ -972,6 +977,7 @@ public class Application extends javafx.application.Application {
         })
 
         bindAttribute(clientDolphin[TABLE][ORDER],{
+            searchText.setText("")
             table.getSelectionModel().clearSelection()
             updateFacets(tablePane, it.newValue, it.oldValue)
             Double translate = it.newValue.minus(1).multiply(206).plus(480)
@@ -979,10 +985,12 @@ public class Application extends javafx.application.Application {
 
         })
 
+
+
         bindAttribute(clientDolphin[ORDER_CHANGE][VALUE], {
 
             if (it.newValue.equals(IGNORE) || it.oldValue.equals(IGNORE))return;
-
+            searchText.setText("")
             int sceneX = clientDolphin[ORDER_CHANGE][SCENEX].getValue()
             int sceneY = clientDolphin[ORDER_CHANGE][SCENEY].getValue()
             String draggedPane = clientDolphin[ORDER_CHANGE][DRAGGEDPANE].getValue()

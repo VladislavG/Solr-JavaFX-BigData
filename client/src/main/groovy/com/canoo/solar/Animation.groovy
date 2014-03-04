@@ -121,7 +121,8 @@ public class Animation {
     static public void setMouseEventSliding(Rectangle border, Pane pane, Timeline show, Timeline hide, Label tooltip){
 
         border.setOnMouseEntered(new EventHandler<MouseEvent>() {
-            @Override public void handle(MouseEvent e) {
+            @Override
+            public void handle(MouseEvent e) {
                 border.setVisible(false)
                 border.setDisable(true)
                 show.play();
@@ -130,7 +131,8 @@ public class Animation {
         });
 
         pane.setOnMouseExited(new EventHandler<MouseEvent>() {
-            @Override public void handle(MouseEvent e) {
+            @Override
+            public void handle(MouseEvent e) {
                 border.setVisible(true)
                 border.setDisable(false)
                 hide.play();

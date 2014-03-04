@@ -61,6 +61,7 @@ public class ApplicationAction extends DolphinServerAction{
 
             def orderPM = getServerDolphin().findPresentationModelById(ORDER)
             def statePM = getServerDolphin().findPresentationModelById(STATE)
+            def searchPM = getServerDolphin().findPresentationModelById(SEARCH)
             def filterPM = getServerDolphin().findPresentationModelById(FILTER)
             def tablePM = getServerDolphin().findPresentationModelById(TABLE_FILTER)
             def filterAutoPM = getServerDolphin().findPresentationModelById(FILTER_AUTOFILL)
@@ -80,11 +81,64 @@ public class ApplicationAction extends DolphinServerAction{
 //                orders.put(it.propertyName, value)
 //            }
             filterPM.attributes.each {
-                if (it.propertyName == ALL)return;
-                def value = it.value
-                if (value=="" || value==null || value.toString().contains("Plant Types") || value.toString().contains("Zip-Codes") || value.toString().contains("Cities")) value = "*"
-                String query = it.getPropertyName() + ":" + value.toString()
-                ordersWithQueries.put(orders.get(it.propertyName), query)
+                if (it.propertyName == ALL){
+                    def value = it.value
+                    String freeSearchString = ""
+                    int i = 1;
+                    def freeSearchValue = filterPM.findAttributeByPropertyName(ALL).getValue()
+                    try{
+
+                        Integer.valueOf(freeSearchValue)
+                        filterPM.attributes.each {
+                            def values = freeSearchValue
+                            if (!(it.propertyName == ZIP || it.propertyName == ID))return
+                            i++;
+                            if (values == null || values == "") values = "*"
+                            String query = ""
+                            if (it.propertyName.equals("id")){query  = "position:" + values.toString()}
+                            else{query  = it.propertyName + ":" + values.toString()}
+                            if (i < 3){
+                                query = query + " OR "
+                            }
+                            freeSearchString = freeSearchString + query
+                        }
+                    }catch (Exception e){
+                        try{
+                            Double.valueOf(freeSearchValue)
+                            filterPM.attributes.each {
+                                def values = freeSearchValue
+                                if (!(it.propertyName == NOMINAL_POWER))return
+                                i++;
+                                if (values == null || values == "") values = "*"
+                                String query = ""
+                                query  = it.propertyName + ":" + values.toString()
+
+                                freeSearchString = freeSearchString + query
+                            }
+                        } catch (Exception e2){
+
+                            filterPM.attributes.each {
+                                def values = freeSearchValue
+                                if (!(it.propertyName == CITY || it.propertyName == PLANT_TYPE))return
+                                i++;
+                                if (values == null || values == "") values = "*"
+                                String query = ""
+                                query  = it.propertyName + ":" + values.toString()
+                                if (i < 3){
+                                    query = query + " OR "
+                                }
+                                freeSearchString = freeSearchString + query
+                            }
+                        }
+                    }
+                    ordersWithQueries.put(orders.get(TABLE), freeSearchString)
+                };
+                else{
+                    def value = it.value
+                    if (value=="" || value==null || value.toString().contains("Plant Types") || value.toString().contains("Zip-Codes") || value.toString().contains("Cities")) value = "*"
+                    String query = it.getPropertyName() + ":" + value.toString()
+                    ordersWithQueries.put(orders.get(it.propertyName), query)
+                }
             }
 
 
@@ -110,23 +164,6 @@ public class ApplicationAction extends DolphinServerAction{
                 solrQuery.addFilterQuery(query)
             }
 
-
-            String freeSearchString = ""
-            int i = 2;
-            filterPM.attributes.each {
-                i++;
-                if (it.propertyName == ALL || it.propertyName == NOMINAL_POWER)return
-                Object value = filterPM.findAttributeByPropertyName(ALL).getValue()
-                if (value == null || value == "") value = "*"
-                String query = ""
-                if (it.propertyName.equals("id")){query  = "position:" + value.toString()}
-                else{query  = it.propertyName + ":" + value.toString()}
-                if (i < filterPM.attributes.size()){
-                    query = query + " OR "
-                }
-                freeSearchString = freeSearchString + query
-            }
-            solrQuery.addFilterQuery(freeSearchString)
 
             def value = tablePM[POSITION_FILTER].getValue()
             if (value == null || value == "") value = "*"
@@ -180,6 +217,7 @@ public class ApplicationAction extends DolphinServerAction{
             }
             changeValue statePM[CITY_DISTRIBUTION], s
             changeValue statePM[CITY_MOST], mostCity
+
 
             int t = 0
             String mostType = ""
@@ -285,14 +323,69 @@ public class ApplicationAction extends DolphinServerAction{
                     def value = it[ORDER].getValue()
                     orders.put(it.id, value)
                 }
-
+//            orderPM.attributes.each {
+//                def value = it.getValue()
+//                orders.put(it.propertyName, value)
+//            }
                 filterPM.attributes.each {
+                    if (it.propertyName == ALL){
+                        def value = it.value
+                        String freeSearchString = ""
+                        int i = 1;
+                        def freeSearchValue = filterPM.findAttributeByPropertyName(ALL).getValue()
+                        try{
 
-                    def value = it.value
+                            Integer.valueOf(freeSearchValue)
+                            filterPM.attributes.each {
+                                def values = freeSearchValue
+                                if (!(it.propertyName == ZIP || it.propertyName == ID))return
+                                i++;
+                                if (values == null || values == "") values = "*"
+                                String query = ""
+                                if (it.propertyName.equals("id")){query  = "position:" + values.toString()}
+                                else{query  = it.propertyName + ":" + values.toString()}
+                                if (i < 3){
+                                    query = query + " OR "
+                                }
+                                freeSearchString = freeSearchString + query
+                            }
+                        }catch (Exception e){
+                            try{
+                                Double.valueOf(freeSearchValue)
+                                filterPM.attributes.each {
+                                    def values = freeSearchValue
+                                    if (!(it.propertyName == NOMINAL_POWER))return
+                                    i++;
+                                    if (values == null || values == "") values = "*"
+                                    String query = ""
+                                    query  = it.propertyName + ":" + values.toString()
 
-                    if (value=="" || value==null || value.toString().contains("Plant Type") || value.toString().contains("Zip-Codes") || value.toString().contains("Cities")) value = "*"
-                    String query = it.getPropertyName() + ":" + value.toString()
-                    ordersWithQueries.put(orders.get(it.propertyName), query)
+                                    freeSearchString = freeSearchString + query
+                                }
+                            } catch (Exception e2){
+
+                                filterPM.attributes.each {
+                                    def values = freeSearchValue
+                                    if (!(it.propertyName == CITY || it.propertyName == PLANT_TYPE))return
+                                    i++;
+                                    if (values == null || values == "") values = "*"
+                                    String query = ""
+                                    query  = it.propertyName + ":" + values.toString()
+                                    if (i < 3){
+                                        query = query + " OR "
+                                    }
+                                    freeSearchString = freeSearchString + query
+                                }
+                            }
+                        }
+                        ordersWithQueries.put(orders.get(TABLE), freeSearchString)
+                    };
+                    else{
+                        def value = it.value
+                        if (value=="" || value==null || value.toString().contains("Plant Types") || value.toString().contains("Zip-Codes") || value.toString().contains("Cities")) value = "*"
+                        String query = it.getPropertyName() + ":" + value.toString()
+                        ordersWithQueries.put(orders.get(it.propertyName), query)
+                    }
                 }
 
                 (0..ordersWithQueries.size()-1).each {
@@ -319,28 +412,10 @@ public class ApplicationAction extends DolphinServerAction{
                     solrQuery.addFilterQuery(query)
                 }
 
-                String freeSearchString = ""
-                int i = 2;
-                filterPM.attributes.each {
-                    i++;
-                    if (it.propertyName == ALL || it.propertyName == NOMINAL_POWER)return
-                    Object value = filterPM.findAttributeByPropertyName(ALL).getValue()
-                    if (value == null || value == "") value = "*"
-                    String query = ""
-                    if (it.propertyName.equals("id")){query  = "position:" + value.toString()}
-                    else{query  = it.propertyName + ":" + value.toString()}
-                    if (i < filterPM.attributes.size()){
-                        query = query + " OR "
-                    }
-                    freeSearchString = freeSearchString + query
-                }
-                solrQuery.addFilterQuery(freeSearchString)
-
-//
-//                def value = tablePM[POSITION_FILTER].getValue()
-//                if (value == null || value == "") value = "*"
-//                String tableString = "position:" + value
-//                solrQuery.addFilterQuery(tableString)
+                def value = tablePM[POSITION_FILTER].getValue()
+                if (value == null || value == "") value = "*"
+                String tableString = "position:" + value
+                solrQuery.addFilterQuery(tableString)
 
                 solrQuery.setStart(rowIdx)
                     solrQuery.setRows(1);
@@ -358,7 +433,6 @@ public class ApplicationAction extends DolphinServerAction{
                     response.add(createInitializeAttributeCommand(rowIdx.toString(), AVGKWH, result.getFieldValue(AVGKWH)))
                     response.add(createInitializeAttributeCommand(rowIdx.toString(), GPS_LAT, result.getFieldValue(GPS_LAT)))
                     response.add(createInitializeAttributeCommand(rowIdx.toString(), GPS_LON, result.getFieldValue(GPS_LON)))
-
             }
         }
     }
