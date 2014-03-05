@@ -64,6 +64,7 @@ class UpdateActions {
     }
 
     public static void refreshTable(){
+        Application.table.getSelectionModel().clearSelection()
         Application.disableControls.setValue(true)
         Application.clientDolphin.data Constants.CMD.GET, { data ->
             def size = data.get(0).get(Constants.FilterConstants.SIZE)
@@ -71,14 +72,14 @@ class UpdateActions {
                 @Override
                 void accept(Integer rowIndex) {
                     Application.loadPresentationModel(rowIndex)
+                    Application.disableControls.setValue(false)
                 }
             });
             javafx.collections.ObservableList<PowerPlant> newItems = FakeCollections.newObservableList(newFakeList);
             Application.table.setItems(newItems)
             Application.totalCount.setText(newItems.size() + "/1377475")
-            Application.table.getSelectionModel().clearSelection()
             Application.updateDetails()
-            Application.disableControls.setValue(false)
+
         }
     }
 

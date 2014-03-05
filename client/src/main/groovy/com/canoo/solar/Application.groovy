@@ -437,10 +437,10 @@ public class Application extends javafx.application.Application {
                 progressBar.setVisible(false)
             }
         })
-
         table.setSortPolicy(new Callback<TableView<PowerPlant>, Boolean>() {
             @Override
             Boolean call(TableView<PowerPlant> powerPlantTableView) {
+
                 if (table.getSortOrder().size() > 0) {
                     String s = new String()
                     table.getSortOrder().each {
@@ -859,6 +859,9 @@ public class Application extends javafx.application.Application {
         cityDistribution.setText(cityDistributionString)
         cityMost.setText(cityMostString)
         totalAVGKWH.setText(totalAVGKWHString)
+        if(table.getItems().size() == 0){
+            disableControls.setValue(false)
+        }
     }
 
     public static PowerPlantList getFakeList() {
